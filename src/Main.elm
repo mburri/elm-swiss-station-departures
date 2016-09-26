@@ -2,13 +2,13 @@ module Main exposing (main)
 
 import Html exposing (Html, button, div, text, h1, table, colgroup, col, thead, tbody, th, tr, td, input)
 import Html.App as App
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (align, attribute, id, placeholder)
 
 
 main : Program Never
 main =
-    App.beginnerProgram { model = "", view = view, update = update }
+    App.beginnerProgram { model = init, view = view, update = update }
 
 
 
@@ -16,7 +16,13 @@ main =
 
 
 type alias Model =
-    String
+    { query : String
+    }
+
+
+init : Model
+init =
+    { query = "" }
 
 
 
@@ -25,11 +31,17 @@ type alias Model =
 
 type Msg
     = NoOp
+    | ChangeQuery String
 
 
 update : Msg -> Model -> Model
 update msg model =
-    model
+    case msg of
+        NoOp ->
+            model
+
+        ChangeQuery query ->
+            { model | query = query }
 
 
 
@@ -41,9 +53,11 @@ view model =
     div []
         [ h1 [] [ text "Swiss Station Departures" ]
         , div []
-            [ input [ placeholder "Station" ]
+            [ input [ placeholder "Station", onInput ChangeQuery ]
                 []
             ]
+        , div []
+            [ text model.query ]
         , table [ id "stationboard" ]
             [ colgroup []
                 [ col [ attribute "width" "120" ]
