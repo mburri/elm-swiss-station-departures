@@ -5,12 +5,15 @@ import Html.App as App
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (align, attribute, id, placeholder)
 import Platform.Cmd as Cmd
+import Task
+import Http
+import Json.Decode as Json
 
 
 main : Program Never
 main =
     App.program
-        { init = init ""
+        { init = init "" ""
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -23,12 +26,13 @@ main =
 
 type alias Model =
     { query : String
+    , stations : String
     }
 
 
-init : String -> ( Model, Cmd Msg )
-init query =
-    ( Model query
+init : String -> String -> ( Model, Cmd Msg )
+init query stations =
+    ( Model query stations
     , Cmd.none
     )
 
@@ -40,6 +44,9 @@ init query =
 type Msg
     = NoOp
     | ChangeQuery String
+    | SearchStation
+    | SearchStationFail Http.Error
+    | SearchStationSucceed String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -50,6 +57,15 @@ update msg model =
 
         ChangeQuery query ->
             ( { model | query = query }, Cmd.none )
+
+        SearchStation ->
+            ( model, getStations model.query )
+
+        SearchStationFail error ->
+            ( model, Cmd.none )
+
+        SearchStationSucceed stations ->
+            ( { model | stations = stations }, Cmd.none )
 
 
 
@@ -63,9 +79,13 @@ view model =
         , div []
             [ input [ placeholder "Station", onInput ChangeQuery ]
                 []
+            , button [ onClick SearchStation ] [ text "Search" ]
             ]
         , div []
-            [ text model.query ]
+            [ text model.query
+            , text " "
+            , text model.stations
+            ]
         , table [ id "stationboard" ]
             [ colgroup []
                 [ col [ attribute "width" "120" ]
@@ -218,3 +238,21 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
+
+
+
+-- HTTP
+
+
+getStations : String -> Cmd Msg
+getStations query =
+    let
+        url =
+            "http://transport.opendata.ch/v1/locations?query=" ++ query
+    in
+        Task.perform SearchStationFail SearchStationSucceed (Http.get decodeStation url)
+
+
+decodeStation : Json.Decoder String
+decodeStation =
+    Json.at [ "stations", "name" ] Json.string
