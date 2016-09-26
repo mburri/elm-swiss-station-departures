@@ -4,11 +4,17 @@ import Html exposing (Html, button, div, text, h1, table, colgroup, col, thead, 
 import Html.App as App
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (align, attribute, id, placeholder)
+import Platform.Cmd as Cmd
 
 
 main : Program Never
 main =
-    App.beginnerProgram { model = init, view = view, update = update }
+    App.program
+        { init = init ""
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
 
 
@@ -20,9 +26,11 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    { query = "" }
+init : String -> ( Model, Cmd Msg )
+init query =
+    ( Model query
+    , Cmd.none
+    )
 
 
 
@@ -34,14 +42,14 @@ type Msg
     | ChangeQuery String
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
-            model
+            ( model, Cmd.none )
 
         ChangeQuery query ->
-            { model | query = query }
+            ( { model | query = query }, Cmd.none )
 
 
 
@@ -201,3 +209,12 @@ view model =
                 ]
             ]
         ]
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
