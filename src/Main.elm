@@ -13,7 +13,7 @@ import Json.Decode as Json
 main : Program Never
 main =
     App.program
-        { init = init "" ""
+        { init = init "" "" initDepartures
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -24,15 +24,31 @@ main =
 -- Model
 
 
-type alias Model =
-    { query : String
-    , stations : String
+type alias Departure =
+    { time : String
+    , name : String
+    , destination : String
     }
 
 
-init : String -> String -> ( Model, Cmd Msg )
-init query stations =
-    ( Model query stations
+initDepartures : List Departure
+initDepartures =
+    [ { time = "14:22", name = "NFB28", destination = "Bern Wankdorf, Bahnhof" }
+    , { time = "14:24", name = "NFB10", destination = "Ostermundigen, Rüti" }
+    , { time = "14:25", name = "NFB10", destination = "Schliern bei Köniz" }
+    ]
+
+
+type alias Model =
+    { query : String
+    , stations : String
+    , departures : List Departure
+    }
+
+
+init : String -> String -> List Departure -> ( Model, Cmd Msg )
+init query stations departures =
+    ( Model query stations departures
     , Cmd.none
     )
 
@@ -86,148 +102,44 @@ view model =
             , text " "
             , text model.stations
             ]
-        , table [ id "stationboard" ]
-            [ colgroup []
-                [ col [ attribute "width" "120" ]
-                    []
-                , col [ attribute "width" "140" ]
-                    []
-                , col [ attribute "width" "230" ]
-                    []
-                ]
-            , thead []
-                [ tr []
-                    [ th [ align "left" ]
-                        [ text "Zeit" ]
-                    , th []
-                        [ text "" ]
-                    , th [ align "left" ]
-                        [ text "Nach" ]
-                    ]
-                ]
-            , tbody []
-                [ tr []
-                    [ td []
-                        [ text "14:22" ]
-                    , td []
-                        [ text "NFB 28" ]
-                    , td []
-                        [ text "Bern Wankdorf, Bahnhof" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:24" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Schliern bei Köniz" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:25" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Ostermundigen, Rüti" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:29" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Schliern bei Köniz" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:30" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Ostermundigen, Rüti" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:34" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Schliern bei Köniz" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:35" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Ostermundigen, Rüti" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:35" ]
-                    , td []
-                        [ text "10" ]
-                    , td []
-                        [ text "Ostermundigen" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:37" ]
-                    , td []
-                        [ text "NFB 28" ]
-                    , td []
-                        [ text "Bern Wankdorf, Bahnhof" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:39" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Schliern bei Köniz" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:40" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Ostermundigen, Rüti" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:44" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Schliern bei Köniz" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:45" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Ostermundigen, Rüti" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:49" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Schliern bei Köniz" ]
-                    ]
-                , tr []
-                    [ td []
-                        [ text "14:50" ]
-                    , td []
-                        [ text "NFB 10" ]
-                    , td []
-                        [ text "Ostermundigen, Rüti" ]
-                    ]
+        , viewAllDepartures model.departures
+        ]
+
+
+viewAllDepartures : List Departure -> Html.Html Msg
+viewAllDepartures departures =
+    table [ id "stationboard" ]
+        [ colgroup []
+            [ col [ attribute "width" "120" ]
+                []
+            , col [ attribute "width" "140" ]
+                []
+            , col [ attribute "width" "230" ]
+                []
+            ]
+        , thead []
+            [ tr []
+                [ th [ align "left" ]
+                    [ text "Zeit" ]
+                , th []
+                    [ text "" ]
+                , th [ align "left" ]
+                    [ text "Nach" ]
                 ]
             ]
+        , tbody [] (List.map viewSingleDeparture departures)
+        ]
+
+
+viewSingleDeparture : Departure -> Html.Html Msg
+viewSingleDeparture departure =
+    tr []
+        [ td []
+            [ text departure.time ]
+        , td []
+            [ text departure.name ]
+        , td []
+            [ text departure.destination ]
         ]
 
 
