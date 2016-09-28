@@ -7,7 +7,8 @@ import Html.Attributes exposing (align, attribute, id, placeholder)
 import Platform.Cmd as Cmd
 import Task
 import Http
-import Json.Decode as Json
+import Debug
+import Json.Decode as Json exposing ((:=))
 
 
 main : Program Never
@@ -25,7 +26,8 @@ main =
 
 
 type alias Station =
-    String
+    { name : String
+    }
 
 
 type alias Departure =
@@ -66,7 +68,7 @@ type Msg
     | ChangeQuery String
     | SearchStation
     | SearchStationFail Http.Error
-    | SearchStationSucceed String
+    | SearchStationSucceed (List Station)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -82,10 +84,18 @@ update msg model =
             ( model, getStations model.query )
 
         SearchStationFail error ->
-            ( model, Cmd.none )
+            let
+                _ =
+                    Debug.log "got an error:" error
+            in
+                ( model, Cmd.none )
 
         SearchStationSucceed stations ->
-            ( model, Cmd.none )
+            let
+                _ =
+                    Debug.log "got a response" stations
+            in
+                ( { model | stations = stations }, Cmd.none )
 
 
 
@@ -166,9 +176,15 @@ getStations query =
         url =
             "http://transport.opendata.ch/v1/locations?query=" ++ query
     in
-        Task.perform SearchStationFail SearchStationSucceed (Http.get decodeStation url)
+        Task.perform SearchStationFail SearchStationSucceed (Http.get decodeStations url)
 
 
-decodeStation : Json.Decoder String
+decodeStation : Json.Decoder Station
 decodeStation =
-    Json.at [ "stations", "name" ] Json.string
+    Json.object1 Station ("name" := Json.string)
+
+
+decodeStations : Json.Decoder (List Station)
+decodeStations =
+    Json.object1 identity
+        ("stations" := Json.list decodeStation)
