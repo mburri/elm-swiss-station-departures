@@ -13,7 +13,7 @@ import Json.Decode as Json
 main : Program Never
 main =
     App.program
-        { init = init "" "" initDepartures
+        { init = init "" [] initDepartures
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -22,6 +22,10 @@ main =
 
 
 -- Model
+
+
+type alias Station =
+    String
 
 
 type alias Departure =
@@ -41,12 +45,12 @@ initDepartures =
 
 type alias Model =
     { query : String
-    , stations : String
+    , stations : List Station
     , departures : List Departure
     }
 
 
-init : String -> String -> List Departure -> ( Model, Cmd Msg )
+init : String -> List Station -> List Departure -> ( Model, Cmd Msg )
 init query stations departures =
     ( Model query stations departures
     , Cmd.none
@@ -81,7 +85,7 @@ update msg model =
             ( model, Cmd.none )
 
         SearchStationSucceed stations ->
-            ( { model | stations = stations }, Cmd.none )
+            ( model, Cmd.none )
 
 
 
@@ -100,7 +104,7 @@ view model =
         , div []
             [ text model.query
             , text " "
-            , text model.stations
+            , text <| toString <| List.length model.stations
             ]
         , viewAllDepartures model.departures
         ]
