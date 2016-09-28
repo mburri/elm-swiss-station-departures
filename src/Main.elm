@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Html exposing (Html, button, div, text, h1, table, colgroup, col, thead, tbody, th, tr, td, input)
+import Html exposing (Html, button, div, text, h1, table, colgroup, col, thead, tbody, th, tr, td, input, p)
 import Html.App as App
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (align, attribute, id, placeholder)
@@ -84,18 +84,10 @@ update msg model =
             ( model, getStations model.query )
 
         SearchStationFail error ->
-            let
-                _ =
-                    Debug.log "got an error:" error
-            in
-                ( model, Cmd.none )
+            ( model, Cmd.none )
 
         SearchStationSucceed stations ->
-            let
-                _ =
-                    Debug.log "got a response" stations
-            in
-                ( { model | stations = stations }, Cmd.none )
+            ( { model | stations = stations }, Cmd.none )
 
 
 
@@ -111,13 +103,19 @@ view model =
                 []
             , button [ onClick SearchStation ] [ text "Search" ]
             ]
-        , div []
-            [ text model.query
-            , text " "
-            , text <| toString <| List.length model.stations
-            ]
+        , viewStations model.stations
         , viewAllDepartures model.departures
         ]
+
+
+viewStations : List Station -> Html.Html Msg
+viewStations stations =
+    div [] (List.map viewStation stations)
+
+
+viewStation : Station -> Html.Html Msg
+viewStation station =
+    p [] [ text station.name ]
 
 
 viewAllDepartures : List Departure -> Html.Html Msg
