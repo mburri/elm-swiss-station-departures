@@ -1,20 +1,21 @@
 module Main exposing (main)
 
+import Autocomplete
+import Debug
 import Html exposing (Html, button, div, text, h1, table, colgroup, col, thead, tbody, th, tr, td, input, p)
 import Html.App as App
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (align, attribute, id, placeholder)
+import Http
+import Json.Decode as Json exposing ((:=))
 import Platform.Cmd as Cmd
 import Task
-import Http
-import Debug
-import Json.Decode as Json exposing ((:=))
 
 
 main : Program Never
 main =
     App.program
-        { init = init "" [] initDepartures
+        { init = init ! []
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -37,26 +38,29 @@ type alias Departure =
     }
 
 
+type alias Model =
+    { query : String
+    , stations : List Station
+    , departures : List Departure
+    , autoState : Autocomplete.State
+    }
+
+
+init : Model
+init =
+    { query = ""
+    , stations = []
+    , departures = initDepartures
+    , autoState = Autocomplete.empty
+    }
+
+
 initDepartures : List Departure
 initDepartures =
     [ { time = "14:22", name = "NFB28", destination = "Bern Wankdorf, Bahnhof" }
     , { time = "14:24", name = "NFB10", destination = "Ostermundigen, Rüti" }
     , { time = "14:25", name = "NFB10", destination = "Schliern bei Köniz" }
     ]
-
-
-type alias Model =
-    { query : String
-    , stations : List Station
-    , departures : List Departure
-    }
-
-
-init : String -> List Station -> List Departure -> ( Model, Cmd Msg )
-init query stations departures =
-    ( Model query stations departures
-    , Cmd.none
-    )
 
 
 
