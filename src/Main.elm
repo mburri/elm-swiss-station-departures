@@ -1,21 +1,16 @@
-module Main exposing (main)
+module Main exposing (..)
 
 import Autocomplete
-import Debug
-import Html exposing (Html, button, div, text, h1, table, colgroup, col, thead, tbody, th, tr, td, input, p)
+import Html exposing (Html, button, div, text, h1, input)
 import Html.App as App
-import Html.Events exposing (onClick, onInput)
-import Html.Attributes exposing (align, attribute, id, placeholder)
-import Http
-import Json.Decode as Json exposing ((:=))
-import Platform.Cmd as Cmd
-import Task
+import Html.Attributes exposing (id, classList, class)
+import Html.Events exposing (onInput)
+import String
 
 
-main : Program Never
 main =
     App.program
-        { init = init ! []
+        { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -23,7 +18,7 @@ main =
 
 
 
--- Model
+-- MODEL
 
 
 type alias Station =
@@ -31,132 +26,71 @@ type alias Station =
     }
 
 
-type alias Departure =
-    { time : String
-    , name : String
-    , destination : String
-    }
-
-
 type alias Model =
     { query : String
-    , stations : List Station
-    , departures : List Departure
     , autoState : Autocomplete.State
+    , stations : List Station
+    , howManyToShow : Int
+    , showStations : Bool
     }
-
-
-init : Model
-init =
-    { query = ""
-    , stations = []
-    , departures = initDepartures
-    , autoState = Autocomplete.empty
-    }
-
-
-initDepartures : List Departure
-initDepartures =
-    [ { time = "14:22", name = "NFB28", destination = "Bern Wankdorf, Bahnhof" }
-    , { time = "14:24", name = "NFB10", destination = "Ostermundigen, Rüti" }
-    , { time = "14:25", name = "NFB10", destination = "Schliern bei Köniz" }
-    ]
-
-
-
--- Update
 
 
 type Msg
     = NoOp
     | ChangeQuery String
-    | SearchStation
-    | SearchStationFail Http.Error
-    | SearchStationSucceed (List Station)
+    | SetAutoState Autocomplete.Msg
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+init : ( Model, Cmd Msg )
+init =
+    ( Model
+        ""
+        Autocomplete.empty
+        stations
+        5
+        False
+    , Cmd.none
+    )
+
+
+acceptableStations : String -> List Station -> List Station
+acceptableStations query stations =
+    List.filter (matches query) stations
+
+
+matches : String -> Station -> Bool
+matches query station =
+    String.contains (String.toLower query) (String.toLower station.name)
+
+
+
+-- UPDATE
+
+
 update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
 
-        ChangeQuery query ->
-            ( { model | query = query }, Cmd.none )
+        ChangeQuery q ->
+            let
+                hasMatches =
+                    not <|
+                        List.isEmpty <|
+                            (acceptableStations q model.stations)
 
-        SearchStation ->
-            ( model, getStations model.query )
+                emptyQuery =
+                    String.isEmpty q
+            in
+                ( { model
+                    | query = q
+                    , showStations = hasMatches && not emptyQuery
+                  }
+                , Cmd.none
+                )
 
-        SearchStationFail error ->
+        SetAutoState msg ->
             ( model, Cmd.none )
-
-        SearchStationSucceed stations ->
-            ( { model | stations = stations }, Cmd.none )
-
-
-
--- View
-
-
-view : Model -> Html.Html Msg
-view model =
-    div []
-        [ h1 [] [ text "Swiss Station Departures" ]
-        , div []
-            [ input [ placeholder "Station", onInput ChangeQuery ]
-                []
-            , button [ onClick SearchStation ] [ text "Search" ]
-            ]
-        , viewStations model.stations
-        , viewAllDepartures model.departures
-        ]
-
-
-viewStations : List Station -> Html.Html Msg
-viewStations stations =
-    div [] (List.map viewStation stations)
-
-
-viewStation : Station -> Html.Html Msg
-viewStation station =
-    p [] [ text station.name ]
-
-
-viewAllDepartures : List Departure -> Html.Html Msg
-viewAllDepartures departures =
-    table [ id "stationboard" ]
-        [ colgroup []
-            [ col [ attribute "width" "120" ]
-                []
-            , col [ attribute "width" "140" ]
-                []
-            , col [ attribute "width" "230" ]
-                []
-            ]
-        , thead []
-            [ tr []
-                [ th [ align "left" ]
-                    [ text "Zeit" ]
-                , th []
-                    [ text "" ]
-                , th [ align "left" ]
-                    [ text "Nach" ]
-                ]
-            ]
-        , tbody [] (List.map viewSingleDeparture departures)
-        ]
-
-
-viewSingleDeparture : Departure -> Html.Html Msg
-viewSingleDeparture departure =
-    tr []
-        [ td []
-            [ text departure.time ]
-        , td []
-            [ text departure.name ]
-        , td []
-            [ text departure.destination ]
-        ]
 
 
 
@@ -169,24 +103,53 @@ subscriptions model =
 
 
 
--- HTTP
+-- VIEW
 
 
-getStations : String -> Cmd Msg
-getStations query =
+view model =
+    div []
+        [ h1 [] [ text "elm-swiss-station-departures" ]
+        , input [ onInput ChangeQuery ] []
+        , viewAutocomplete model
+        ]
+
+
+viewAutocomplete : Model -> Html Msg
+viewAutocomplete model =
+    if model.showStations then
+        div [ class "autocomplete-menu" ]
+            [ App.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
+    else
+        text ""
+
+
+viewConfig : Autocomplete.ViewConfig Station
+viewConfig =
     let
-        url =
-            "http://transport.opendata.ch/v1/locations?query=" ++ query
+        stationListItem keySelected mouseSelected station =
+            { attributes = []
+            , children = [ Html.text station.name ]
+            }
     in
-        Task.perform SearchStationFail SearchStationSucceed (Http.get decodeStations url)
+        Autocomplete.viewConfig
+            { toId = .name
+            , ul = [ class "autocomplete-list" ]
+            , li = stationListItem
+            }
 
 
-decodeStation : Json.Decoder Station
-decodeStation =
-    Json.object1 Station ("name" := Json.string)
+
+-- temp data
 
 
-decodeStations : Json.Decoder (List Station)
-decodeStations =
-    Json.object1 identity
-        ("stations" := Json.list decodeStation)
+stations : List Station
+stations =
+    [ Station "Bern"
+    , Station "Schliern bei Köniz"
+    , Station "Köniz"
+    , Station "Köniz Zentrum"
+    , Station "Köniz Schloss"
+    , Station "Eigerplatz, Bern"
+    , Station "Eigerplatz, Thun"
+    , Station "Eigergletscher"
+    ]
