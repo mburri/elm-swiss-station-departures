@@ -2,11 +2,13 @@ module Main exposing (..)
 
 import Autocomplete
 import Html.App as App
-import Html exposing (Html, button, div, text, h1, input)
-import Html.Attributes exposing (id, classList, class, value, autocomplete, style)
-import Html.Events exposing (onInput, onWithOptions, keyCode)
-import Json.Decode as Json
+import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, col, table, colgroup)
+import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align)
+import Html.Events exposing (onInput, onFocus, onWithOptions, keyCode)
+import Http
+import Json.Decode as Json exposing ((:=))
 import String
+import Task
 import Debug
 
 
@@ -27,23 +29,20 @@ type alias Station =
     { name : String
     }
 
-
+type alias Departure =
+    { to: String
+    , departure: String
+    , name: String
+    }
 type alias Model =
     { query : String
     , autoState : Autocomplete.State
     , stations : List Station
     , howManyToShow : Int
     , showStations : Bool
+    , selectedStation: Maybe Station
+    , departures: List Departure
     }
-
-
-type Msg
-    = NoOp
-    | ChangeQuery String
-    | SetAutoState Autocomplete.Msg
-    | SelectStation String
-    | PreviewStation String
-
 
 init : ( Model, Cmd Msg )
 init =
@@ -53,8 +52,24 @@ init =
         stations
         5
         False
+        Nothing
+        []
     , Cmd.none
     )
+
+
+
+type Msg
+    = NoOp
+    | ChangeQuery String
+    | SetAutoState Autocomplete.Msg
+    | SelectStation String
+    | PreviewStation String
+    | OnFocus
+    | Wrap Bool
+    | Reset
+    | FetchStationTableSucceed (List Departure)
+    | FetchStationTableFail Http.Error
 
 
 acceptableStations : String -> List Station -> List Station
@@ -113,15 +128,87 @@ update msg model =
                     Just updateMsg ->
                         update updateMsg newModel
 
-        SelectStation selectedId ->
-            -- TODO: implement me
+        SelectStation id ->
             let
-                _ =
-                    Debug.log "selected station" selectedId
+                selectedStation =
+                    List.head (List.filter (\station -> station.name == id) model.stations)
             in
-                ( model, Cmd.none )
+                ({ model
+                    | query =
+                        List.filter (\station -> station.name == id) model.stations
+                            |> List.head
+                            |> Maybe.withDefault (Station "")
+                            |> .name
+                    , autoState = Autocomplete.empty
+                    , showStations = False
+                    , selectedStation = selectedStation
+                }, getStationTable selectedStation)
+        OnFocus ->
+            model ! []
+
+        Reset ->
+            { model | autoState = Autocomplete.reset updateConfig model.autoState, selectedStation = Nothing } ! []
 
 
+        Wrap toTop ->
+            case model.selectedStation of
+                Just station ->
+                    update Reset model
+
+                Nothing ->
+                    if toTop then
+                        { model
+                            | autoState = Autocomplete.resetToLastItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
+                            , selectedStation = List.head <| List.reverse <| List.take model.howManyToShow <| (acceptableStations model.query model.stations)
+                        }
+                            ! []
+                    else
+                        { model
+                            | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
+                            , selectedStation = List.head <| List.take model.howManyToShow <| (acceptableStations model.query model.stations)
+                        }
+                            ! []
+
+        FetchStationTableSucceed result ->
+            let
+                _ = Debug.log "got a response: " result
+            in
+                ({ model | departures = result } , Cmd.none)
+        FetchStationTableFail error ->
+            let
+                _=
+                    Debug.log "fetch station failed: " error
+            in
+                model ! []
+
+
+getStationTable: Maybe Station -> Cmd Msg
+getStationTable maybeStation =
+        let
+            _= Debug.log "now i want to get some stations" maybeStation
+        in
+            case maybeStation of
+                Just station ->
+                    let
+                        url = "http://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=10"
+                    in
+                        Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
+                Nothing ->
+                    let
+                        _= Debug.log "nothing selected" "!"
+                    in
+                        Cmd.none
+
+decodeDepartures: Json.Decoder (List Departure)
+decodeDepartures =
+    Json.object1 identity ("stationboard" := Json.list decodeDeparture)
+
+decodeDeparture: Json.Decoder Departure
+decodeDeparture =
+    Json.object3 Departure
+        ("to" := Json.string)
+        (Json.at ["stop", "departure"] Json.string)
+        ("name" := Json.string)
 
 -- SUBSCRIPTIONS
 
@@ -158,6 +245,7 @@ view model =
             [ h1 [] [ text "elm-swiss-station-departures" ]
             , input
                 [ onInput ChangeQuery
+                , onFocus OnFocus
                 , onWithOptions "keydown" options dec
                 , value model.query
                 , autocomplete False
@@ -165,6 +253,7 @@ view model =
                 ]
                 []
             , viewAutocomplete model
+            , viewAllDepartures model.departures
             ]
 
 
@@ -207,14 +296,53 @@ updateConfig =
                     Maybe.map SelectStation maybeId
                 else
                     Nothing
-        , onTooLow = Nothing
-        , onTooHigh = Nothing
+        , onTooLow = Just <| Wrap False
+        , onTooHigh = Just <| Wrap True
         , onMouseEnter = \id -> Just <| PreviewStation id
         , onMouseLeave = \_ -> Nothing
         , onMouseClick = \id -> Just <| SelectStation id
         , separateSelections = False
         }
 
+
+viewAllDepartures : List Departure -> Html.Html Msg
+viewAllDepartures departures =
+    if not (List.isEmpty departures) then
+        table [ id "stationboard" ]
+            [ colgroup []
+                [ col [ attribute "width" "120" ]
+                    []
+                , col [ attribute "width" "140" ]
+                    []
+                , col [ attribute "width" "230" ]
+                    []
+                ]
+            , thead []
+                [ tr []
+                    [ th [ align "left" ]
+                        [ text "Zeit" ]
+                    , th []
+                        [ text "" ]
+                    , th [ align "left" ]
+                        [ text "Nach" ]
+                    ]
+                ]
+            , tbody [] (List.map viewSingleDeparture departures)
+            ]
+    else
+        div [] []
+
+
+viewSingleDeparture : Departure -> Html.Html Msg
+viewSingleDeparture departure =
+    tr []
+        [ td []
+            [ text departure.departure ]
+        , td []
+            [ text departure.name ]
+        , td []
+            [ text departure.to ]
+        ]
 
 
 -- temp data
