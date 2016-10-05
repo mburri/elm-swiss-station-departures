@@ -1,11 +1,13 @@
 module Main exposing (..)
 
 import Autocomplete
-import Html exposing (Html, button, div, text, h1, input)
 import Html.App as App
-import Html.Attributes exposing (id, classList, class)
-import Html.Events exposing (onInput)
+import Html exposing (Html, button, div, text, h1, input)
+import Html.Attributes exposing (id, classList, class, value, autocomplete, style)
+import Html.Events exposing (onInput, onWithOptions, keyCode)
+import Json.Decode as Json
 import String
+import Debug
 
 
 main =
@@ -39,6 +41,8 @@ type Msg
     = NoOp
     | ChangeQuery String
     | SetAutoState Autocomplete.Msg
+    | SelectStation String
+    | PreviewStation String
 
 
 init : ( Model, Cmd Msg )
@@ -67,6 +71,7 @@ matches query station =
 -- UPDATE
 
 
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
@@ -89,8 +94,32 @@ update msg model =
                 , Cmd.none
                 )
 
-        SetAutoState msg ->
+        PreviewStation station ->
+            -- TODO: implement me
             ( model, Cmd.none )
+
+        SetAutoState autoMsg ->
+            let
+                ( newState, maybeMsg ) =
+                    Autocomplete.update updateConfig autoMsg model.howManyToShow model.autoState (acceptableStations model.query model.stations)
+
+                newModel =
+                    { model | autoState = newState }
+            in
+                case maybeMsg of
+                    Nothing ->
+                        ( newModel, Cmd.none )
+
+                    Just updateMsg ->
+                        update updateMsg newModel
+
+        SelectStation selectedId ->
+            -- TODO: implement me
+            let
+                _ =
+                    Debug.log "selected station" selectedId
+            in
+                ( model, Cmd.none )
 
 
 
@@ -99,7 +128,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.map SetAutoState Autocomplete.subscription
 
 
 
@@ -107,27 +136,55 @@ subscriptions model =
 
 
 view model =
-    div []
-        [ h1 [] [ text "elm-swiss-station-departures" ]
-        , input [ onInput ChangeQuery ] []
-        , viewAutocomplete model
-        ]
+    let
+        options =
+            { preventDefault = True, stopPropagation = False }
+
+        dec =
+            -- TODO: naming?
+            (Json.customDecoder keyCode
+                (\code ->
+                    if code == 38 || code == 40 then
+                        Ok NoOp
+                    else if code == 27 then
+                        --Ok HandleEscape
+                        Ok NoOp
+                    else
+                        Err "not handling that key"
+                )
+            )
+    in
+        div []
+            [ h1 [] [ text "elm-swiss-station-departures" ]
+            , input
+                [ onInput ChangeQuery
+                , onWithOptions "keydown" options dec
+                , value model.query
+                , autocomplete False
+                , class "autocomplete-input"
+                ]
+                []
+            , viewAutocomplete model
+            ]
 
 
 viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
     if model.showStations then
-        div [ class "autocomplete-menu" ]
+        div []
             [ App.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
     else
-        text ""
+        div [] []
 
 
 viewConfig : Autocomplete.ViewConfig Station
 viewConfig =
     let
         stationListItem keySelected mouseSelected station =
-            { attributes = []
+            { attributes =
+                [ classList [ ( "autocomplete-item", True ), ( "key-selected", keySelected ), ( "mouse-selected", mouseSelected ) ]
+                , id station.name
+                ]
             , children = [ Html.text station.name ]
             }
     in
@@ -136,6 +193,27 @@ viewConfig =
             , ul = [ class "autocomplete-list" ]
             , li = stationListItem
             }
+
+
+updateConfig : Autocomplete.UpdateConfig Msg Station
+updateConfig =
+    Autocomplete.updateConfig
+        { toId = .name
+        , onKeyDown =
+            \code maybeId ->
+                if code == 38 || code == 40 then
+                    Maybe.map PreviewStation maybeId
+                else if code == 13 then
+                    Maybe.map SelectStation maybeId
+                else
+                    Nothing
+        , onTooLow = Nothing
+        , onTooHigh = Nothing
+        , onMouseEnter = \id -> Just <| PreviewStation id
+        , onMouseLeave = \_ -> Nothing
+        , onMouseClick = \id -> Just <| SelectStation id
+        , separateSelections = False
+        }
 
 
 
