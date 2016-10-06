@@ -55,7 +55,7 @@ init =
     ( Model
         ""
         Autocomplete.empty
-        stations
+        []
         5
         False
         Nothing
@@ -76,6 +76,8 @@ type Msg
     | Reset
     | FetchStationTableSucceed (List Departure)
     | FetchStationTableFail Http.Error
+    | FetchStationSucceed (List Station)
+    | FetchStationFail Http.Error
 
 
 acceptableStations : String -> List Station -> List Station
@@ -99,21 +101,7 @@ update msg model =
             ( model, Cmd.none )
 
         ChangeQuery q ->
-            let
-                hasMatches =
-                    not <|
-                        List.isEmpty <|
-                            (acceptableStations q model.stations)
-
-                emptyQuery =
-                    String.isEmpty q
-            in
-                ( { model
-                    | query = q
-                    , showStations = hasMatches && not emptyQuery
-                  }
-                , Cmd.none
-                )
+            ( { model | query = q }, getStations q )
 
         PreviewStation station ->
             -- TODO: implement me
@@ -183,6 +171,37 @@ update msg model =
         FetchStationTableFail error ->
             ( { model | fetchStationTableFailedMessage = toString error }, Cmd.none )
 
+        FetchStationFail error ->
+            ( model, Cmd.none )
+
+        FetchStationSucceed stations ->
+            ( { model
+                | stations = stations
+                , showStations = True
+              }
+            , Cmd.none
+            )
+
+
+getStations : String -> Cmd Msg
+getStations query =
+    let
+        url =
+            "http://transport.opendata.ch/v1/locations?query=" ++ query
+    in
+        Task.perform FetchStationFail FetchStationSucceed (Http.get decodeStations url)
+
+
+decodeStation : Json.Decoder Station
+decodeStation =
+    Json.object1 Station ("name" := Json.string)
+
+
+decodeStations : Json.Decoder (List Station)
+decodeStations =
+    Json.object1 identity
+        ("stations" := Json.list decodeStation)
+
 
 getStationTable : Maybe Station -> Cmd Msg
 getStationTable maybeStation =
@@ -195,11 +214,7 @@ getStationTable maybeStation =
                 Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
 
         Nothing ->
-            let
-                _ =
-                    Debug.log "nothing selected" "!"
-            in
-                Cmd.none
+            Cmd.none
 
 
 decodeDepartures : Json.Decoder (List Departure)
@@ -211,7 +226,7 @@ decodeDeparture : Json.Decoder Departure
 decodeDeparture =
     Json.object3 Departure
         ("to" := Json.string)
-        (Json.at [ "stopp", "departure" ] Json.string)
+        (Json.at [ "stop", "departure" ] Json.string)
         ("name" := Json.string)
 
 
@@ -367,20 +382,3 @@ viewSingleDeparture departure =
             , td []
                 [ text departure.to ]
             ]
-
-
-
--- temp data
-
-
-stations : List Station
-stations =
-    [ Station "Bern"
-    , Station "Schliern bei Köniz"
-    , Station "Köniz"
-    , Station "Köniz Zentrum"
-    , Station "Köniz Schloss"
-    , Station "Eigerplatz, Bern"
-    , Station "Eigerplatz, Thun"
-    , Station "Eigergletscher"
-    ]
