@@ -1,8 +1,8 @@
-# elm-webpack-seed
+# elm-swiss-station-departures
 
-A simple starting point for elm-projects
+A simple app to look up the next departures from a given station
 
-## Getting started
+## Installation and running
 
 Install elm (if not already installed).
 
@@ -23,8 +23,4 @@ npm install
 npm run dev
 ```
 
-Compiles and runs the counter example (see http://elm-lang.org/examples/buttons) written in Elm in a webpack dev server.
-
-Open http://localhost:3000
-
-Changes in elm-files are automatically compiled and reloaded in your browser - the current state of the application is preserved thanks to elm-hot-loader.
+Compiles and runs to app on http://localhost:3000
