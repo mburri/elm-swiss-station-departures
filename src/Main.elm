@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Autocomplete
+import Date exposing (Date)
 import Html.App as App
 import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, col, table, colgroup)
 import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align)
@@ -29,20 +30,25 @@ type alias Station =
     { name : String
     }
 
+
 type alias Departure =
-    { to: String
-    , departure: String
-    , name: String
+    { to : String
+    , departure : String
+    , name : String
     }
+
+
 type alias Model =
     { query : String
     , autoState : Autocomplete.State
     , stations : List Station
     , howManyToShow : Int
     , showStations : Bool
-    , selectedStation: Maybe Station
-    , departures: List Departure
+    , selectedStation : Maybe Station
+    , departures : List Departure
+    , fetchStationTableFailedMessage : String
     }
+
 
 init : ( Model, Cmd Msg )
 init =
@@ -54,9 +60,9 @@ init =
         False
         Nothing
         []
+        ""
     , Cmd.none
     )
-
 
 
 type Msg
@@ -133,7 +139,7 @@ update msg model =
                 selectedStation =
                     List.head (List.filter (\station -> station.name == id) model.stations)
             in
-                ({ model
+                ( { model
                     | query =
                         List.filter (\station -> station.name == id) model.stations
                             |> List.head
@@ -142,13 +148,15 @@ update msg model =
                     , autoState = Autocomplete.empty
                     , showStations = False
                     , selectedStation = selectedStation
-                }, getStationTable selectedStation)
+                  }
+                , getStationTable selectedStation
+                )
+
         OnFocus ->
             model ! []
 
         Reset ->
             { model | autoState = Autocomplete.reset updateConfig model.autoState, selectedStation = Nothing } ! []
-
 
         Wrap toTop ->
             case model.selectedStation of
@@ -170,45 +178,43 @@ update msg model =
                             ! []
 
         FetchStationTableSucceed result ->
-            let
-                _ = Debug.log "got a response: " result
-            in
-                ({ model | departures = result } , Cmd.none)
+            ( { model | departures = result }, Cmd.none )
+
         FetchStationTableFail error ->
-            let
-                _=
-                    Debug.log "fetch station failed: " error
-            in
-                model ! []
+            ( { model | fetchStationTableFailedMessage = toString error }, Cmd.none )
 
 
-getStationTable: Maybe Station -> Cmd Msg
+getStationTable : Maybe Station -> Cmd Msg
 getStationTable maybeStation =
-        let
-            _= Debug.log "now i want to get some stations" maybeStation
-        in
-            case maybeStation of
-                Just station ->
-                    let
-                        url = "http://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=10"
-                    in
-                        Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
-                Nothing ->
-                    let
-                        _= Debug.log "nothing selected" "!"
-                    in
-                        Cmd.none
+    case maybeStation of
+        Just station ->
+            let
+                url =
+                    "http://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=10"
+            in
+                Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
 
-decodeDepartures: Json.Decoder (List Departure)
+        Nothing ->
+            let
+                _ =
+                    Debug.log "nothing selected" "!"
+            in
+                Cmd.none
+
+
+decodeDepartures : Json.Decoder (List Departure)
 decodeDepartures =
     Json.object1 identity ("stationboard" := Json.list decodeDeparture)
 
-decodeDeparture: Json.Decoder Departure
+
+decodeDeparture : Json.Decoder Departure
 decodeDeparture =
     Json.object3 Departure
         ("to" := Json.string)
-        (Json.at ["stop", "departure"] Json.string)
+        (Json.at [ "stopp", "departure" ] Json.string)
         ("name" := Json.string)
+
+
 
 -- SUBSCRIPTIONS
 
@@ -252,9 +258,18 @@ view model =
                 , class "autocomplete-input"
                 ]
                 []
+            , viewErrors model.fetchStationTableFailedMessage
             , viewAutocomplete model
             , viewAllDepartures model.departures
             ]
+
+
+viewErrors : String -> Html Msg
+viewErrors fetchStationTableFailedMessage =
+    if String.isEmpty fetchStationTableFailedMessage then
+        div [] []
+    else
+        div [] [ text fetchStationTableFailedMessage ]
 
 
 viewAutocomplete : Model -> Html Msg
@@ -335,14 +350,24 @@ viewAllDepartures departures =
 
 viewSingleDeparture : Departure -> Html.Html Msg
 viewSingleDeparture departure =
-    tr []
-        [ td []
-            [ text departure.departure ]
-        , td []
-            [ text departure.name ]
-        , td []
-            [ text departure.to ]
-        ]
+    let
+        departureTime =
+            case Date.fromString departure.departure of
+                Err msg ->
+                    text ""
+
+                Ok departure ->
+                    text (toString (Date.hour departure) ++ ":" ++ toString (Date.minute departure))
+    in
+        tr []
+            [ td []
+                [ departureTime ]
+            , td []
+                [ text departure.name ]
+            , td []
+                [ text departure.to ]
+            ]
+
 
 
 -- temp data
