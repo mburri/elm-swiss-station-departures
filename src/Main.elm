@@ -65,33 +65,22 @@ init =
     )
 
 
+
+-- UPDATE
+
+
 type Msg
     = NoOp
     | ChangeQuery String
     | SetAutoState Autocomplete.Msg
     | SelectStation String
-    | PreviewStation String
-    | OnFocus
     | Wrap Bool
     | Reset
     | FetchStationTableSucceed (List Departure)
     | FetchStationTableFail Http.Error
     | FetchStationSucceed (List Station)
     | FetchStationFail Http.Error
-
-
-acceptableStations : String -> List Station -> List Station
-acceptableStations query stations =
-    List.filter (matches query) stations
-
-
-matches : String -> Station -> Bool
-matches query station =
-    String.contains (String.toLower query) (String.toLower station.name)
-
-
-
--- UPDATE
+    | HandleEscape
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -102,10 +91,6 @@ update msg model =
 
         ChangeQuery q ->
             ( { model | query = q }, getStations q )
-
-        PreviewStation station ->
-            -- TODO: implement me
-            ( model, Cmd.none )
 
         SetAutoState autoMsg ->
             let
@@ -139,9 +124,6 @@ update msg model =
                   }
                 , getStationTable selectedStation
                 )
-
-        OnFocus ->
-            model ! []
 
         Reset ->
             { model | autoState = Autocomplete.reset updateConfig model.autoState, selectedStation = Nothing } ! []
@@ -182,6 +164,17 @@ update msg model =
             , Cmd.none
             )
 
+        HandleEscape ->
+            ( { model
+                | query = ""
+                , selectedStation = Nothing
+                , departures = []
+                , stations = []
+                , autoState = Autocomplete.empty
+              }
+            , Cmd.none
+            )
+
 
 getStations : String -> Cmd Msg
 getStations query =
@@ -209,7 +202,7 @@ getStationTable maybeStation =
         Just station ->
             let
                 url =
-                    "http://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=10"
+                    "http://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
             in
                 Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
 
@@ -228,6 +221,16 @@ decodeDeparture =
         ("to" := Json.string)
         (Json.at [ "stop", "departure" ] Json.string)
         ("name" := Json.string)
+
+
+acceptableStations : String -> List Station -> List Station
+acceptableStations query stations =
+    List.filter (matches query) stations
+
+
+matches : String -> Station -> Bool
+matches query station =
+    String.contains (String.toLower query) (String.toLower station.name)
 
 
 
@@ -255,8 +258,7 @@ view model =
                     if code == 38 || code == 40 then
                         Ok NoOp
                     else if code == 27 then
-                        --Ok HandleEscape
-                        Ok NoOp
+                        Ok HandleEscape
                     else
                         Err "not handling that key"
                 )
@@ -266,7 +268,6 @@ view model =
             [ h1 [] [ text "elm-swiss-station-departures" ]
             , input
                 [ onInput ChangeQuery
-                , onFocus OnFocus
                 , onWithOptions "keydown" options dec
                 , value model.query
                 , autocomplete False
@@ -320,15 +321,13 @@ updateConfig =
         { toId = .name
         , onKeyDown =
             \code maybeId ->
-                if code == 38 || code == 40 then
-                    Maybe.map PreviewStation maybeId
-                else if code == 13 then
+                if code == 13 then
                     Maybe.map SelectStation maybeId
                 else
                     Nothing
         , onTooLow = Just <| Wrap False
         , onTooHigh = Just <| Wrap True
-        , onMouseEnter = \id -> Just <| PreviewStation id
+        , onMouseEnter = \_ -> Nothing
         , onMouseLeave = \_ -> Nothing
         , onMouseClick = \id -> Just <| SelectStation id
         , separateSelections = False
@@ -374,11 +373,8 @@ viewSingleDeparture departure =
                 Ok departure ->
                     text (toString (Date.hour departure) ++ ":" ++ toString (Date.minute departure))
     in
-        tr []
-            [ td []
-                [ departureTime ]
-            , td []
-                [ text departure.name ]
-            , td []
-                [ text departure.to ]
+        tr [ class "hello", id "yves" ]
+            [ td [] [ departureTime ]
+            , td [] [ text departure.name ]
+            , td [] [ text departure.to ]
             ]
