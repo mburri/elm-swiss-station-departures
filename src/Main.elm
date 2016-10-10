@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Autocomplete
 import Date exposing (Date)
+import Date.Format
 import Html.App as App
 import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, table)
 import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align, placeholder)
@@ -11,6 +12,7 @@ import Json.Decode as Json exposing ((:=))
 import String
 import Task
 import Debug
+
 
 
 main =
@@ -364,7 +366,7 @@ viewSingleDeparture departure =
                     text ""
 
                 Ok departure ->
-                    text (toString (Date.hour departure) ++ ":" ++ toString (Date.minute departure))
+                    text (Date.Format.format "%k:%M" departure)
     in
         tr []
             [ td [] [ departureTime ]
