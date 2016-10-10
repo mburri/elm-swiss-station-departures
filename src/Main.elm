@@ -3,8 +3,8 @@ module Main exposing (..)
 import Autocomplete
 import Date exposing (Date)
 import Html.App as App
-import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, col, table, colgroup)
-import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align)
+import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, table)
+import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align, placeholder)
 import Html.Events exposing (onInput, onFocus, onWithOptions, keyCode)
 import Http
 import Json.Decode as Json exposing ((:=))
@@ -272,6 +272,7 @@ view model =
                 , value model.query
                 , autocomplete False
                 , class "autocomplete-input"
+                , placeholder "station"
                 ]
                 []
             , viewErrors model.fetchStationTableFailedMessage
@@ -291,7 +292,7 @@ viewErrors fetchStationTableFailedMessage =
 viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
     if model.showStations then
-        div []
+        div [ class "autocomplete-menu"]
             [ App.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
     else
         div [] []
@@ -338,15 +339,7 @@ viewAllDepartures : List Departure -> Html.Html Msg
 viewAllDepartures departures =
     if not (List.isEmpty departures) then
         table [ id "stationboard" ]
-            [ colgroup []
-                [ col [ attribute "width" "120" ]
-                    []
-                , col [ attribute "width" "140" ]
-                    []
-                , col [ attribute "width" "230" ]
-                    []
-                ]
-            , thead []
+            [ thead []
                 [ tr []
                     [ th [ align "left" ]
                         [ text "Zeit" ]
@@ -373,7 +366,7 @@ viewSingleDeparture departure =
                 Ok departure ->
                     text (toString (Date.hour departure) ++ ":" ++ toString (Date.minute departure))
     in
-        tr [ class "hello", id "yves" ]
+        tr []
             [ td [] [ departureTime ]
             , td [] [ text departure.name ]
             , td [] [ text departure.to ]
