@@ -182,7 +182,7 @@ getStations : String -> Cmd Msg
 getStations query =
     let
         url =
-            "http://transport.opendata.ch/v1/locations?query=" ++ query
+            "https://transport.opendata.ch/v1/locations?query=" ++ query
     in
         Task.perform FetchStationFail FetchStationSucceed (Http.get decodeStations url)
 
@@ -204,7 +204,7 @@ getStationTable maybeStation =
         Just station ->
             let
                 url =
-                    "http://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
+                    "https://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
             in
                 Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
 
