@@ -3,20 +3,18 @@ module Main exposing (..)
 import Autocomplete
 import Date exposing (Date)
 import Date.Format
-import Html.App as App
 import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, table)
 import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align, placeholder)
 import Html.Events exposing (onInput, onFocus, onWithOptions, keyCode)
 import Http
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as Json exposing (field)
 import String
 import Task
 import Debug
 
 
-
 main =
-    App.program
+    Html.program
         { init = init
         , view = view
         , update = update
@@ -78,10 +76,10 @@ type Msg
     | SelectStation String
     | Wrap Bool
     | Reset
-    | FetchStationTableSucceed (List Departure)
-    | FetchStationTableFail Http.Error
-    | FetchStationSucceed (List Station)
-    | FetchStationFail Http.Error
+    | FetchStationTableSucceed
+      (Result Http.Error (List Departure))
+    | FetchStationSucceed
+        (Result Http.Error (List Station))
     | HandleEscape
 
 
@@ -150,21 +148,29 @@ update msg model =
                             ! []
 
         FetchStationTableSucceed result ->
-            ( { model | departures = result }, Cmd.none )
+            case result of
+                Result.Ok departures ->
+                    ( { model | departures = departures }, Cmd.none )
+                Result.Err err ->
+                    let _ =
+                        Debug.log "Error retrieving departures" err
+                    in
+                        (model, Cmd.none)
 
-        FetchStationTableFail error ->
-            ( { model | fetchStationTableFailedMessage = toString error }, Cmd.none )
-
-        FetchStationFail error ->
-            ( model, Cmd.none )
-
-        FetchStationSucceed stations ->
-            ( { model
-                | stations = stations
-                , showStations = True
-              }
-            , Cmd.none
-            )
+        FetchStationSucceed result ->
+            case result of
+                Result.Ok stations ->
+                    ( { model
+                      | stations = stations
+                      , showStations = True
+                    }
+                    , Cmd.none
+                    )
+                Result.Err err ->
+                    let _ =
+                        Debug.log "Error retrieving stations" err
+                    in
+                        (model, Cmd.none)
 
         HandleEscape ->
             ( { model
@@ -184,18 +190,19 @@ getStations query =
         url =
             "https://transport.opendata.ch/v1/locations?query=" ++ query
     in
-        Task.perform FetchStationFail FetchStationSucceed (Http.get decodeStations url)
+        Http.get url decodeStations |> Http.send FetchStationSucceed
 
 
 decodeStation : Json.Decoder Station
 decodeStation =
-    Json.object1 Station ("name" := Json.string)
+    Json.map Station (field "name" Json.string)
 
 
 decodeStations : Json.Decoder (List Station)
 decodeStations =
-    Json.object1 identity
-        ("stations" := Json.list decodeStation)
+    Json.map identity
+        (field "stations" (Json.list decodeStation))
+
 
 
 getStationTable : Maybe Station -> Cmd Msg
@@ -206,7 +213,7 @@ getStationTable maybeStation =
                 url =
                     "https://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
             in
-                Task.perform FetchStationTableFail FetchStationTableSucceed (Http.get decodeDepartures url)
+                Http.get url decodeDepartures  |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -214,15 +221,15 @@ getStationTable maybeStation =
 
 decodeDepartures : Json.Decoder (List Departure)
 decodeDepartures =
-    Json.object1 identity ("stationboard" := Json.list decodeDeparture)
+    Json.map identity (field "stationboard" (Json.list decodeDeparture))
 
 
 decodeDeparture : Json.Decoder Departure
 decodeDeparture =
-    Json.object3 Departure
-        ("to" := Json.string)
+    Json.map3 Departure
+        (field "to" Json.string)
         (Json.at [ "stop", "departure" ] Json.string)
-        ("name" := Json.string)
+        (field "name" Json.string)
 
 
 acceptableStations : String -> List Station -> List Station
@@ -255,7 +262,8 @@ view model =
 
         dec =
             -- TODO: naming?
-            (Json.customDecoder keyCode
+
+            (Json.map
                 (\code ->
                     if code == 38 || code == 40 then
                         Ok NoOp
@@ -270,7 +278,7 @@ view model =
             [ h1 [] [ text "elm-swiss-station-departures" ]
             , input
                 [ onInput ChangeQuery
-                , onWithOptions "keydown" options dec
+
                 , value model.query
                 , autocomplete False
                 , class "autocomplete-input"
@@ -294,8 +302,8 @@ viewErrors fetchStationTableFailedMessage =
 viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
     if model.showStations then
-        div [ class "autocomplete-menu"]
-            [ App.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
+        div [ class "autocomplete-menu" ]
+            [ Html.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
     else
         div [] []
 
