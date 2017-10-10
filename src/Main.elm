@@ -9,10 +9,10 @@ import Html.Events exposing (onInput, onFocus, onWithOptions, keyCode)
 import Http
 import Json.Decode as Json exposing (field)
 import String
-import Task
 import Debug
 
 
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
@@ -76,10 +76,8 @@ type Msg
     | SelectStation String
     | Wrap Bool
     | Reset
-    | FetchStationTableSucceed
-      (Result Http.Error (List Departure))
-    | FetchStationSucceed
-        (Result Http.Error (List Station))
+    | FetchStationTableSucceed (Result Http.Error (List Departure))
+    | FetchStationSucceed (Result Http.Error (List Station))
     | HandleEscape
 
 
@@ -151,26 +149,30 @@ update msg model =
             case result of
                 Result.Ok departures ->
                     ( { model | departures = departures }, Cmd.none )
+
                 Result.Err err ->
-                    let _ =
-                        Debug.log "Error retrieving departures" err
+                    let
+                        _ =
+                            Debug.log "Error retrieving departures" err
                     in
-                        (model, Cmd.none)
+                        ( model, Cmd.none )
 
         FetchStationSucceed result ->
             case result of
                 Result.Ok stations ->
                     ( { model
-                      | stations = stations
-                      , showStations = True
-                    }
+                        | stations = stations
+                        , showStations = True
+                      }
                     , Cmd.none
                     )
+
                 Result.Err err ->
-                    let _ =
-                        Debug.log "Error retrieving stations" err
+                    let
+                        _ =
+                            Debug.log "Error retrieving stations" err
                     in
-                        (model, Cmd.none)
+                        ( model, Cmd.none )
 
         HandleEscape ->
             ( { model
@@ -190,7 +192,10 @@ getStations query =
         url =
             "https://transport.opendata.ch/v1/locations?query=" ++ query
     in
-        Http.get url decodeStations |> Http.send FetchStationSucceed
+        if String.length query >= 3 then
+            Http.get url decodeStations |> Http.send FetchStationSucceed
+        else
+            Cmd.none
 
 
 decodeStation : Json.Decoder Station
@@ -204,7 +209,6 @@ decodeStations =
         (field "stations" (Json.list decodeStation))
 
 
-
 getStationTable : Maybe Station -> Cmd Msg
 getStationTable maybeStation =
     case maybeStation of
@@ -213,7 +217,7 @@ getStationTable maybeStation =
                 url =
                     "https://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
             in
-                Http.get url decodeDepartures  |> Http.send FetchStationTableSucceed
+                Http.get url decodeDepartures |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -255,6 +259,7 @@ subscriptions model =
 -- VIEW
 
 
+view : Model -> Html Msg
 view model =
     let
         options =
@@ -262,7 +267,6 @@ view model =
 
         dec =
             -- TODO: naming?
-
             (Json.map
                 (\code ->
                     if code == 38 || code == 40 then
@@ -278,7 +282,6 @@ view model =
             [ h1 [] [ text "elm-swiss-station-departures" ]
             , input
                 [ onInput ChangeQuery
-
                 , value model.query
                 , autocomplete False
                 , class "autocomplete-input"
