@@ -25,4 +25,4 @@ npm install
 npm run dev
 ```
 
-Compiles and runs the app on http://localhost:3000
+Compiles and runs the app on http://localhost:4321
