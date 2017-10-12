@@ -3,13 +3,12 @@ module Main exposing (..)
 import Autocomplete
 import Date exposing (Date)
 import Date.Format
-import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, table)
-import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align, placeholder)
-import Html.Events exposing (onInput, onFocus, onWithOptions, keyCode)
+import Departure exposing (Departure, decodeDepartures)
+import Html exposing (Html, button, div, h1, input, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (align, attribute, autocomplete, class, classList, id, placeholder, style, value)
+import Html.Events exposing (keyCode, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
-import String
-import Debug
 
 
 main : Program Never Model Msg
@@ -28,13 +27,6 @@ main =
 
 type alias Station =
     { name : String
-    }
-
-
-type alias Departure =
-    { to : String
-    , departure : String
-    , name : String
     }
 
 
@@ -221,19 +213,6 @@ getStationTable maybeStation =
 
         Nothing ->
             Cmd.none
-
-
-decodeDepartures : Json.Decoder (List Departure)
-decodeDepartures =
-    Json.map identity (field "stationboard" (Json.list decodeDeparture))
-
-
-decodeDeparture : Json.Decoder Departure
-decodeDeparture =
-    Json.map3 Departure
-        (field "to" Json.string)
-        (Json.at [ "stop", "departure" ] Json.string)
-        (field "name" Json.string)
 
 
 acceptableStations : String -> List Station -> List Station
