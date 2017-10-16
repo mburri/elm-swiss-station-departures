@@ -112,7 +112,7 @@ update msg model =
                     , showStations = False
                     , selectedStation = selectedStation
                   }
-                , getStationTable selectedStation
+                , getDepartures selectedStation
                 )
 
         Reset ->
@@ -201,8 +201,8 @@ decodeStations =
         (field "stations" (Json.list decodeStation))
 
 
-getStationTable : Maybe Station -> Cmd Msg
-getStationTable maybeStation =
+getDepartures : Maybe Station -> Cmd Msg
+getDepartures maybeStation =
     case maybeStation of
         Just station ->
             let
