@@ -1,9 +1,7 @@
 module Main exposing (..)
 
 import Autocomplete
-import Date exposing (Date)
-import Date.Format
-import Departure exposing (Departure, decodeDepartures)
+import Departure exposing (Departure)
 import Html exposing (Html, button, div, h1, input, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (align, attribute, autocomplete, class, classList, id, placeholder, style, value)
 import Html.Events exposing (keyCode, onFocus, onInput, onWithOptions)
@@ -194,7 +192,7 @@ getDepartures maybeStation =
                 url =
                     "https://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
             in
-                Http.get url decodeDepartures |> Http.send FetchStationTableSucceed
+                Http.get url Departure.decode |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -254,7 +252,7 @@ view model =
                 []
             , viewErrors model.fetchStationTableFailedMessage
             , viewAutocomplete model
-            , viewAllDepartures model.departures
+            , Departure.view model.departures
             ]
 
 
@@ -310,41 +308,3 @@ updateConfig =
         , onMouseClick = \id -> Just <| SelectStation id
         , separateSelections = False
         }
-
-
-viewAllDepartures : List Departure -> Html.Html Msg
-viewAllDepartures departures =
-    if not (List.isEmpty departures) then
-        table [ id "stationboard" ]
-            [ thead []
-                [ tr []
-                    [ th [ align "left" ]
-                        [ text "Zeit" ]
-                    , th []
-                        [ text "" ]
-                    , th [ align "left" ]
-                        [ text "Nach" ]
-                    ]
-                ]
-            , tbody [] (List.map viewSingleDeparture departures)
-            ]
-    else
-        div [] []
-
-
-viewSingleDeparture : Departure -> Html.Html Msg
-viewSingleDeparture departure =
-    let
-        departureTime =
-            case Date.fromString departure.departure of
-                Err msg ->
-                    text ""
-
-                Ok departure ->
-                    text (Date.Format.format "%k:%M" departure)
-    in
-        tr []
-            [ td [] [ departureTime ]
-            , td [] [ text departure.name ]
-            , td [] [ text departure.to ]
-            ]

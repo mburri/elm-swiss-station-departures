@@ -1,6 +1,10 @@
-module Departure exposing (Departure, decodeDepartures)
+module Departure exposing (Departure, decode, view)
 
+import Date
+import Html exposing (div, table, thead, tbody, tr, th, td, text)
+import Html.Attributes exposing (align, id)
 import Json.Decode as Json exposing (field)
+import Date.Format
 
 
 type alias Departure =
@@ -10,8 +14,8 @@ type alias Departure =
     }
 
 
-decodeDepartures : Json.Decoder (List Departure)
-decodeDepartures =
+decode : Json.Decoder (List Departure)
+decode =
     Json.map identity (field "stationboard" (Json.list decodeDeparture))
 
 
@@ -21,3 +25,41 @@ decodeDeparture =
         (field "to" Json.string)
         (Json.at [ "stop", "departure" ] Json.string)
         (field "name" Json.string)
+
+
+view : List Departure -> Html.Html msg
+view departures =
+    if not (List.isEmpty departures) then
+        table [ id "stationboard" ]
+            [ thead []
+                [ tr []
+                    [ th [ align "left" ]
+                        [ text "Zeit" ]
+                    , th []
+                        [ text "" ]
+                    , th [ align "left" ]
+                        [ text "Nach" ]
+                    ]
+                ]
+            , tbody [] (List.map viewSingleDeparture departures)
+            ]
+    else
+        div [] []
+
+
+viewSingleDeparture : Departure -> Html.Html msg
+viewSingleDeparture departure =
+    let
+        departureTime =
+            case Date.fromString departure.departure of
+                Err msg ->
+                    Html.text ""
+
+                Ok departure ->
+                    Html.text (Date.Format.format "%k:%M" departure)
+    in
+        tr []
+            [ td [] [ departureTime ]
+            , td [] [ text departure.name ]
+            , td [] [ text departure.to ]
+            ]
