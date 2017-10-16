@@ -9,6 +9,7 @@ import Html.Attributes exposing (align, attribute, autocomplete, class, classLis
 import Html.Events exposing (keyCode, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
+import Station exposing (Station, decodeStations)
 
 
 main : Program Never Model Msg
@@ -23,11 +24,6 @@ main =
 
 
 -- MODEL
-
-
-type alias Station =
-    { name : String
-    }
 
 
 type alias Model =
@@ -188,17 +184,6 @@ getStations query =
             Http.get url decodeStations |> Http.send FetchStationSucceed
         else
             Cmd.none
-
-
-decodeStation : Json.Decoder Station
-decodeStation =
-    Json.map Station (field "name" Json.string)
-
-
-decodeStations : Json.Decoder (List Station)
-decodeStations =
-    Json.map identity
-        (field "stations" (Json.list decodeStation))
 
 
 getDepartures : Maybe Station -> Cmd Msg
