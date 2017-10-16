@@ -3,10 +3,8 @@
   "version": "0.0.1",
   "description": "a starting point for elm projects",
   "scripts": {
-      "dev": "webpack-dashboard -m -- webpack-dev-server --port 4321 --hot"
-    , "build": "webpack -p"
-    , "format": "elm-format --yes ./src"
-    , "start": "yarn run dev"
+    "start": "elm-live src/Main.elm --open --path-to-elm-make=node_modules/.bin/elm-make -- --output app.js",
+    "dev": "yarn start --debug"
   },
   "keywords": [
     "elm"
@@ -14,11 +12,7 @@
   "author": "Max Burri",
   "license": "ISC",
   "devDependencies": {
-    "elm-hot-loader": "^0.3.4",
-    "elm-webpack-loader": "^3.0.6",
-    "file-loader": "^0.9.0",
-    "webpack": "^1.13.2",
-    "webpack-dashboard": "^0.1.8",
-    "webpack-dev-server": "^1.15.0"
+    "elm": "^0.18.0",
+    "elm-live": "^2.7.5"
   }
 }
