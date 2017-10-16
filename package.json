@@ -6,6 +6,7 @@
       "dev": "webpack-dashboard -m -- webpack-dev-server --port 4321 --hot"
     , "build": "webpack -p"
     , "format": "elm-format --yes ./src"
+    , "start": "yarn run dev"
   },
   "keywords": [
     "elm"
