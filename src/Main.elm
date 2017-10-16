@@ -7,7 +7,7 @@ import Html.Attributes exposing (align, attribute, autocomplete, class, classLis
 import Html.Events exposing (keyCode, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
-import Station exposing (Station, decodeStations)
+import Station exposing (Station, decodeStations, acceptableStations)
 
 
 main : Program Never Model Msg
@@ -96,16 +96,7 @@ update msg model =
                 selectedStation =
                     List.head (List.filter (\station -> station.name == id) model.stations)
             in
-                ( { model
-                    | query =
-                        List.filter (\station -> station.name == id) model.stations
-                            |> List.head
-                            |> Maybe.withDefault (Station "")
-                            |> .name
-                    , autoState = Autocomplete.empty
-                    , showStations = False
-                    , selectedStation = selectedStation
-                  }
+                ( selectStation model selectedStation id
                 , getDepartures selectedStation
                 )
 
@@ -198,14 +189,18 @@ getDepartures maybeStation =
             Cmd.none
 
 
-acceptableStations : String -> List Station -> List Station
-acceptableStations query stations =
-    List.filter (matches query) stations
-
-
-matches : String -> Station -> Bool
-matches query station =
-    String.contains (String.toLower query) (String.toLower station.name)
+selectStation : Model -> Maybe Station -> String -> Model
+selectStation model selectedStation id =
+    { model
+        | query =
+            List.filter (\station -> station.name == id) model.stations
+                |> List.head
+                |> Maybe.withDefault (Station "")
+                |> .name
+        , autoState = Autocomplete.empty
+        , showStations = False
+        , selectedStation = selectedStation
+    }
 
 
 
