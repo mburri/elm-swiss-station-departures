@@ -1,20 +1,25 @@
 module Main exposing (..)
 
 import Autocomplete
+import Color
+import Css exposing (..)
+import Css.Colors
 import Departure exposing (Departure)
-import Html exposing (Html, button, div, h1, input, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (align, attribute, autocomplete, class, classList, id, placeholder, style, value)
-import Html.Events exposing (keyCode, onFocus, onInput, onWithOptions)
+import Html
+import Html.Attributes
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (align, attribute, autocomplete, class, classList, css, id, placeholder, style, value)
+import Html.Styled.Events exposing (keyCode, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
-import Station exposing (Station, decodeStations, acceptableStations)
+import Station exposing (Station, acceptableStations, decodeStations)
 
 
 main : Program Never Model Msg
 main =
     Html.program
         { init = init
-        , view = view
+        , view = view >> toUnstyled
         , update = update
         , subscriptions = subscriptions
         }
@@ -235,20 +240,42 @@ view model =
                 )
             )
     in
-        div []
-            [ h1 [] [ text "elm-swiss-station-departures" ]
-            , input
-                [ onInput ChangeQuery
-                , value model.query
-                , autocomplete False
-                , class "autocomplete-input"
-                , placeholder "station"
+        body
+            [ css
+                [ width (px 960)
+                , margin auto
+                , fontFamily sansSerif
                 ]
-                []
-            , viewErrors model.fetchStationTableFailedMessage
-            , viewAutocomplete model
-            , Departure.view model.departures
             ]
+            [ div []
+                [ viewTitle
+                , input
+                    [ onInput ChangeQuery
+                    , value model.query
+                    , autocomplete False
+                    , class "autocomplete-input"
+                    , placeholder "station"
+                    ]
+                    []
+                , viewErrors model.fetchStationTableFailedMessage
+                , viewAutocomplete model
+                , Departure.view model.departures
+                ]
+            ]
+
+
+viewTitle : Html msg
+viewTitle =
+    div [ css [ textAlign center ] ]
+        [ h1
+            [ css
+                [ display block
+                , padding (px 20)
+                , backgroundColor Css.Colors.red
+                ]
+            ]
+            [ text "elm-swiss-station-departures" ]
+        ]
 
 
 viewErrors : String -> Html Msg
@@ -261,11 +288,15 @@ viewErrors fetchStationTableFailedMessage =
 
 viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
-    if model.showStations then
-        div [ class "autocomplete-menu" ]
-            [ Html.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
-    else
-        div [] []
+    let
+        autocompleteView =
+            Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)
+    in
+        if model.showStations then
+            div [ class "autocomplete-menu" ]
+                [ Html.Styled.map SetAutoState (fromUnstyled autocompleteView) ]
+        else
+            div [] []
 
 
 viewConfig : Autocomplete.ViewConfig Station
@@ -273,15 +304,15 @@ viewConfig =
     let
         stationListItem keySelected mouseSelected station =
             { attributes =
-                [ classList [ ( "autocomplete-item", True ), ( "key-selected", keySelected ), ( "mouse-selected", mouseSelected ) ]
-                , id station.name
+                [ Html.Attributes.classList [ ( "autocomplete-item", True ), ( "key-selected", keySelected ), ( "mouse-selected", mouseSelected ) ]
+                , Html.Attributes.id station.name
                 ]
             , children = [ Html.text station.name ]
             }
     in
         Autocomplete.viewConfig
             { toId = .name
-            , ul = [ class "autocomplete-list" ]
+            , ul = [ Html.Attributes.class "autocomplete-list" ]
             , li = stationListItem
             }
 

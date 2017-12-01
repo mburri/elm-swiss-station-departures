@@ -1,8 +1,8 @@
 module Departure exposing (Departure, decode, view)
 
 import Date
-import Html exposing (div, table, thead, tbody, tr, th, td, text)
-import Html.Attributes exposing (align, id)
+import Html.Styled exposing (div, table, thead, tbody, tr, th, td, text)
+import Html.Styled.Attributes exposing (align, id)
 import Json.Decode as Json exposing (field)
 import Date.Format
 
@@ -27,7 +27,7 @@ decodeDeparture =
         (field "name" Json.string)
 
 
-view : List Departure -> Html.Html msg
+view : List Departure -> Html.Styled.Html msg
 view departures =
     if not (List.isEmpty departures) then
         table [ id "stationboard" ]
@@ -47,16 +47,16 @@ view departures =
         div [] []
 
 
-viewSingleDeparture : Departure -> Html.Html msg
+viewSingleDeparture : Departure -> Html.Styled.Html msg
 viewSingleDeparture departure =
     let
         departureTime =
             case Date.fromString departure.departure of
                 Err msg ->
-                    Html.text ""
+                    text ""
 
                 Ok departure ->
-                    Html.text (Date.Format.format "%k:%M" departure)
+                    text (Date.Format.format "%k:%M" departure)
     in
         tr []
             [ td [] [ departureTime ]
