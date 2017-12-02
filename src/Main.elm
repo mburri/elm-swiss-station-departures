@@ -228,7 +228,12 @@ type Styles
 globalStyles : Html msg
 globalStyles =
     global
-        [ Css.Foreign.class KeySelected
+        [ Css.Foreign.body
+            [ width (px 960)
+            , margin auto
+            , fontFamily sansSerif
+            ]
+        , Css.Foreign.class KeySelected
             [ backgroundColor (hex "#3366FF")
             ]
         ]
@@ -253,36 +258,28 @@ view model =
                 )
             )
     in
-        body
-            [ css
-                [ width (px 960)
-                , margin auto
-                , fontFamily sansSerif
-                ]
-            ]
+        div []
             [ globalStyles
-            , div []
-                [ viewTitle
-                , input
-                    [ css
-                        [ fontSize (Css.rem 2.0)
-                        , width (pct 100)
-                        , color Css.Colors.black
-                        , padding (Css.rem 0.5)
-                        , borderRadius (Css.rem 0.2)
-                        , backgroundColor Css.Colors.silver
-                        ]
-                    , onInput ChangeQuery
-                    , value model.query
-                    , autocomplete False
-                    , class "autocomplete-input"
-                    , placeholder "station"
+            , viewTitle
+            , input
+                [ css
+                    [ fontSize (Css.rem 2.0)
+                    , width (pct 100)
+                    , color Css.Colors.black
+                    , padding (Css.rem 0.5)
+                    , borderRadius (Css.rem 0.2)
+                    , backgroundColor Css.Colors.silver
                     ]
-                    []
-                , viewErrors model.fetchStationTableFailedMessage
-                , viewAutocomplete model
-                , Departure.view model.departures
+                , onInput ChangeQuery
+                , value model.query
+                , autocomplete False
+                , class "autocomplete-input"
+                , placeholder "station"
                 ]
+                []
+            , viewErrors model.fetchStationTableFailedMessage
+            , viewAutocomplete model
+            , Departure.view model.departures
             ]
 
 
