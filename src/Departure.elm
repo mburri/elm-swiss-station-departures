@@ -1,10 +1,12 @@
 module Departure exposing (Departure, decode, view)
 
+import Css exposing (..)
+import Css.Colors
 import Date
-import Html.Styled exposing (div, table, thead, tbody, tr, th, td, text)
-import Html.Styled.Attributes exposing (align, id)
-import Json.Decode as Json exposing (field)
 import Date.Format
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (..)
+import Json.Decode as Json exposing (field)
 
 
 type alias Departure =
@@ -27,17 +29,36 @@ decodeDeparture =
         (field "name" Json.string)
 
 
+cellStyle : Attribute msg
+cellStyle =
+    css
+        [ padding2 (Css.rem 0.5) (Css.rem 0.8)
+        , borderBottom3 (px 1) solid Css.Colors.gray
+        ]
+
+
 view : List Departure -> Html.Styled.Html msg
 view departures =
     if not (List.isEmpty departures) then
-        table [ id "stationboard" ]
+        Html.Styled.table
+            [ css
+                [ marginTop (Css.rem 1.0)
+                , Css.width (pct 100)
+                , borderCollapse collapse
+                ]
+            ]
             [ thead []
-                [ tr []
-                    [ th [ align "left" ]
+                [ tr
+                    [ css
+                        [ color Css.Colors.blue
+                        , borderBottom3 (px 1) solid Css.Colors.red
+                        ]
+                    ]
+                    [ th [ cellStyle, align "left" ]
                         [ text "Zeit" ]
-                    , th []
+                    , th [ cellStyle ]
                         [ text "" ]
-                    , th [ align "left" ]
+                    , th [ cellStyle, align "left" ]
                         [ text "Nach" ]
                     ]
                 ]
@@ -59,7 +80,7 @@ viewSingleDeparture departure =
                     text (Date.Format.format "%k:%M" departure)
     in
         tr []
-            [ td [] [ departureTime ]
-            , td [] [ text departure.name ]
-            , td [] [ text departure.to ]
+            [ td [ cellStyle ] [ departureTime ]
+            , td [ cellStyle ] [ text departure.name ]
+            , td [ cellStyle ] [ text departure.to ]
             ]

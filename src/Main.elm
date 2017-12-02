@@ -1,9 +1,9 @@
 module Main exposing (..)
 
 import Autocomplete
-import Color
 import Css exposing (..)
 import Css.Colors
+import Css.Foreign exposing (global)
 import Departure exposing (Departure)
 import Html
 import Html.Attributes
@@ -221,6 +221,19 @@ subscriptions model =
 -- VIEW
 
 
+type Styles
+    = KeySelected
+
+
+globalStyles : Html msg
+globalStyles =
+    global
+        [ Css.Foreign.class KeySelected
+            [ backgroundColor (hex "#3366FF")
+            ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -247,10 +260,19 @@ view model =
                 , fontFamily sansSerif
                 ]
             ]
-            [ div []
+            [ globalStyles
+            , div []
                 [ viewTitle
                 , input
-                    [ onInput ChangeQuery
+                    [ css
+                        [ fontSize (Css.rem 2.0)
+                        , width (pct 100)
+                        , color Css.Colors.black
+                        , padding (Css.rem 0.5)
+                        , borderRadius (Css.rem 0.2)
+                        , backgroundColor Css.Colors.silver
+                        ]
+                    , onInput ChangeQuery
                     , value model.query
                     , autocomplete False
                     , class "autocomplete-input"
@@ -304,7 +326,11 @@ viewConfig =
     let
         stationListItem keySelected mouseSelected station =
             { attributes =
-                [ Html.Attributes.classList [ ( "autocomplete-item", True ), ( "key-selected", keySelected ), ( "mouse-selected", mouseSelected ) ]
+                [ Html.Attributes.classList
+                    [ ( "autocomplete-item", True )
+                    , ( "KeySelected", keySelected )
+                    , ( "mouse-selected", mouseSelected )
+                    ]
                 , Html.Attributes.id station.name
                 ]
             , children = [ Html.text station.name ]
