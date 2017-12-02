@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Autocomplete
+import Autocomplete exposing (MouseSelected)
 import Css exposing (..)
 import Css.Colors
 import Css.Foreign exposing (global)
@@ -62,7 +62,7 @@ init =
 
 type Msg
     = NoOp
-    | ChangeQuery String
+    | SearchStation String
     | SetAutoState Autocomplete.Msg
     | SelectStation String
     | Wrap Bool
@@ -78,8 +78,8 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        ChangeQuery q ->
-            ( { model | query = q }, getStations q )
+        SearchStation query ->
+            ( { model | query = query }, getStations query )
 
         SetAutoState autoMsg ->
             let
@@ -99,14 +99,20 @@ update msg model =
         SelectStation id ->
             let
                 selectedStation =
-                    List.head (List.filter (\station -> station.name == id) model.stations)
+                    model.stations
+                        |> List.filter (\station -> station.name == id)
+                        |> List.head
             in
                 ( selectStation model selectedStation id
                 , getDepartures selectedStation
                 )
 
         Reset ->
-            { model | autoState = Autocomplete.reset updateConfig model.autoState, selectedStation = Nothing } ! []
+            { model
+                | autoState = Autocomplete.reset updateConfig model.autoState
+                , selectedStation = Nothing
+            }
+                ! []
 
         Wrap toTop ->
             case model.selectedStation of
@@ -117,13 +123,20 @@ update msg model =
                     if toTop then
                         { model
                             | autoState = Autocomplete.resetToLastItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
-                            , selectedStation = List.head <| List.reverse <| List.take model.howManyToShow <| (acceptableStations model.query model.stations)
+                            , selectedStation =
+                                List.head <|
+                                    List.reverse <|
+                                        List.take model.howManyToShow <|
+                                            (acceptableStations model.query model.stations)
                         }
                             ! []
                     else
                         { model
                             | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
-                            , selectedStation = List.head <| List.take model.howManyToShow <| (acceptableStations model.query model.stations)
+                            , selectedStation =
+                                List.head <|
+                                    List.take model.howManyToShow <|
+                                        (acceptableStations model.query model.stations)
                         }
                             ! []
 
@@ -198,7 +211,8 @@ selectStation : Model -> Maybe Station -> String -> Model
 selectStation model selectedStation id =
     { model
         | query =
-            List.filter (\station -> station.name == id) model.stations
+            model.stations
+                |> List.filter (\station -> station.name == id)
                 |> List.head
                 |> Maybe.withDefault (Station "")
                 |> .name
@@ -223,18 +237,41 @@ subscriptions model =
 
 type Styles
     = KeySelected
+    | MouseSelected
+    | AutocompleteList
+    | AutocompleteItem
 
 
 globalStyles : Html msg
 globalStyles =
     global
-        [ Css.Foreign.body
+        [ Css.Foreign.html
+            [ fontSize (px 20)
+            , width (pct 100)
+            ]
+        , Css.Foreign.body
             [ width (px 960)
             , margin auto
             , fontFamily sansSerif
             ]
         , Css.Foreign.class KeySelected
             [ backgroundColor (hex "#3366FF")
+            ]
+        , Css.Foreign.class MouseSelected
+            [ backgroundColor (hex "#ececec") ]
+        , Css.Foreign.class AutocompleteItem
+            [ display block
+            , padding2 (Css.rem 0.3) (Css.rem 0.8)
+            , fontSize (Css.rem 1.5)
+            , borderBottom3 (px 1) solid (hex "#DDD")
+            , cursor pointer
+            ]
+        , Css.Foreign.class AutocompleteList
+            [ listStyle none
+            , padding (px 0)
+            , margin auto
+            , maxHeight (Css.rem 12)
+            , overflowY auto
             ]
         ]
 
@@ -270,10 +307,9 @@ view model =
                     , borderRadius (Css.rem 0.2)
                     , backgroundColor Css.Colors.silver
                     ]
-                , onInput ChangeQuery
+                , onInput SearchStation
                 , value model.query
                 , autocomplete False
-                , class "autocomplete-input"
                 , placeholder "station"
                 ]
                 []
@@ -312,7 +348,7 @@ viewAutocomplete model =
             Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)
     in
         if model.showStations then
-            div [ class "autocomplete-menu" ]
+            div [ class "AutocompleteMenu" ]
                 [ Html.Styled.map SetAutoState (fromUnstyled autocompleteView) ]
         else
             div [] []
@@ -324,9 +360,9 @@ viewConfig =
         stationListItem keySelected mouseSelected station =
             { attributes =
                 [ Html.Attributes.classList
-                    [ ( "autocomplete-item", True )
+                    [ ( "AutocompleteItem", True )
                     , ( "KeySelected", keySelected )
-                    , ( "mouse-selected", mouseSelected )
+                    , ( "MouseSelected", mouseSelected )
                     ]
                 , Html.Attributes.id station.name
                 ]
@@ -335,7 +371,7 @@ viewConfig =
     in
         Autocomplete.viewConfig
             { toId = .name
-            , ul = [ Html.Attributes.class "autocomplete-list" ]
+            , ul = [ Html.Attributes.class "AutocompleteList" ]
             , li = stationListItem
             }
 
