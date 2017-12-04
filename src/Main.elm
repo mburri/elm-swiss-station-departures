@@ -13,6 +13,7 @@ import Html.Styled.Events exposing (keyCode, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
 import Station exposing (Station, acceptableStations, decodeStations)
+import Theme exposing (theme)
 
 
 main : Program Never Model Msg
@@ -111,6 +112,7 @@ update msg model =
             { model
                 | autoState = Autocomplete.reset updateConfig model.autoState
                 , selectedStation = Nothing
+                , fetchStationTableFailedMessage = ""
             }
                 ! []
 
@@ -143,14 +145,19 @@ update msg model =
         FetchStationTableSucceed result ->
             case result of
                 Result.Ok departures ->
-                    ( { model | departures = departures }, Cmd.none )
+                    ( { model
+                        | departures = departures
+                        , fetchStationTableFailedMessage = ""
+                      }
+                    , Cmd.none
+                    )
 
                 Result.Err err ->
                     let
                         _ =
                             Debug.log "Error retrieving departures" err
                     in
-                        ( model, Cmd.none )
+                        ( { model | fetchStationTableFailedMessage = toString err }, Cmd.none )
 
         FetchStationSucceed result ->
             case result of
@@ -158,6 +165,7 @@ update msg model =
                     ( { model
                         | stations = stations
                         , showStations = True
+                        , fetchStationTableFailedMessage = ""
                       }
                     , Cmd.none
                     )
@@ -167,7 +175,7 @@ update msg model =
                         _ =
                             Debug.log "Error retrieving stations" err
                     in
-                        ( model, Cmd.none )
+                        ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
 
         HandleEscape ->
             ( { model
@@ -238,6 +246,7 @@ subscriptions model =
 type Styles
     = KeySelected
     | MouseSelected
+    | AutocompleteMenu
     | AutocompleteList
     | AutocompleteItem
 
@@ -253,17 +262,22 @@ globalStyles =
             [ width (px 960)
             , margin auto
             , fontFamily sansSerif
+            , backgroundColor theme.primary1
             ]
         , Css.Foreign.class KeySelected
-            [ backgroundColor (hex "#3366FF")
+            [ backgroundColor theme.primary3
             ]
         , Css.Foreign.class MouseSelected
-            [ backgroundColor (hex "#ececec") ]
+            [ backgroundColor theme.primary3 ]
+        , Css.Foreign.class AutocompleteMenu
+            [ margin (Css.rem 2.0)
+            , color Css.Colors.white
+            ]
         , Css.Foreign.class AutocompleteItem
             [ display block
             , padding2 (Css.rem 0.3) (Css.rem 0.8)
             , fontSize (Css.rem 1.5)
-            , borderBottom3 (px 1) solid (hex "#DDD")
+            , borderBottom3 (px 1) solid theme.primary5
             , cursor pointer
             ]
         , Css.Foreign.class AutocompleteList
@@ -298,21 +312,7 @@ view model =
         div []
             [ globalStyles
             , viewTitle
-            , input
-                [ css
-                    [ fontSize (Css.rem 2.0)
-                    , width (pct 100)
-                    , color Css.Colors.black
-                    , padding (Css.rem 0.5)
-                    , borderRadius (Css.rem 0.2)
-                    , backgroundColor Css.Colors.silver
-                    ]
-                , onInput SearchStation
-                , value model.query
-                , autocomplete False
-                , placeholder "station"
-                ]
-                []
+            , viewSearchBar model.query
             , viewErrors model.fetchStationTableFailedMessage
             , viewAutocomplete model
             , Departure.view model.departures
@@ -325,11 +325,33 @@ viewTitle =
         [ h1
             [ css
                 [ display block
-                , padding (px 20)
-                , backgroundColor Css.Colors.red
+                , color Css.Colors.white
+                , fontSize (Css.rem 2.5)
                 ]
             ]
-            [ text "elm-swiss-station-departures" ]
+            [ text "Next departures from..." ]
+        ]
+
+
+viewSearchBar : String -> Html Msg
+viewSearchBar searchString =
+    div [ css [ textAlign center ] ]
+        [ input
+            [ css
+                [ fontSize (Css.rem 2.0)
+                , width (pct 90)
+                , margin auto
+                , padding (Css.rem 0.5)
+                , borderRadius (Css.rem 0.2)
+                , backgroundColor Css.Colors.white
+                , color theme.primary5
+                ]
+            , onInput SearchStation
+            , value searchString
+            , autocomplete False
+            , placeholder "... enter the station name"
+            ]
+            []
         ]
 
 
@@ -338,7 +360,15 @@ viewErrors fetchStationTableFailedMessage =
     if String.isEmpty fetchStationTableFailedMessage then
         div [] []
     else
-        div [] [ text fetchStationTableFailedMessage ]
+        div
+            [ css
+                [ backgroundColor theme.secondary1
+                , color Css.Colors.white
+                , margin (Css.rem 2.0)
+                , padding (Css.rem 1.5)
+                ]
+            ]
+            [ text fetchStationTableFailedMessage ]
 
 
 viewAutocomplete : Model -> Html Msg
@@ -393,3 +423,25 @@ updateConfig =
         , onMouseClick = \id -> Just <| SelectStation id
         , separateSelections = False
         }
+
+
+toErrorMessage : Http.Error -> String
+toErrorMessage error =
+    case error of
+        Http.BadUrl string ->
+            "Bad Url requested"
+
+        Http.Timeout ->
+            "Timeout - the server took too long to respond"
+
+        Http.NetworkError ->
+            "No network connection..."
+
+        Http.BadStatus stringResponseHttp ->
+            "HttpStatus "
+                ++ toString (stringResponseHttp.status.code)
+                ++ ", the message was: "
+                ++ stringResponseHttp.status.message
+
+        Http.BadPayload string stringResponseHttp ->
+            "Bad Payload - unable to handle response from server"

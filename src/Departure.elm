@@ -7,6 +7,7 @@ import Date.Format
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Json.Decode as Json exposing (field)
+import Theme exposing (theme)
 
 
 type alias Departure =
@@ -32,8 +33,10 @@ decodeDeparture =
 cellStyle : Attribute msg
 cellStyle =
     css
-        [ padding2 (Css.rem 0.5) (Css.rem 0.8)
-        , borderBottom3 (px 1) solid Css.Colors.gray
+        [ color theme.primary5
+        , fontSize (Css.rem 1.5)
+        , padding2 (Css.rem 0.5) (Css.rem 0.8)
+        , borderBottom3 (px 1) solid theme.primary5
         ]
 
 
@@ -42,7 +45,7 @@ view departures =
     if not (List.isEmpty departures) then
         Html.Styled.table
             [ css
-                [ marginTop (Css.rem 1.0)
+                [ margin (Css.rem 2.0)
                 , Css.width (pct 100)
                 , borderCollapse collapse
                 ]
@@ -50,7 +53,7 @@ view departures =
             [ thead []
                 [ tr
                     [ css
-                        [ color Css.Colors.blue
+                        [ color Css.Colors.white
                         , borderBottom3 (px 1) solid Css.Colors.red
                         ]
                     ]
