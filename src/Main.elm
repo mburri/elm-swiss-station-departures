@@ -1,22 +1,26 @@
 module Main exposing (..)
 
-import Autocomplete
-import Date exposing (Date)
-import Date.Format
-import Html exposing (Html, button, div, text, h1, input, td, th, tr, thead, tbody, table)
-import Html.Attributes exposing (id, classList, class, value, autocomplete, style, attribute, align, placeholder)
-import Html.Events exposing (onInput, onFocus, onWithOptions, keyCode)
+import Autocomplete exposing (MouseSelected)
+import Css exposing (..)
+import Css.Colors
+import Css.Foreign exposing (global)
+import Departure exposing (Departure)
+import Html
+import Html.Attributes
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (align, attribute, autocomplete, class, classList, css, id, placeholder, style, value)
+import Html.Styled.Events exposing (keyCode, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
-import String
-import Task
-import Debug
+import Station exposing (Station, acceptableStations, decodeStations)
+import Theme exposing (theme)
 
 
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
-        , view = view
+        , view = view >> toUnstyled
         , update = update
         , subscriptions = subscriptions
         }
@@ -24,18 +28,6 @@ main =
 
 
 -- MODEL
-
-
-type alias Station =
-    { name : String
-    }
-
-
-type alias Departure =
-    { to : String
-    , departure : String
-    , name : String
-    }
 
 
 type alias Model =
@@ -71,15 +63,13 @@ init =
 
 type Msg
     = NoOp
-    | ChangeQuery String
+    | SearchStation String
     | SetAutoState Autocomplete.Msg
     | SelectStation String
     | Wrap Bool
     | Reset
-    | FetchStationTableSucceed
-      (Result Http.Error (List Departure))
-    | FetchStationSucceed
-        (Result Http.Error (List Station))
+    | FetchStationTableSucceed (Result Http.Error (List Departure))
+    | FetchStationSucceed (Result Http.Error (List Station))
     | HandleEscape
 
 
@@ -89,8 +79,8 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        ChangeQuery q ->
-            ( { model | query = q }, getStations q )
+        SearchStation query ->
+            ( { model | query = query }, getStations query )
 
         SetAutoState autoMsg ->
             let
@@ -110,23 +100,21 @@ update msg model =
         SelectStation id ->
             let
                 selectedStation =
-                    List.head (List.filter (\station -> station.name == id) model.stations)
+                    model.stations
+                        |> List.filter (\station -> station.name == id)
+                        |> List.head
             in
-                ( { model
-                    | query =
-                        List.filter (\station -> station.name == id) model.stations
-                            |> List.head
-                            |> Maybe.withDefault (Station "")
-                            |> .name
-                    , autoState = Autocomplete.empty
-                    , showStations = False
-                    , selectedStation = selectedStation
-                  }
-                , getStationTable selectedStation
+                ( selectStation model selectedStation id
+                , getDepartures selectedStation
                 )
 
         Reset ->
-            { model | autoState = Autocomplete.reset updateConfig model.autoState, selectedStation = Nothing } ! []
+            { model
+                | autoState = Autocomplete.reset updateConfig model.autoState
+                , selectedStation = Nothing
+                , fetchStationTableFailedMessage = ""
+            }
+                ! []
 
         Wrap toTop ->
             case model.selectedStation of
@@ -137,40 +125,57 @@ update msg model =
                     if toTop then
                         { model
                             | autoState = Autocomplete.resetToLastItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
-                            , selectedStation = List.head <| List.reverse <| List.take model.howManyToShow <| (acceptableStations model.query model.stations)
+                            , selectedStation =
+                                List.head <|
+                                    List.reverse <|
+                                        List.take model.howManyToShow <|
+                                            (acceptableStations model.query model.stations)
                         }
                             ! []
                     else
                         { model
                             | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
-                            , selectedStation = List.head <| List.take model.howManyToShow <| (acceptableStations model.query model.stations)
+                            , selectedStation =
+                                List.head <|
+                                    List.take model.howManyToShow <|
+                                        (acceptableStations model.query model.stations)
                         }
                             ! []
 
         FetchStationTableSucceed result ->
             case result of
                 Result.Ok departures ->
-                    ( { model | departures = departures }, Cmd.none )
+                    ( { model
+                        | departures = departures
+                        , fetchStationTableFailedMessage = ""
+                      }
+                    , Cmd.none
+                    )
+
                 Result.Err err ->
-                    let _ =
-                        Debug.log "Error retrieving departures" err
+                    let
+                        _ =
+                            Debug.log "Error retrieving departures" err
                     in
-                        (model, Cmd.none)
+                        ( { model | fetchStationTableFailedMessage = toString err }, Cmd.none )
 
         FetchStationSucceed result ->
             case result of
                 Result.Ok stations ->
                     ( { model
-                      | stations = stations
-                      , showStations = True
-                    }
+                        | stations = stations
+                        , showStations = True
+                        , fetchStationTableFailedMessage = ""
+                      }
                     , Cmd.none
                     )
+
                 Result.Err err ->
-                    let _ =
-                        Debug.log "Error retrieving stations" err
+                    let
+                        _ =
+                            Debug.log "Error retrieving stations" err
                     in
-                        (model, Cmd.none)
+                        ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
 
         HandleEscape ->
             ( { model
@@ -190,56 +195,39 @@ getStations query =
         url =
             "https://transport.opendata.ch/v1/locations?query=" ++ query
     in
-        Http.get url decodeStations |> Http.send FetchStationSucceed
+        if String.length query >= 3 then
+            Http.get url decodeStations |> Http.send FetchStationSucceed
+        else
+            Cmd.none
 
 
-decodeStation : Json.Decoder Station
-decodeStation =
-    Json.map Station (field "name" Json.string)
-
-
-decodeStations : Json.Decoder (List Station)
-decodeStations =
-    Json.map identity
-        (field "stations" (Json.list decodeStation))
-
-
-
-getStationTable : Maybe Station -> Cmd Msg
-getStationTable maybeStation =
+getDepartures : Maybe Station -> Cmd Msg
+getDepartures maybeStation =
     case maybeStation of
         Just station ->
             let
                 url =
                     "https://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
             in
-                Http.get url decodeDepartures  |> Http.send FetchStationTableSucceed
+                Http.get url Departure.decode |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
 
 
-decodeDepartures : Json.Decoder (List Departure)
-decodeDepartures =
-    Json.map identity (field "stationboard" (Json.list decodeDeparture))
-
-
-decodeDeparture : Json.Decoder Departure
-decodeDeparture =
-    Json.map3 Departure
-        (field "to" Json.string)
-        (Json.at [ "stop", "departure" ] Json.string)
-        (field "name" Json.string)
-
-
-acceptableStations : String -> List Station -> List Station
-acceptableStations query stations =
-    List.filter (matches query) stations
-
-
-matches : String -> Station -> Bool
-matches query station =
-    String.contains (String.toLower query) (String.toLower station.name)
+selectStation : Model -> Maybe Station -> String -> Model
+selectStation model selectedStation id =
+    { model
+        | query =
+            model.stations
+                |> List.filter (\station -> station.name == id)
+                |> List.head
+                |> Maybe.withDefault (Station "")
+                |> .name
+        , autoState = Autocomplete.empty
+        , showStations = False
+        , selectedStation = selectedStation
+    }
 
 
 
@@ -255,6 +243,54 @@ subscriptions model =
 -- VIEW
 
 
+type Styles
+    = KeySelected
+    | MouseSelected
+    | AutocompleteMenu
+    | AutocompleteList
+    | AutocompleteItem
+
+
+globalStyles : Html msg
+globalStyles =
+    global
+        [ Css.Foreign.html
+            [ fontSize (px 20)
+            , width (pct 100)
+            ]
+        , Css.Foreign.body
+            [ width (px 960)
+            , margin auto
+            , fontFamily sansSerif
+            , backgroundColor theme.primary1
+            ]
+        , Css.Foreign.class KeySelected
+            [ backgroundColor theme.primary3
+            ]
+        , Css.Foreign.class MouseSelected
+            [ backgroundColor theme.primary3 ]
+        , Css.Foreign.class AutocompleteMenu
+            [ margin (Css.rem 2.0)
+            , color Css.Colors.white
+            ]
+        , Css.Foreign.class AutocompleteItem
+            [ display block
+            , padding2 (Css.rem 0.3) (Css.rem 0.8)
+            , fontSize (Css.rem 1.5)
+            , borderBottom3 (px 1) solid theme.primary5
+            , cursor pointer
+            ]
+        , Css.Foreign.class AutocompleteList
+            [ listStyle none
+            , padding (px 0)
+            , margin auto
+            , maxHeight (Css.rem 12)
+            , overflowY auto
+            ]
+        ]
+
+
+view : Model -> Html Msg
 view model =
     let
         options =
@@ -262,7 +298,6 @@ view model =
 
         dec =
             -- TODO: naming?
-
             (Json.map
                 (\code ->
                     if code == 38 || code == 40 then
@@ -275,20 +310,49 @@ view model =
             )
     in
         div []
-            [ h1 [] [ text "elm-swiss-station-departures" ]
-            , input
-                [ onInput ChangeQuery
-
-                , value model.query
-                , autocomplete False
-                , class "autocomplete-input"
-                , placeholder "station"
-                ]
-                []
+            [ globalStyles
+            , viewTitle
+            , viewSearchBar model.query
             , viewErrors model.fetchStationTableFailedMessage
             , viewAutocomplete model
-            , viewAllDepartures model.departures
+            , Departure.view model.departures
             ]
+
+
+viewTitle : Html msg
+viewTitle =
+    div [ css [ textAlign center ] ]
+        [ h1
+            [ css
+                [ display block
+                , color Css.Colors.white
+                , fontSize (Css.rem 2.5)
+                ]
+            ]
+            [ text "Next departures from..." ]
+        ]
+
+
+viewSearchBar : String -> Html Msg
+viewSearchBar searchString =
+    div [ css [ textAlign center ] ]
+        [ input
+            [ css
+                [ fontSize (Css.rem 2.0)
+                , width (pct 90)
+                , margin auto
+                , padding (Css.rem 0.5)
+                , borderRadius (Css.rem 0.2)
+                , backgroundColor Css.Colors.white
+                , color theme.primary5
+                ]
+            , onInput SearchStation
+            , value searchString
+            , autocomplete False
+            , placeholder "... enter the station name"
+            ]
+            []
+        ]
 
 
 viewErrors : String -> Html Msg
@@ -296,16 +360,28 @@ viewErrors fetchStationTableFailedMessage =
     if String.isEmpty fetchStationTableFailedMessage then
         div [] []
     else
-        div [] [ text fetchStationTableFailedMessage ]
+        div
+            [ css
+                [ backgroundColor theme.secondary1
+                , color Css.Colors.white
+                , margin (Css.rem 2.0)
+                , padding (Css.rem 1.5)
+                ]
+            ]
+            [ text fetchStationTableFailedMessage ]
 
 
 viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
-    if model.showStations then
-        div [ class "autocomplete-menu" ]
-            [ Html.map SetAutoState (Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)) ]
-    else
-        div [] []
+    let
+        autocompleteView =
+            Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)
+    in
+        if model.showStations then
+            div [ class "AutocompleteMenu" ]
+                [ Html.Styled.map SetAutoState (fromUnstyled autocompleteView) ]
+        else
+            div [] []
 
 
 viewConfig : Autocomplete.ViewConfig Station
@@ -313,15 +389,19 @@ viewConfig =
     let
         stationListItem keySelected mouseSelected station =
             { attributes =
-                [ classList [ ( "autocomplete-item", True ), ( "key-selected", keySelected ), ( "mouse-selected", mouseSelected ) ]
-                , id station.name
+                [ Html.Attributes.classList
+                    [ ( "AutocompleteItem", True )
+                    , ( "KeySelected", keySelected )
+                    , ( "MouseSelected", mouseSelected )
+                    ]
+                , Html.Attributes.id station.name
                 ]
             , children = [ Html.text station.name ]
             }
     in
         Autocomplete.viewConfig
             { toId = .name
-            , ul = [ class "autocomplete-list" ]
+            , ul = [ Html.Attributes.class "AutocompleteList" ]
             , li = stationListItem
             }
 
@@ -345,39 +425,23 @@ updateConfig =
         }
 
 
-viewAllDepartures : List Departure -> Html.Html Msg
-viewAllDepartures departures =
-    if not (List.isEmpty departures) then
-        table [ id "stationboard" ]
-            [ thead []
-                [ tr []
-                    [ th [ align "left" ]
-                        [ text "Zeit" ]
-                    , th []
-                        [ text "" ]
-                    , th [ align "left" ]
-                        [ text "Nach" ]
-                    ]
-                ]
-            , tbody [] (List.map viewSingleDeparture departures)
-            ]
-    else
-        div [] []
+toErrorMessage : Http.Error -> String
+toErrorMessage error =
+    case error of
+        Http.BadUrl string ->
+            "Bad Url requested"
 
+        Http.Timeout ->
+            "Timeout - the server took too long to respond"
 
-viewSingleDeparture : Departure -> Html.Html Msg
-viewSingleDeparture departure =
-    let
-        departureTime =
-            case Date.fromString departure.departure of
-                Err msg ->
-                    text ""
+        Http.NetworkError ->
+            "No network connection..."
 
-                Ok departure ->
-                    text (Date.Format.format "%k:%M" departure)
-    in
-        tr []
-            [ td [] [ departureTime ]
-            , td [] [ text departure.name ]
-            , td [] [ text departure.to ]
-            ]
+        Http.BadStatus stringResponseHttp ->
+            "HttpStatus "
+                ++ toString (stringResponseHttp.status.code)
+                ++ ", the message was: "
+                ++ stringResponseHttp.status.message
+
+        Http.BadPayload string stringResponseHttp ->
+            "Bad Payload - unable to handle response from server"

@@ -1,88 +1,14 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8" />
     <title>elm-swiss-station-departures</title>
-    <style media="screen">
-        html {
-            font-size: 20px;
-            width: 100%;
-        }
-
-        body {
-            font-family: helvetica;
-            width: 980px;
-            margin: auto;
-        }
-
-        input {
-
-            font-size: 1rem;
-        }
-
-
-        .autocomplete-input {
-            width: 100%;
-            color: black;
-            padding: 0.2rem;
-            border-radius: 0.2rem;
-            background-color: white;
-        }
-
-        .autocomplete-menu {
-            position: relative;
-            margin-top: 0.2rem;
-            background: white;
-            border: 1px solid #DDD;
-            border-radius: 3px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-
-        }
-
-        .autocomplete-list {
-            list-style: none;
-            padding: 0;
-            margin: auto;
-            max-height: 10rem;
-            overflow-y: auto;
-        }
-
-        .autocomplete-item {
-            display: block;
-            padding: 0.3rem 0.8rem;
-            font-size: 0.8rem;
-            border-bottom: 1px solid #DDD;
-            cursor: pointer;
-        }
-
-        .key-selected {
-            background-color: #3366FF;
-        }
-
-        .mouse-selected {
-            background-color: #ececec;
-        }
-
-        table#stationboard {
-            margin-top: 1rem;
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table#statioboard > tbody > tr {
-            color: blue
-            border-bottom: 1px solid red;
-        }
-
-        table#stationboard td, table#stationboard th  {
-            padding: 0.5rem 0.8rem;
-            border-bottom: 1px solid #dddddd;
-        }
-
-    </style>
-  </head>
-  <body>
+</head>
+<body>
     <div id="main"></div>
-    <script src="bundle.js"></script>
-  </body>
+    <script src="app.js"></script>
+    <script>
+        Elm.Main.embed(document.getElementById('main'));
+    </script>
+</body>
 </html>
