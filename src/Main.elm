@@ -349,7 +349,7 @@ viewSearchBar searchString =
             , onInput SearchStation
             , value searchString
             , autocomplete False
-            , placeholder "... enter the station name"
+            , placeholder "search  station..."
             ]
             []
         ]
