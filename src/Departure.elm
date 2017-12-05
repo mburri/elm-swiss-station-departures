@@ -33,7 +33,7 @@ decodeDeparture =
 cellStyle : Attribute msg
 cellStyle =
     css
-        [ color theme.primary5
+        [ color Css.Colors.white
         , fontSize (Css.rem 1.5)
         , padding2 (Css.rem 0.5) (Css.rem 0.8)
         , borderBottom3 (px 1) solid theme.primary5
@@ -46,7 +46,7 @@ view departures =
         Html.Styled.table
             [ css
                 [ margin (Css.rem 2.0)
-                , Css.width (pct 100)
+                , Css.width (px 880)
                 , borderCollapse collapse
                 ]
             ]
@@ -68,7 +68,7 @@ view departures =
             , tbody [] (List.map viewSingleDeparture departures)
             ]
     else
-        div [] []
+        text ""
 
 
 viewSingleDeparture : Departure -> Html.Styled.Html msg

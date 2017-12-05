@@ -8,10 +8,11 @@ import Departure exposing (Departure)
 import Html
 import Html.Attributes
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (align, attribute, autocomplete, class, classList, css, id, placeholder, style, value)
-import Html.Styled.Events exposing (keyCode, onFocus, onInput, onWithOptions)
+import Html.Styled.Attributes exposing (align, attribute, autocomplete, class, classList, css, id, placeholder, style, styled, value)
+import Html.Styled.Events exposing (keyCode, onClick, onFocus, onInput, onWithOptions)
 import Http
 import Json.Decode as Json exposing (field)
+import List.Extra
 import Station exposing (Station, acceptableStations, decodeStations)
 import Theme exposing (theme)
 
@@ -30,6 +31,11 @@ main =
 -- MODEL
 
 
+type Mode
+    = Search
+    | Recent
+
+
 type alias Model =
     { query : String
     , autoState : Autocomplete.State
@@ -39,6 +45,8 @@ type alias Model =
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
+    , latest : List Station
+    , mode : Mode
     }
 
 
@@ -53,6 +61,8 @@ init =
         Nothing
         []
         ""
+        []
+        Search
     , Cmd.none
     )
 
@@ -66,11 +76,13 @@ type Msg
     | SearchStation String
     | SetAutoState Autocomplete.Msg
     | SelectStation String
+    | SelectStationFromRecent Station
     | Wrap Bool
     | Reset
     | FetchStationTableSucceed (Result Http.Error (List Departure))
     | FetchStationSucceed (Result Http.Error (List Station))
     | HandleEscape
+    | ToggleMode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -97,14 +109,14 @@ update msg model =
                     Just updateMsg ->
                         update updateMsg newModel
 
-        SelectStation id ->
+        SelectStation name ->
             let
                 selectedStation =
                     model.stations
-                        |> List.filter (\station -> station.name == id)
+                        |> List.filter (\station -> station.name == name)
                         |> List.head
             in
-                ( selectStation model selectedStation id
+                ( selectStation model selectedStation name
                 , getDepartures selectedStation
                 )
 
@@ -188,6 +200,22 @@ update msg model =
             , Cmd.none
             )
 
+        ToggleMode ->
+            ( { model | mode = toggle model.mode }, Cmd.none )
+
+        SelectStationFromRecent station ->
+            ( model, getDepartures (Just station) )
+
+
+toggle : Mode -> Mode
+toggle mode =
+    case mode of
+        Search ->
+            Recent
+
+        Recent ->
+            Search
+
 
 getStations : String -> Cmd Msg
 getStations query =
@@ -227,7 +255,19 @@ selectStation model selectedStation id =
         , autoState = Autocomplete.empty
         , showStations = False
         , selectedStation = selectedStation
+        , latest = addStation model.latest selectedStation
     }
+
+
+addStation : List Station -> Maybe Station -> List Station
+addStation stations maybeStation =
+    case maybeStation of
+        Just station ->
+            (station :: stations)
+                |> List.Extra.uniqueBy (\station -> station.name)
+
+        Nothing ->
+            stations
 
 
 
@@ -312,7 +352,12 @@ view model =
         div []
             [ globalStyles
             , viewTitle
-            , viewSearchBar model.query
+            , case model.mode of
+                Search ->
+                    viewSearchBar model.query
+
+                Recent ->
+                    viewRecentlySelected model.latest
             , viewErrors model.fetchStationTableFailedMessage
             , viewAutocomplete model
             , Departure.view model.departures
@@ -333,10 +378,24 @@ viewTitle =
         ]
 
 
+modeButton : List (Attribute msg) -> List (Html msg) -> Html msg
+modeButton =
+    styled button
+        [ padding (Css.rem 0.5)
+        , marginBottom (Css.rem 0.5)
+        , border3 (px 1) solid theme.primary3
+        , fontSize (Css.rem 1.0)
+        , fontWeight bold
+        , color theme.primary5
+        , backgroundColor theme.secondary5
+        ]
+
+
 viewSearchBar : String -> Html Msg
 viewSearchBar searchString =
     div [ css [ textAlign center ] ]
-        [ input
+        [ modeButton [ onClick ToggleMode ] [ text "Show recent searches" ]
+        , input
             [ css
                 [ fontSize (Css.rem 2.0)
                 , width (pct 90)
@@ -349,10 +408,46 @@ viewSearchBar searchString =
             , onInput SearchStation
             , value searchString
             , autocomplete False
-            , placeholder "... enter the station name"
+            , placeholder "search  station..."
             ]
             []
         ]
+
+
+viewRecentlySelected : List Station -> Html Msg
+viewRecentlySelected recents =
+    let
+        recentSearches =
+            recents
+                |> List.map viewRecent
+                |> ul
+                    [ css
+                        [ fontSize (Css.rem 2.0)
+                        , color Css.Colors.white
+                        , listStyle none
+                        , padding (Css.rem 2.0)
+                        ]
+                    ]
+    in
+        div [ css [ textAlign center ] ]
+            [ modeButton [ onClick ToggleMode ] [ text "text search" ]
+            , recentSearches
+            ]
+
+
+viewRecent : Station -> Html Msg
+viewRecent station =
+    li
+        [ css
+            [ margin auto
+            , paddingLeft (Css.rem 2.0)
+            , paddingRight (Css.rem 2.0)
+            , width (pct 30)
+            , borderBottom3 (px 1) solid theme.primary5
+            ]
+        , onClick (SelectStationFromRecent station)
+        ]
+        [ text station.name ]
 
 
 viewErrors : String -> Html Msg
