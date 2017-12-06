@@ -1,8 +1,7 @@
 module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
 
 import Autocomplete exposing (MouseSelected)
-import Css exposing (..)
-import Css.Colors
+import Css exposing (center, textAlign)
 import Date
 import Date.Format
 import Html
@@ -315,28 +314,14 @@ viewStyled model =
 
 viewTitle : Html msg
 viewTitle =
-    div [ css [ textAlign center ] ]
-        [ h1
-            [ css
-                [ display block
-                , color Css.Colors.white
-                , fontSize (Css.rem 2.5)
-                ]
+    div
+        [ css
+            [ textAlign center
             ]
-            [ text "Next departures from..." ]
         ]
-
-
-modeButton : List (Attribute msg) -> List (Html msg) -> Html msg
-modeButton =
-    styled button
-        [ padding (Css.rem 0.5)
-        , marginBottom (Css.rem 0.5)
-        , border3 (px 1) solid theme.primary3
-        , fontSize (Css.rem 1.0)
-        , fontWeight bold
-        , color theme.primary5
-        , backgroundColor theme.secondary5
+        [ h1
+            [ Styles.title ]
+            [ text "Next departures from..." ]
         ]
 
 
@@ -344,17 +329,8 @@ viewSearchBar : String -> Html Msg
 viewSearchBar searchString =
     div [ css [ textAlign center ] ]
         [ modeButton [ onClick ToggleMode ] [ text "Show recent searches" ]
-        , input
-            [ css
-                [ fontSize (Css.rem 2.0)
-                , width (pct 90)
-                , margin auto
-                , padding (Css.rem 0.5)
-                , borderRadius (Css.rem 0.2)
-                , backgroundColor Css.Colors.white
-                , color theme.primary5
-                ]
-            , onInput SearchStation
+        , searchField
+            [ onInput SearchStation
             , value searchString
             , autocomplete False
             , placeholder "search  station..."
@@ -369,14 +345,7 @@ viewRecentlySelected recents =
         recentSearches =
             recents
                 |> List.map viewRecent
-                |> ul
-                    [ css
-                        [ fontSize (Css.rem 2.0)
-                        , color Css.Colors.white
-                        , listStyle none
-                        , padding (Css.rem 2.0)
-                        ]
-                    ]
+                |> recentStationList []
     in
         div [ css [ textAlign center ] ]
             [ modeButton [ onClick ToggleMode ] [ text "text search" ]
@@ -386,16 +355,8 @@ viewRecentlySelected recents =
 
 viewRecent : Station -> Html Msg
 viewRecent station =
-    li
-        [ css
-            [ margin auto
-            , paddingLeft (Css.rem 2.0)
-            , paddingRight (Css.rem 2.0)
-            , width (pct 30)
-            , borderBottom3 (px 1) solid theme.primary5
-            ]
-        , onClick (SelectStationFromRecent station)
-        ]
+    recentStationListItem
+        [ onClick (SelectStationFromRecent station) ]
         [ text station.name ]
 
 
@@ -404,14 +365,7 @@ viewErrors fetchStationTableFailedMessage =
     if String.isEmpty fetchStationTableFailedMessage then
         div [] []
     else
-        div
-            [ css
-                [ backgroundColor theme.secondary1
-                , color Css.Colors.white
-                , margin (Css.rem 2.0)
-                , padding (Css.rem 1.5)
-                ]
-            ]
+        errorBox []
             [ text fetchStationTableFailedMessage ]
 
 
@@ -469,32 +423,13 @@ updateConfig =
         }
 
 
-cellStyle : Attribute msg
-cellStyle =
-    css
-        [ color Css.Colors.white
-        , fontSize (Css.rem 1.5)
-        , padding2 (Css.rem 0.5) (Css.rem 0.8)
-        , borderBottom3 (px 1) solid theme.primary5
-        ]
-
-
 viewDepartures : List Departure -> Html.Styled.Html msg
 viewDepartures departures =
     if not (List.isEmpty departures) then
-        Html.Styled.table
-            [ css
-                [ margin (Css.rem 2.0)
-                , Css.width (px 880)
-                , borderCollapse collapse
-                ]
-            ]
+        departuresTable []
             [ thead []
                 [ tr
-                    [ css
-                        [ color Css.Colors.white
-                        , borderBottom3 (px 1) solid Css.Colors.red
-                        ]
+                    [ rowStyle
                     ]
                     [ th [ cellStyle, align "left" ]
                         [ text "Zeit" ]
