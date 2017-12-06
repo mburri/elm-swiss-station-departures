@@ -1,11 +1,21 @@
-module Station exposing (Station, decodeStations, acceptableStations)
+module Station exposing (Station, decodeStations, acceptableStations, search)
 
+import Http
 import Json.Decode as Json exposing (field)
 
 
 type alias Station =
     { name : String
     }
+
+
+search : String -> Http.Request (List Station)
+search query =
+    let
+        url =
+            "https://transport.opendata.ch/v1/locations?query=" ++ query
+    in
+        Http.get url decodeStations
 
 
 decodeStation : Json.Decoder Station

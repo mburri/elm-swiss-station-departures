@@ -208,25 +208,17 @@ toggle mode =
 
 getStations : String -> Cmd Msg
 getStations query =
-    let
-        url =
-            "https://transport.opendata.ch/v1/locations?query=" ++ query
-    in
-        if String.length query >= 3 then
-            Http.get url decodeStations |> Http.send FetchStationSucceed
-        else
-            Cmd.none
+    if (String.length query) >= 3 then
+        query |> Station.search |> Http.send FetchStationSucceed
+    else
+        Cmd.none
 
 
 getDepartures : Maybe Station -> Cmd Msg
 getDepartures maybeStation =
     case maybeStation of
         Just station ->
-            let
-                url =
-                    "https://transport.opendata.ch/v1/stationboard?station=" ++ station.name ++ "&limit=20"
-            in
-                Http.get url Departure.decode |> Http.send FetchStationTableSucceed
+            Departure.get station.name |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none

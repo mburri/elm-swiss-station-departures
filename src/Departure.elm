@@ -1,5 +1,6 @@
-module Departure exposing (Departure, decode, view)
+module Departure exposing (Departure, decode, view, get)
 
+import Http
 import Css exposing (..)
 import Css.Colors
 import Date
@@ -15,6 +16,15 @@ type alias Departure =
     , departure : String
     , name : String
     }
+
+
+get : String -> Http.Request (List Departure)
+get stationName =
+    let
+        url =
+            "https://transport.opendata.ch/v1/stationboard?station=" ++ stationName ++ "&limit=20"
+    in
+        Http.get url decode
 
 
 decode : Json.Decoder (List Departure)
