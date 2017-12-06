@@ -3,8 +3,8 @@ module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
 import Autocomplete exposing (MouseSelected)
 import Css exposing (..)
 import Css.Colors
-import Css.Foreign exposing (global)
-import Departure exposing (Departure)
+import Date
+import Date.Format
 import Html
 import Html.Attributes
 import Html.Styled exposing (..)
@@ -13,8 +13,8 @@ import Html.Styled.Events exposing (keyCode, onClick, onFocus, onInput, onWithOp
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
-import Station exposing (Station, acceptableStations, decodeStations)
-import Theme exposing (theme)
+import Styles exposing (..)
+import TransportApi exposing (..)
 
 
 -- MODEL
@@ -106,7 +106,7 @@ update msg model =
                         |> List.head
             in
                 ( selectStation model selectedStation name
-                , getDepartures selectedStation
+                , getOpenTransportApis selectedStation
                 )
 
         Reset ->
@@ -193,7 +193,7 @@ update msg model =
             ( { model | mode = toggle model.mode }, Cmd.none )
 
         SelectStationFromRecent station ->
-            ( model, getDepartures (Just station) )
+            ( model, getOpenTransportApis (Just station) )
 
 
 toggle : Mode -> Mode
@@ -209,16 +209,16 @@ toggle mode =
 getStations : String -> Cmd Msg
 getStations query =
     if (String.length query) >= 3 then
-        query |> Station.search |> Http.send FetchStationSucceed
+        query |> TransportApi.searchStation |> Http.send FetchStationSucceed
     else
         Cmd.none
 
 
-getDepartures : Maybe Station -> Cmd Msg
-getDepartures maybeStation =
+getOpenTransportApis : Maybe Station -> Cmd Msg
+getOpenTransportApis maybeStation =
     case maybeStation of
         Just station ->
-            Departure.get station.name |> Http.send FetchStationTableSucceed
+            TransportApi.getDepartures station.name |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -251,6 +251,16 @@ addStation stations maybeStation =
             stations
 
 
+acceptableStations : String -> List Station -> List Station
+acceptableStations query stations =
+    List.filter (matches query) stations
+
+
+matches : String -> Station -> Bool
+matches query station =
+    String.contains (String.toLower query) (String.toLower station.name)
+
+
 
 -- SUBSCRIPTIONS
 
@@ -262,53 +272,6 @@ subscriptions model =
 
 
 -- VIEW
-
-
-type Styles
-    = KeySelected
-    | MouseSelected
-    | AutocompleteMenu
-    | AutocompleteList
-    | AutocompleteItem
-
-
-globalStyles : Html msg
-globalStyles =
-    global
-        [ Css.Foreign.html
-            [ fontSize (px 20)
-            , width (pct 100)
-            ]
-        , Css.Foreign.body
-            [ width (px 960)
-            , margin auto
-            , fontFamily sansSerif
-            , backgroundColor theme.primary1
-            ]
-        , Css.Foreign.class KeySelected
-            [ backgroundColor theme.primary3
-            ]
-        , Css.Foreign.class MouseSelected
-            [ backgroundColor theme.primary3 ]
-        , Css.Foreign.class AutocompleteMenu
-            [ margin (Css.rem 2.0)
-            , color Css.Colors.white
-            ]
-        , Css.Foreign.class AutocompleteItem
-            [ display block
-            , padding2 (Css.rem 0.3) (Css.rem 0.8)
-            , fontSize (Css.rem 1.5)
-            , borderBottom3 (px 1) solid theme.primary5
-            , cursor pointer
-            ]
-        , Css.Foreign.class AutocompleteList
-            [ listStyle none
-            , padding (px 0)
-            , margin auto
-            , maxHeight (Css.rem 12)
-            , overflowY auto
-            ]
-        ]
 
 
 view : Model -> Html.Html Msg
@@ -346,7 +309,7 @@ viewStyled model =
                     viewRecentlySelected model.latest
             , viewErrors model.fetchStationTableFailedMessage
             , viewAutocomplete model
-            , Departure.view model.departures
+            , viewDepartures model.departures
             ]
 
 
@@ -504,6 +467,65 @@ updateConfig =
         , onMouseClick = \id -> Just <| SelectStation id
         , separateSelections = False
         }
+
+
+cellStyle : Attribute msg
+cellStyle =
+    css
+        [ color Css.Colors.white
+        , fontSize (Css.rem 1.5)
+        , padding2 (Css.rem 0.5) (Css.rem 0.8)
+        , borderBottom3 (px 1) solid theme.primary5
+        ]
+
+
+viewDepartures : List Departure -> Html.Styled.Html msg
+viewDepartures departures =
+    if not (List.isEmpty departures) then
+        Html.Styled.table
+            [ css
+                [ margin (Css.rem 2.0)
+                , Css.width (px 880)
+                , borderCollapse collapse
+                ]
+            ]
+            [ thead []
+                [ tr
+                    [ css
+                        [ color Css.Colors.white
+                        , borderBottom3 (px 1) solid Css.Colors.red
+                        ]
+                    ]
+                    [ th [ cellStyle, align "left" ]
+                        [ text "Zeit" ]
+                    , th [ cellStyle ]
+                        [ text "" ]
+                    , th [ cellStyle, align "left" ]
+                        [ text "Nach" ]
+                    ]
+                ]
+            , tbody [] (List.map viewSingleDeparture departures)
+            ]
+    else
+        text ""
+
+
+viewSingleDeparture : Departure -> Html.Styled.Html msg
+viewSingleDeparture departure =
+    let
+        departureTime =
+            case Date.fromString departure.departure of
+                Err msg ->
+                    text ""
+
+                Ok departure ->
+                    text (Date.Format.format "%k:%M" departure)
+    in
+        tr []
+            [ td [ cellStyle ] [ departureTime ]
+            , td [ cellStyle ] [ text departure.name ]
+            , td [ cellStyle ] [ text departure.to ]
+            ]
 
 
 toErrorMessage : Http.Error -> String
