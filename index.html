@@ -11189,6 +11189,541 @@ var _elm_lang$keyboard$Keyboard$subMap = F2(
 			});
 	});
 _elm_lang$core$Native_Platform.effectManagers['Keyboard'] = {pkg: 'elm-lang/keyboard', init: _elm_lang$keyboard$Keyboard$init, onEffects: _elm_lang$keyboard$Keyboard$onEffects, onSelfMsg: _elm_lang$keyboard$Keyboard$onSelfMsg, tag: 'sub', subMap: _elm_lang$keyboard$Keyboard$subMap};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$sectionConfig = function (_p0) {
+	var _p1 = _p0;
+	return {toId: _p1.toId, getData: _p1.getData, ul: _p1.ul, li: _p1.li};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSectionsConfig = function (_p2) {
+	var _p3 = _p2;
+	return {toId: _p3.toId, ul: _p3.ul, li: _p3.li, section: _p3.section};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewConfig = function (_p4) {
+	var _p5 = _p4;
+	return {toId: _p5.toId, ul: _p5.ul, li: _p5.li};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPrevious = F3(
+	function (id, selectedId, resultId) {
+		return _elm_lang$core$Native_Utils.eq(selectedId, id) ? _elm_lang$core$Maybe$Just(id) : (_elm_lang$core$Native_Utils.eq(
+			A2(_elm_lang$core$Maybe$withDefault, '', resultId),
+			id) ? _elm_lang$core$Maybe$Just(selectedId) : resultId);
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$getNextItemId = F2(
+	function (ids, selectedId) {
+		return A2(
+			_elm_lang$core$Maybe$withDefault,
+			selectedId,
+			A3(
+				_elm_lang$core$List$foldl,
+				_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPrevious(selectedId),
+				_elm_lang$core$Maybe$Nothing,
+				ids));
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPreviousItemId = F2(
+	function (ids, selectedId) {
+		return A2(
+			_elm_lang$core$Maybe$withDefault,
+			selectedId,
+			A3(
+				_elm_lang$core$List$foldr,
+				_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPrevious(selectedId),
+				_elm_lang$core$Maybe$Nothing,
+				ids));
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$navigateWithKey = F3(
+	function (code, ids, maybeId) {
+		var _p6 = code;
+		switch (_p6) {
+			case 38:
+				return A2(
+					_elm_lang$core$Maybe$map,
+					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPreviousItemId(ids),
+					maybeId);
+			case 40:
+				return A2(
+					_elm_lang$core$Maybe$map,
+					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getNextItemId(ids),
+					maybeId);
+			default:
+				return maybeId;
+		}
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId = F3(
+	function (separateSelections, id, state) {
+		return separateSelections ? {
+			key: state.key,
+			mouse: _elm_lang$core$Maybe$Just(id)
+		} : {
+			key: _elm_lang$core$Maybe$Just(id),
+			mouse: _elm_lang$core$Maybe$Just(id)
+		};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$updateConfig = function (_p7) {
+	var _p8 = _p7;
+	return {toId: _p8.toId, onKeyDown: _p8.onKeyDown, onTooLow: _p8.onTooLow, onTooHigh: _p8.onTooHigh, onMouseEnter: _p8.onMouseEnter, onMouseLeave: _p8.onMouseLeave, onMouseClick: _p8.onMouseClick, separateSelections: _p8.separateSelections};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty = {key: _elm_lang$core$Maybe$Nothing, mouse: _elm_lang$core$Maybe$Nothing};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$reset = F2(
+	function (_p10, _p9) {
+		var _p11 = _p10;
+		var _p12 = _p9;
+		return _p11.separateSelections ? {key: _elm_lang$core$Maybe$Nothing, mouse: _p12.mouse} : _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty;
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirst = F3(
+	function (config, data, state) {
+		var _p13 = config;
+		var toId = _p13.toId;
+		var separateSelections = _p13.separateSelections;
+		var setFirstItem = F2(
+			function (datum, newState) {
+				return _elm_lang$core$Native_Utils.update(
+					newState,
+					{
+						key: _elm_lang$core$Maybe$Just(
+							toId(datum))
+					});
+			});
+		var _p14 = _elm_lang$core$List$head(data);
+		if (_p14.ctor === 'Nothing') {
+			return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty;
+		} else {
+			var _p15 = _p14._0;
+			return separateSelections ? A2(
+				setFirstItem,
+				_p15,
+				A2(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$reset, config, state)) : A2(setFirstItem, _p15, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty);
+		}
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirstItem = F4(
+	function (config, data, howManyToShow, state) {
+		return A3(
+			_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirst,
+			config,
+			A2(_elm_lang$core$List$take, howManyToShow, data),
+			state);
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToLastItem = F4(
+	function (config, data, howManyToShow, state) {
+		var reversedData = _elm_lang$core$List$reverse(
+			A2(_elm_lang$core$List$take, howManyToShow, data));
+		return A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirst, config, reversedData, state);
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$State = F2(
+	function (a, b) {
+		return {key: a, mouse: b};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$UpdateConfig = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {onKeyDown: a, onTooLow: b, onTooHigh: c, onMouseEnter: d, onMouseLeave: e, onMouseClick: f, toId: g, separateSelections: h};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$HtmlDetails = F2(
+	function (a, b) {
+		return {attributes: a, children: b};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$ViewConfig = F3(
+	function (a, b, c) {
+		return {toId: a, ul: b, li: c};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$ViewWithSectionsConfig = F4(
+	function (a, b, c, d) {
+		return {toId: a, ul: b, li: c, section: d};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$SectionConfig = F4(
+	function (a, b, c, d) {
+		return {toId: a, getData: b, ul: c, li: d};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$SectionNode = F3(
+	function (a, b, c) {
+		return {nodeType: a, attributes: b, children: c};
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp = {ctor: 'NoOp'};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Attributes$map,
+		function (_p16) {
+			return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
+		},
+		msg);
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseClick = function (a) {
+	return {ctor: 'MouseClick', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseLeave = function (a) {
+	return {ctor: 'MouseLeave', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseEnter = function (a) {
+	return {ctor: 'MouseEnter', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewData = F3(
+	function (_p18, _p17, data) {
+		var _p19 = _p18;
+		var _p20 = _p17;
+		var id = _p19.toId(data);
+		var isSelected = function (maybeId) {
+			var _p21 = maybeId;
+			if (_p21.ctor === 'Just') {
+				return _elm_lang$core$Native_Utils.eq(_p21._0, id);
+			} else {
+				return false;
+			}
+		};
+		var listItemData = A3(
+			_p19.li,
+			isSelected(_p20.key),
+			isSelected(_p20.mouse),
+			data);
+		var customAttributes = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, listItemData.attributes);
+		var customLiAttr = A2(
+			_elm_lang$core$List$append,
+			customAttributes,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onMouseEnter(
+					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseEnter(id)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onMouseLeave(
+						_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseLeave(id)),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onClick(
+							_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseClick(id)),
+						_1: {ctor: '[]'}
+					}
+				}
+			});
+		return A2(
+			_elm_lang$html$Html$li,
+			customLiAttr,
+			A2(
+				_elm_lang$core$List$map,
+				_elm_lang$html$Html$map(
+					function (html) {
+						return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
+					}),
+				listItemData.children));
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewSection = F3(
+	function (config, state, section) {
+		var getKeyedItems = function (datum) {
+			return {
+				ctor: '_Tuple2',
+				_0: config.toId(datum),
+				_1: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewData, config, state, datum)
+			};
+		};
+		var viewItemList = A2(
+			_elm_lang$html$Html_Keyed$ul,
+			A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, config.ul),
+			A2(
+				_elm_lang$core$List$map,
+				getKeyedItems,
+				config.section.getData(section)));
+		var sectionNode = config.section.li(section);
+		var attributes = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, sectionNode.attributes);
+		var customChildren = A2(
+			_elm_lang$core$List$map,
+			_elm_lang$html$Html$map(
+				function (html) {
+					return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
+				}),
+			sectionNode.children);
+		var children = A2(
+			_elm_lang$core$List$append,
+			customChildren,
+			{
+				ctor: '::',
+				_0: viewItemList,
+				_1: {ctor: '[]'}
+			});
+		return A2(
+			_elm_lang$html$Html$li,
+			attributes,
+			{
+				ctor: '::',
+				_0: A3(_elm_lang$html$Html$node, sectionNode.nodeType, attributes, children),
+				_1: {ctor: '[]'}
+			});
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSections = F4(
+	function (config, howManyToShow, state, sections) {
+		var getKeyedItems = function (section) {
+			return {
+				ctor: '_Tuple2',
+				_0: config.section.toId(section),
+				_1: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewSection, config, state, section)
+			};
+		};
+		return A2(
+			_elm_lang$html$Html_Keyed$ul,
+			A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, config.section.ul),
+			A2(_elm_lang$core$List$map, getKeyedItems, sections));
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewItem = F3(
+	function (_p23, _p22, data) {
+		var _p24 = _p23;
+		var _p25 = _p22;
+		var id = _p24.toId(data);
+		var isSelected = function (maybeId) {
+			var _p26 = maybeId;
+			if (_p26.ctor === 'Just') {
+				return _elm_lang$core$Native_Utils.eq(_p26._0, id);
+			} else {
+				return false;
+			}
+		};
+		var listItemData = A3(
+			_p24.li,
+			isSelected(_p25.key),
+			isSelected(_p25.mouse),
+			data);
+		var customAttributes = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, listItemData.attributes);
+		var customLiAttr = A2(
+			_elm_lang$core$List$append,
+			customAttributes,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onMouseEnter(
+					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseEnter(id)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onMouseLeave(
+						_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseLeave(id)),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onClick(
+							_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseClick(id)),
+						_1: {ctor: '[]'}
+					}
+				}
+			});
+		return A2(
+			_elm_lang$html$Html$li,
+			customLiAttr,
+			A2(
+				_elm_lang$core$List$map,
+				_elm_lang$html$Html$map(
+					function (html) {
+						return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
+					}),
+				listItemData.children));
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewList = F4(
+	function (config, howManyToShow, state, data) {
+		var getKeyedItems = function (datum) {
+			return {
+				ctor: '_Tuple2',
+				_0: config.toId(datum),
+				_1: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewItem, config, state, datum)
+			};
+		};
+		var customUlAttr = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, config.ul);
+		return A2(
+			_elm_lang$html$Html_Keyed$ul,
+			customUlAttr,
+			A2(
+				_elm_lang$core$List$map,
+				getKeyedItems,
+				A2(_elm_lang$core$List$take, howManyToShow, data)));
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$view = F4(
+	function (config, howManyToShow, state, data) {
+		return A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewList, config, howManyToShow, state, data);
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooHigh = {ctor: 'WentTooHigh'};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooLow = {ctor: 'WentTooLow'};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$update = F5(
+	function (config, msg, howManyToShow, state, data) {
+		update:
+		while (true) {
+			var _p27 = msg;
+			switch (_p27.ctor) {
+				case 'KeyDown':
+					var _p28 = _p27._0;
+					var boundedList = A2(
+						_elm_lang$core$List$take,
+						howManyToShow,
+						A2(_elm_lang$core$List$map, config.toId, data));
+					var newKey = A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$navigateWithKey, _p28, boundedList, state.key);
+					if (_elm_lang$core$Native_Utils.eq(newKey, state.key) && _elm_lang$core$Native_Utils.eq(_p28, 38)) {
+						var _v15 = config,
+							_v16 = _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooHigh,
+							_v17 = howManyToShow,
+							_v18 = state,
+							_v19 = data;
+						config = _v15;
+						msg = _v16;
+						howManyToShow = _v17;
+						state = _v18;
+						data = _v19;
+						continue update;
+					} else {
+						if (_elm_lang$core$Native_Utils.eq(newKey, state.key) && _elm_lang$core$Native_Utils.eq(_p28, 40)) {
+							var _v20 = config,
+								_v21 = _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooLow,
+								_v22 = howManyToShow,
+								_v23 = state,
+								_v24 = data;
+							config = _v20;
+							msg = _v21;
+							howManyToShow = _v22;
+							state = _v23;
+							data = _v24;
+							continue update;
+						} else {
+							if (config.separateSelections) {
+								return {
+									ctor: '_Tuple2',
+									_0: _elm_lang$core$Native_Utils.update(
+										state,
+										{key: newKey}),
+									_1: A2(config.onKeyDown, _p28, newKey)
+								};
+							} else {
+								return {
+									ctor: '_Tuple2',
+									_0: {key: newKey, mouse: newKey},
+									_1: A2(config.onKeyDown, _p28, newKey)
+								};
+							}
+						}
+					}
+				case 'WentTooLow':
+					return {ctor: '_Tuple2', _0: state, _1: config.onTooLow};
+				case 'WentTooHigh':
+					return {ctor: '_Tuple2', _0: state, _1: config.onTooHigh};
+				case 'MouseEnter':
+					var _p29 = _p27._0;
+					return {
+						ctor: '_Tuple2',
+						_0: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId, config.separateSelections, _p29, state),
+						_1: config.onMouseEnter(_p29)
+					};
+				case 'MouseLeave':
+					var _p30 = _p27._0;
+					return {
+						ctor: '_Tuple2',
+						_0: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId, config.separateSelections, _p30, state),
+						_1: config.onMouseLeave(_p30)
+					};
+				case 'MouseClick':
+					var _p31 = _p27._0;
+					return {
+						ctor: '_Tuple2',
+						_0: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId, config.separateSelections, _p31, state),
+						_1: config.onMouseClick(_p31)
+					};
+				default:
+					return {ctor: '_Tuple2', _0: state, _1: _elm_lang$core$Maybe$Nothing};
+			}
+		}
+	});
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$KeyDown = function (a) {
+	return {ctor: 'KeyDown', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$subscription = _elm_lang$keyboard$Keyboard$downs(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$KeyDown);
+var _thebritican$elm_autocomplete$Autocomplete$HtmlDetails = F2(
+	function (a, b) {
+		return {attributes: a, children: b};
+	});
+var _thebritican$elm_autocomplete$Autocomplete$SectionNode = F3(
+	function (a, b, c) {
+		return {nodeType: a, attributes: b, children: c};
+	});
+var _thebritican$elm_autocomplete$Autocomplete$State = function (a) {
+	return {ctor: 'State', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete$empty = _thebritican$elm_autocomplete$Autocomplete$State(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty);
+var _thebritican$elm_autocomplete$Autocomplete$reset = F2(
+	function (_p1, _p0) {
+		var _p2 = _p1;
+		var _p3 = _p0;
+		return _thebritican$elm_autocomplete$Autocomplete$State(
+			A2(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$reset, _p2._0, _p3._0));
+	});
+var _thebritican$elm_autocomplete$Autocomplete$resetToFirstItem = F4(
+	function (_p5, data, howManyToShow, _p4) {
+		var _p6 = _p5;
+		var _p7 = _p4;
+		return _thebritican$elm_autocomplete$Autocomplete$State(
+			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirstItem, _p6._0, data, howManyToShow, _p7._0));
+	});
+var _thebritican$elm_autocomplete$Autocomplete$resetToLastItem = F4(
+	function (_p9, data, howManyToShow, _p8) {
+		var _p10 = _p9;
+		var _p11 = _p8;
+		return _thebritican$elm_autocomplete$Autocomplete$State(
+			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToLastItem, _p10._0, data, howManyToShow, _p11._0));
+	});
+var _thebritican$elm_autocomplete$Autocomplete$update = F5(
+	function (_p14, _p13, howManyToShow, _p12, data) {
+		var _p15 = _p14;
+		var _p16 = _p13;
+		var _p17 = _p12;
+		var _p18 = A5(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$update, _p15._0, _p16._0, howManyToShow, _p17._0, data);
+		var newState = _p18._0;
+		var maybeMsg = _p18._1;
+		return {
+			ctor: '_Tuple2',
+			_0: _thebritican$elm_autocomplete$Autocomplete$State(newState),
+			_1: maybeMsg
+		};
+	});
+var _thebritican$elm_autocomplete$Autocomplete$Msg = function (a) {
+	return {ctor: 'Msg', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete$subscription = A2(_elm_lang$core$Platform_Sub$map, _thebritican$elm_autocomplete$Autocomplete$Msg, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$subscription);
+var _thebritican$elm_autocomplete$Autocomplete$view = F4(
+	function (_p20, howManyToShow, _p19, data) {
+		var _p21 = _p20;
+		var _p22 = _p19;
+		return A2(
+			_elm_lang$html$Html$map,
+			_thebritican$elm_autocomplete$Autocomplete$Msg,
+			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$view, _p21._0, howManyToShow, _p22._0, data));
+	});
+var _thebritican$elm_autocomplete$Autocomplete$viewWithSections = F4(
+	function (_p24, howManyToShow, _p23, sections) {
+		var _p25 = _p24;
+		var _p26 = _p23;
+		return A2(
+			_elm_lang$html$Html$map,
+			_thebritican$elm_autocomplete$Autocomplete$Msg,
+			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSections, _p25._0, howManyToShow, _p26._0, sections));
+	});
+var _thebritican$elm_autocomplete$Autocomplete$UpdateConfig = function (a) {
+	return {ctor: 'UpdateConfig', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete$updateConfig = function (config) {
+	return _thebritican$elm_autocomplete$Autocomplete$UpdateConfig(
+		_thebritican$elm_autocomplete$Autocomplete_Autocomplete$updateConfig(config));
+};
+var _thebritican$elm_autocomplete$Autocomplete$ViewConfig = function (a) {
+	return {ctor: 'ViewConfig', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete$viewConfig = function (config) {
+	return _thebritican$elm_autocomplete$Autocomplete$ViewConfig(
+		_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewConfig(config));
+};
+var _thebritican$elm_autocomplete$Autocomplete$ViewWithSectionsConfig = function (a) {
+	return {ctor: 'ViewWithSectionsConfig', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete$viewWithSectionsConfig = function (config) {
+	return _thebritican$elm_autocomplete$Autocomplete$ViewWithSectionsConfig(
+		function () {
+			var _p27 = config.section;
+			return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSectionsConfig(
+				_elm_lang$core$Native_Utils.update(
+					config,
+					{section: _p27._0}));
+		}());
+};
+var _thebritican$elm_autocomplete$Autocomplete$SectionConfig = function (a) {
+	return {ctor: 'SectionConfig', _0: a};
+};
+var _thebritican$elm_autocomplete$Autocomplete$sectionConfig = function (section) {
+	return _thebritican$elm_autocomplete$Autocomplete$SectionConfig(
+		_thebritican$elm_autocomplete$Autocomplete_Autocomplete$sectionConfig(section));
+};
 var _rtfeldman$elm_css_util$Css_Helpers$toCssIdentifier = function (identifier) {
 	return A4(
 		_elm_lang$core$Regex$replace,
@@ -14982,23 +15517,6 @@ var _rtfeldman$elm_css$Css$IntentionallyUnsupportedPleaseSeeDocs = {ctor: 'Inten
 var _rtfeldman$elm_css$Css$thin = _rtfeldman$elm_css$Css$IntentionallyUnsupportedPleaseSeeDocs;
 var _rtfeldman$elm_css$Css$thick = _rtfeldman$elm_css$Css$IntentionallyUnsupportedPleaseSeeDocs;
 var _rtfeldman$elm_css$Css$blink = _rtfeldman$elm_css$Css$IntentionallyUnsupportedPleaseSeeDocs;
-var _rtfeldman$elm_css$Css_Colors$white = _rtfeldman$elm_css$Css$hex('ffffff');
-var _rtfeldman$elm_css$Css_Colors$silver = _rtfeldman$elm_css$Css$hex('dddddd');
-var _rtfeldman$elm_css$Css_Colors$gray = _rtfeldman$elm_css$Css$hex('AAAAAA');
-var _rtfeldman$elm_css$Css_Colors$black = _rtfeldman$elm_css$Css$hex('111111');
-var _rtfeldman$elm_css$Css_Colors$purple = _rtfeldman$elm_css$Css$hex('B10DC9');
-var _rtfeldman$elm_css$Css_Colors$fuchsia = _rtfeldman$elm_css$Css$hex('F012BE');
-var _rtfeldman$elm_css$Css_Colors$maroon = _rtfeldman$elm_css$Css$hex('85144b');
-var _rtfeldman$elm_css$Css_Colors$red = _rtfeldman$elm_css$Css$hex('FF4136');
-var _rtfeldman$elm_css$Css_Colors$orange = _rtfeldman$elm_css$Css$hex('FF851B');
-var _rtfeldman$elm_css$Css_Colors$yellow = _rtfeldman$elm_css$Css$hex('FFDC00');
-var _rtfeldman$elm_css$Css_Colors$lime = _rtfeldman$elm_css$Css$hex('01FF70');
-var _rtfeldman$elm_css$Css_Colors$green = _rtfeldman$elm_css$Css$hex('2ECC40');
-var _rtfeldman$elm_css$Css_Colors$olive = _rtfeldman$elm_css$Css$hex('3D9970');
-var _rtfeldman$elm_css$Css_Colors$teal = _rtfeldman$elm_css$Css$hex('39CCCC');
-var _rtfeldman$elm_css$Css_Colors$aqua = _rtfeldman$elm_css$Css$hex('7FDBFF');
-var _rtfeldman$elm_css$Css_Colors$blue = _rtfeldman$elm_css$Css$hex('0074D9');
-var _rtfeldman$elm_css$Css_Colors$navy = _rtfeldman$elm_css$Css$hex('001F3F');
 var _mgold$elm_date_format$Date_Local$french = {
 	date: {
 		months: {jan: 'Janvier', feb: 'Février', mar: 'Mars', apr: 'Avril', may: 'Mai', jun: 'Juin', jul: 'Juillet', aug: 'Août', sep: 'Septembre', oct: 'Octobre', nov: 'Novembre', dec: 'Décembre'},
@@ -17299,783 +17817,151 @@ var _rtfeldman$elm_css$Html_Styled_Attributes$style = function (pairs) {
 		{ctor: '[]'},
 		'');
 };
-var _mburri$elm_webpack_seed$Theme$theme = {
-	primary1: _rtfeldman$elm_css$Css$hex('#003399'),
-	primary2: _rtfeldman$elm_css$Css$hex('#333399'),
-	primary3: _rtfeldman$elm_css$Css$hex('#003366'),
-	primary4: _rtfeldman$elm_css$Css$hex('#3366CC'),
-	primary5: _rtfeldman$elm_css$Css$hex('#6699CC'),
-	secondary1: _rtfeldman$elm_css$Css$hex('#FF9900'),
-	secondary2: _rtfeldman$elm_css$Css$hex('#CC9933'),
-	secondary3: _rtfeldman$elm_css$Css$hex('#996600'),
-	secondary4: _rtfeldman$elm_css$Css$hex('#FFCC33'),
-	secondary5: _rtfeldman$elm_css$Css$hex('#FFCC66')
-};
-var _mburri$elm_webpack_seed$Departure$cellStyle = _rtfeldman$elm_css$Html_Styled_Attributes$css(
+var _rtfeldman$elm_css$Html_Styled_Events$keyCode = A2(_elm_lang$core$Json_Decode$field, 'keyCode', _elm_lang$core$Json_Decode$int);
+var _rtfeldman$elm_css$Html_Styled_Events$targetChecked = A2(
+	_elm_lang$core$Json_Decode$at,
 	{
 		ctor: '::',
-		_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+		_0: 'target',
 		_1: {
 			ctor: '::',
-			_0: _rtfeldman$elm_css$Css$fontSize(
-				_rtfeldman$elm_css$Css$rem(1.5)),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_rtfeldman$elm_css$Css$padding2,
-					_rtfeldman$elm_css$Css$rem(0.5),
-					_rtfeldman$elm_css$Css$rem(0.8)),
-				_1: {
-					ctor: '::',
-					_0: A3(
-						_rtfeldman$elm_css$Css$borderBottom3,
-						_rtfeldman$elm_css$Css$px(1),
-						_rtfeldman$elm_css$Css$solid,
-						_mburri$elm_webpack_seed$Theme$theme.primary5),
-					_1: {ctor: '[]'}
-				}
-			}
-		}
-	});
-var _mburri$elm_webpack_seed$Departure$viewSingleDeparture = function (departure) {
-	var departureTime = function () {
-		var _p0 = _elm_lang$core$Date$fromString(departure.departure);
-		if (_p0.ctor === 'Err') {
-			return _rtfeldman$elm_css$Html_Styled$text('');
-		} else {
-			return _rtfeldman$elm_css$Html_Styled$text(
-				A2(_mgold$elm_date_format$Date_Format$format, '%k:%M', _p0._0));
-		}
-	}();
-	return A2(
-		_rtfeldman$elm_css$Html_Styled$tr,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: A2(
-				_rtfeldman$elm_css$Html_Styled$td,
-				{
-					ctor: '::',
-					_0: _mburri$elm_webpack_seed$Departure$cellStyle,
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: departureTime,
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_rtfeldman$elm_css$Html_Styled$td,
-					{
-						ctor: '::',
-						_0: _mburri$elm_webpack_seed$Departure$cellStyle,
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Html_Styled$text(departure.name),
-						_1: {ctor: '[]'}
-					}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_rtfeldman$elm_css$Html_Styled$td,
-						{
-							ctor: '::',
-							_0: _mburri$elm_webpack_seed$Departure$cellStyle,
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled$text(departure.to),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				}
-			}
-		});
-};
-var _mburri$elm_webpack_seed$Departure$view = function (departures) {
-	return (!_elm_lang$core$List$isEmpty(departures)) ? A2(
-		_rtfeldman$elm_css$Html_Styled$table,
-		{
-			ctor: '::',
-			_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$margin(
-						_rtfeldman$elm_css$Css$rem(2.0)),
-					_1: {
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$width(
-							_rtfeldman$elm_css$Css$px(880)),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$borderCollapse(_rtfeldman$elm_css$Css$collapse),
-							_1: {ctor: '[]'}
-						}
-					}
-				}),
+			_0: 'checked',
 			_1: {ctor: '[]'}
-		},
-		{
-			ctor: '::',
-			_0: A2(
-				_rtfeldman$elm_css$Html_Styled$thead,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: A2(
-						_rtfeldman$elm_css$Html_Styled$tr,
-						{
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-								{
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
-									_1: {
-										ctor: '::',
-										_0: A3(
-											_rtfeldman$elm_css$Css$borderBottom3,
-											_rtfeldman$elm_css$Css$px(1),
-											_rtfeldman$elm_css$Css$solid,
-											_rtfeldman$elm_css$Css_Colors$red),
-										_1: {ctor: '[]'}
-									}
-								}),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: A2(
-								_rtfeldman$elm_css$Html_Styled$th,
-								{
-									ctor: '::',
-									_0: _mburri$elm_webpack_seed$Departure$cellStyle,
-									_1: {
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Html_Styled_Attributes$align('left'),
-										_1: {ctor: '[]'}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Html_Styled$text('Zeit'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_rtfeldman$elm_css$Html_Styled$th,
-									{
-										ctor: '::',
-										_0: _mburri$elm_webpack_seed$Departure$cellStyle,
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Html_Styled$text(''),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: A2(
-										_rtfeldman$elm_css$Html_Styled$th,
-										{
-											ctor: '::',
-											_0: _mburri$elm_webpack_seed$Departure$cellStyle,
-											_1: {
-												ctor: '::',
-												_0: _rtfeldman$elm_css$Html_Styled_Attributes$align('left'),
-												_1: {ctor: '[]'}
-											}
-										},
-										{
-											ctor: '::',
-											_0: _rtfeldman$elm_css$Html_Styled$text('Nach'),
-											_1: {ctor: '[]'}
-										}),
-									_1: {ctor: '[]'}
-								}
-							}
-						}),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_rtfeldman$elm_css$Html_Styled$tbody,
-					{ctor: '[]'},
-					A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$Departure$viewSingleDeparture, departures)),
-				_1: {ctor: '[]'}
-			}
-		}) : _rtfeldman$elm_css$Html_Styled$text('');
-};
-var _mburri$elm_webpack_seed$Departure$Departure = F3(
-	function (a, b, c) {
-		return {to: a, departure: b, name: c};
-	});
-var _mburri$elm_webpack_seed$Departure$decodeDeparture = A4(
-	_elm_lang$core$Json_Decode$map3,
-	_mburri$elm_webpack_seed$Departure$Departure,
-	A2(_elm_lang$core$Json_Decode$field, 'to', _elm_lang$core$Json_Decode$string),
-	A2(
-		_elm_lang$core$Json_Decode$at,
-		{
-			ctor: '::',
-			_0: 'stop',
-			_1: {
-				ctor: '::',
-				_0: 'departure',
-				_1: {ctor: '[]'}
-			}
-		},
-		_elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
-var _mburri$elm_webpack_seed$Departure$decode = A2(
-	_elm_lang$core$Json_Decode$map,
-	_elm_lang$core$Basics$identity,
-	A2(
-		_elm_lang$core$Json_Decode$field,
-		'stationboard',
-		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$Departure$decodeDeparture)));
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$sectionConfig = function (_p0) {
-	var _p1 = _p0;
-	return {toId: _p1.toId, getData: _p1.getData, ul: _p1.ul, li: _p1.li};
-};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSectionsConfig = function (_p2) {
-	var _p3 = _p2;
-	return {toId: _p3.toId, ul: _p3.ul, li: _p3.li, section: _p3.section};
-};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewConfig = function (_p4) {
-	var _p5 = _p4;
-	return {toId: _p5.toId, ul: _p5.ul, li: _p5.li};
-};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPrevious = F3(
-	function (id, selectedId, resultId) {
-		return _elm_lang$core$Native_Utils.eq(selectedId, id) ? _elm_lang$core$Maybe$Just(id) : (_elm_lang$core$Native_Utils.eq(
-			A2(_elm_lang$core$Maybe$withDefault, '', resultId),
-			id) ? _elm_lang$core$Maybe$Just(selectedId) : resultId);
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$getNextItemId = F2(
-	function (ids, selectedId) {
-		return A2(
-			_elm_lang$core$Maybe$withDefault,
-			selectedId,
-			A3(
-				_elm_lang$core$List$foldl,
-				_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPrevious(selectedId),
-				_elm_lang$core$Maybe$Nothing,
-				ids));
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPreviousItemId = F2(
-	function (ids, selectedId) {
-		return A2(
-			_elm_lang$core$Maybe$withDefault,
-			selectedId,
-			A3(
-				_elm_lang$core$List$foldr,
-				_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPrevious(selectedId),
-				_elm_lang$core$Maybe$Nothing,
-				ids));
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$navigateWithKey = F3(
-	function (code, ids, maybeId) {
-		var _p6 = code;
-		switch (_p6) {
-			case 38:
-				return A2(
-					_elm_lang$core$Maybe$map,
-					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getPreviousItemId(ids),
-					maybeId);
-			case 40:
-				return A2(
-					_elm_lang$core$Maybe$map,
-					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$getNextItemId(ids),
-					maybeId);
-			default:
-				return maybeId;
 		}
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId = F3(
-	function (separateSelections, id, state) {
-		return separateSelections ? {
-			key: state.key,
-			mouse: _elm_lang$core$Maybe$Just(id)
-		} : {
-			key: _elm_lang$core$Maybe$Just(id),
-			mouse: _elm_lang$core$Maybe$Just(id)
-		};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$updateConfig = function (_p7) {
-	var _p8 = _p7;
-	return {toId: _p8.toId, onKeyDown: _p8.onKeyDown, onTooLow: _p8.onTooLow, onTooHigh: _p8.onTooHigh, onMouseEnter: _p8.onMouseEnter, onMouseLeave: _p8.onMouseLeave, onMouseClick: _p8.onMouseClick, separateSelections: _p8.separateSelections};
-};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty = {key: _elm_lang$core$Maybe$Nothing, mouse: _elm_lang$core$Maybe$Nothing};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$reset = F2(
-	function (_p10, _p9) {
-		var _p11 = _p10;
-		var _p12 = _p9;
-		return _p11.separateSelections ? {key: _elm_lang$core$Maybe$Nothing, mouse: _p12.mouse} : _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty;
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirst = F3(
-	function (config, data, state) {
-		var _p13 = config;
-		var toId = _p13.toId;
-		var separateSelections = _p13.separateSelections;
-		var setFirstItem = F2(
-			function (datum, newState) {
-				return _elm_lang$core$Native_Utils.update(
-					newState,
-					{
-						key: _elm_lang$core$Maybe$Just(
-							toId(datum))
-					});
-			});
-		var _p14 = _elm_lang$core$List$head(data);
-		if (_p14.ctor === 'Nothing') {
-			return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty;
-		} else {
-			var _p15 = _p14._0;
-			return separateSelections ? A2(
-				setFirstItem,
-				_p15,
-				A2(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$reset, config, state)) : A2(setFirstItem, _p15, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty);
+	},
+	_elm_lang$core$Json_Decode$bool);
+var _rtfeldman$elm_css$Html_Styled_Events$targetValue = A2(
+	_elm_lang$core$Json_Decode$at,
+	{
+		ctor: '::',
+		_0: 'target',
+		_1: {
+			ctor: '::',
+			_0: 'value',
+			_1: {ctor: '[]'}
 		}
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirstItem = F4(
-	function (config, data, howManyToShow, state) {
+	},
+	_elm_lang$core$Json_Decode$string);
+var _rtfeldman$elm_css$Html_Styled_Events$defaultOptions = _elm_lang$virtual_dom$VirtualDom$defaultOptions;
+var _rtfeldman$elm_css$Html_Styled_Events$onWithOptions = F3(
+	function (eventName, options, decoder) {
 		return A3(
-			_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirst,
-			config,
-			A2(_elm_lang$core$List$take, howManyToShow, data),
-			state);
+			_rtfeldman$elm_css$Html_Styled_Internal$InternalAttribute,
+			A3(_elm_lang$virtual_dom$VirtualDom$onWithOptions, eventName, options, decoder),
+			{ctor: '[]'},
+			'');
 	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToLastItem = F4(
-	function (config, data, howManyToShow, state) {
-		var reversedData = _elm_lang$core$List$reverse(
-			A2(_elm_lang$core$List$take, howManyToShow, data));
-		return A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirst, config, reversedData, state);
+var _rtfeldman$elm_css$Html_Styled_Events$on = F2(
+	function (eventName, decoder) {
+		return A3(
+			_rtfeldman$elm_css$Html_Styled_Internal$InternalAttribute,
+			A2(_elm_lang$virtual_dom$VirtualDom$on, eventName, decoder),
+			{ctor: '[]'},
+			'');
 	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$State = F2(
-	function (a, b) {
-		return {key: a, mouse: b};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$UpdateConfig = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {onKeyDown: a, onTooLow: b, onTooHigh: c, onMouseEnter: d, onMouseLeave: e, onMouseClick: f, toId: g, separateSelections: h};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$HtmlDetails = F2(
-	function (a, b) {
-		return {attributes: a, children: b};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$ViewConfig = F3(
-	function (a, b, c) {
-		return {toId: a, ul: b, li: c};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$ViewWithSectionsConfig = F4(
-	function (a, b, c, d) {
-		return {toId: a, ul: b, li: c, section: d};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$SectionConfig = F4(
-	function (a, b, c, d) {
-		return {toId: a, getData: b, ul: c, li: d};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$SectionNode = F3(
-	function (a, b, c) {
-		return {nodeType: a, attributes: b, children: c};
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp = {ctor: 'NoOp'};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg = function (msg) {
+var _rtfeldman$elm_css$Html_Styled_Events$onFocus = function (msg) {
 	return A2(
-		_elm_lang$html$Html_Attributes$map,
-		function (_p16) {
-			return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
-		},
-		msg);
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'focus',
+		_elm_lang$core$Json_Decode$succeed(msg));
 };
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseClick = function (a) {
-	return {ctor: 'MouseClick', _0: a};
+var _rtfeldman$elm_css$Html_Styled_Events$onBlur = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'blur',
+		_elm_lang$core$Json_Decode$succeed(msg));
 };
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseLeave = function (a) {
-	return {ctor: 'MouseLeave', _0: a};
+var _rtfeldman$elm_css$Html_Styled_Events$onSubmitOptions = _elm_lang$core$Native_Utils.update(
+	_rtfeldman$elm_css$Html_Styled_Events$defaultOptions,
+	{preventDefault: true});
+var _rtfeldman$elm_css$Html_Styled_Events$onSubmit = function (msg) {
+	return A3(
+		_rtfeldman$elm_css$Html_Styled_Events$onWithOptions,
+		'submit',
+		_rtfeldman$elm_css$Html_Styled_Events$onSubmitOptions,
+		_elm_lang$core$Json_Decode$succeed(msg));
 };
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseEnter = function (a) {
-	return {ctor: 'MouseEnter', _0: a};
+var _rtfeldman$elm_css$Html_Styled_Events$onCheck = function (tagger) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'change',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _rtfeldman$elm_css$Html_Styled_Events$targetChecked));
 };
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewData = F3(
-	function (_p18, _p17, data) {
-		var _p19 = _p18;
-		var _p20 = _p17;
-		var id = _p19.toId(data);
-		var isSelected = function (maybeId) {
-			var _p21 = maybeId;
-			if (_p21.ctor === 'Just') {
-				return _elm_lang$core$Native_Utils.eq(_p21._0, id);
-			} else {
-				return false;
-			}
-		};
-		var listItemData = A3(
-			_p19.li,
-			isSelected(_p20.key),
-			isSelected(_p20.mouse),
-			data);
-		var customAttributes = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, listItemData.attributes);
-		var customLiAttr = A2(
-			_elm_lang$core$List$append,
-			customAttributes,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Events$onMouseEnter(
-					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseEnter(id)),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Events$onMouseLeave(
-						_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseLeave(id)),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(
-							_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseClick(id)),
-						_1: {ctor: '[]'}
-					}
-				}
-			});
-		return A2(
-			_elm_lang$html$Html$li,
-			customLiAttr,
-			A2(
-				_elm_lang$core$List$map,
-				_elm_lang$html$Html$map(
-					function (html) {
-						return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
-					}),
-				listItemData.children));
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewSection = F3(
-	function (config, state, section) {
-		var getKeyedItems = function (datum) {
-			return {
-				ctor: '_Tuple2',
-				_0: config.toId(datum),
-				_1: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewData, config, state, datum)
-			};
-		};
-		var viewItemList = A2(
-			_elm_lang$html$Html_Keyed$ul,
-			A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, config.ul),
-			A2(
-				_elm_lang$core$List$map,
-				getKeyedItems,
-				config.section.getData(section)));
-		var sectionNode = config.section.li(section);
-		var attributes = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, sectionNode.attributes);
-		var customChildren = A2(
-			_elm_lang$core$List$map,
-			_elm_lang$html$Html$map(
-				function (html) {
-					return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
-				}),
-			sectionNode.children);
-		var children = A2(
-			_elm_lang$core$List$append,
-			customChildren,
-			{
-				ctor: '::',
-				_0: viewItemList,
-				_1: {ctor: '[]'}
-			});
-		return A2(
-			_elm_lang$html$Html$li,
-			attributes,
-			{
-				ctor: '::',
-				_0: A3(_elm_lang$html$Html$node, sectionNode.nodeType, attributes, children),
-				_1: {ctor: '[]'}
-			});
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSections = F4(
-	function (config, howManyToShow, state, sections) {
-		var getKeyedItems = function (section) {
-			return {
-				ctor: '_Tuple2',
-				_0: config.section.toId(section),
-				_1: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewSection, config, state, section)
-			};
-		};
-		return A2(
-			_elm_lang$html$Html_Keyed$ul,
-			A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, config.section.ul),
-			A2(_elm_lang$core$List$map, getKeyedItems, sections));
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewItem = F3(
-	function (_p23, _p22, data) {
-		var _p24 = _p23;
-		var _p25 = _p22;
-		var id = _p24.toId(data);
-		var isSelected = function (maybeId) {
-			var _p26 = maybeId;
-			if (_p26.ctor === 'Just') {
-				return _elm_lang$core$Native_Utils.eq(_p26._0, id);
-			} else {
-				return false;
-			}
-		};
-		var listItemData = A3(
-			_p24.li,
-			isSelected(_p25.key),
-			isSelected(_p25.mouse),
-			data);
-		var customAttributes = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, listItemData.attributes);
-		var customLiAttr = A2(
-			_elm_lang$core$List$append,
-			customAttributes,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Events$onMouseEnter(
-					_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseEnter(id)),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Events$onMouseLeave(
-						_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseLeave(id)),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(
-							_thebritican$elm_autocomplete$Autocomplete_Autocomplete$MouseClick(id)),
-						_1: {ctor: '[]'}
-					}
-				}
-			});
-		return A2(
-			_elm_lang$html$Html$li,
-			customLiAttr,
-			A2(
-				_elm_lang$core$List$map,
-				_elm_lang$html$Html$map(
-					function (html) {
-						return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$NoOp;
-					}),
-				listItemData.children));
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewList = F4(
-	function (config, howManyToShow, state, data) {
-		var getKeyedItems = function (datum) {
-			return {
-				ctor: '_Tuple2',
-				_0: config.toId(datum),
-				_1: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewItem, config, state, datum)
-			};
-		};
-		var customUlAttr = A2(_elm_lang$core$List$map, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$mapNeverToMsg, config.ul);
-		return A2(
-			_elm_lang$html$Html_Keyed$ul,
-			customUlAttr,
-			A2(
-				_elm_lang$core$List$map,
-				getKeyedItems,
-				A2(_elm_lang$core$List$take, howManyToShow, data)));
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$view = F4(
-	function (config, howManyToShow, state, data) {
-		return A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewList, config, howManyToShow, state, data);
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooHigh = {ctor: 'WentTooHigh'};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooLow = {ctor: 'WentTooLow'};
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$update = F5(
-	function (config, msg, howManyToShow, state, data) {
-		update:
-		while (true) {
-			var _p27 = msg;
-			switch (_p27.ctor) {
-				case 'KeyDown':
-					var _p28 = _p27._0;
-					var boundedList = A2(
-						_elm_lang$core$List$take,
-						howManyToShow,
-						A2(_elm_lang$core$List$map, config.toId, data));
-					var newKey = A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$navigateWithKey, _p28, boundedList, state.key);
-					if (_elm_lang$core$Native_Utils.eq(newKey, state.key) && _elm_lang$core$Native_Utils.eq(_p28, 38)) {
-						var _v15 = config,
-							_v16 = _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooHigh,
-							_v17 = howManyToShow,
-							_v18 = state,
-							_v19 = data;
-						config = _v15;
-						msg = _v16;
-						howManyToShow = _v17;
-						state = _v18;
-						data = _v19;
-						continue update;
-					} else {
-						if (_elm_lang$core$Native_Utils.eq(newKey, state.key) && _elm_lang$core$Native_Utils.eq(_p28, 40)) {
-							var _v20 = config,
-								_v21 = _thebritican$elm_autocomplete$Autocomplete_Autocomplete$WentTooLow,
-								_v22 = howManyToShow,
-								_v23 = state,
-								_v24 = data;
-							config = _v20;
-							msg = _v21;
-							howManyToShow = _v22;
-							state = _v23;
-							data = _v24;
-							continue update;
-						} else {
-							if (config.separateSelections) {
-								return {
-									ctor: '_Tuple2',
-									_0: _elm_lang$core$Native_Utils.update(
-										state,
-										{key: newKey}),
-									_1: A2(config.onKeyDown, _p28, newKey)
-								};
-							} else {
-								return {
-									ctor: '_Tuple2',
-									_0: {key: newKey, mouse: newKey},
-									_1: A2(config.onKeyDown, _p28, newKey)
-								};
-							}
-						}
-					}
-				case 'WentTooLow':
-					return {ctor: '_Tuple2', _0: state, _1: config.onTooLow};
-				case 'WentTooHigh':
-					return {ctor: '_Tuple2', _0: state, _1: config.onTooHigh};
-				case 'MouseEnter':
-					var _p29 = _p27._0;
-					return {
-						ctor: '_Tuple2',
-						_0: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId, config.separateSelections, _p29, state),
-						_1: config.onMouseEnter(_p29)
-					};
-				case 'MouseLeave':
-					var _p30 = _p27._0;
-					return {
-						ctor: '_Tuple2',
-						_0: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId, config.separateSelections, _p30, state),
-						_1: config.onMouseLeave(_p30)
-					};
-				case 'MouseClick':
-					var _p31 = _p27._0;
-					return {
-						ctor: '_Tuple2',
-						_0: A3(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetMouseStateWithId, config.separateSelections, _p31, state),
-						_1: config.onMouseClick(_p31)
-					};
-				default:
-					return {ctor: '_Tuple2', _0: state, _1: _elm_lang$core$Maybe$Nothing};
-			}
-		}
-	});
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$KeyDown = function (a) {
-	return {ctor: 'KeyDown', _0: a};
+var _rtfeldman$elm_css$Html_Styled_Events$onInput = function (tagger) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'input',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _rtfeldman$elm_css$Html_Styled_Events$targetValue));
 };
-var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$subscription = _elm_lang$keyboard$Keyboard$downs(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$KeyDown);
-var _thebritican$elm_autocomplete$Autocomplete$HtmlDetails = F2(
+var _rtfeldman$elm_css$Html_Styled_Events$onMouseOut = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'mouseout',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onMouseOver = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'mouseover',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onMouseLeave = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'mouseleave',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onMouseEnter = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'mouseenter',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onMouseUp = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'mouseup',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onMouseDown = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'mousedown',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onDoubleClick = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'dblclick',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$onClick = function (msg) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled_Events$on,
+		'click',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _rtfeldman$elm_css$Html_Styled_Events$Options = F2(
 	function (a, b) {
-		return {attributes: a, children: b};
+		return {stopPropagation: a, preventDefault: b};
 	});
-var _thebritican$elm_autocomplete$Autocomplete$SectionNode = F3(
-	function (a, b, c) {
-		return {nodeType: a, attributes: b, children: c};
-	});
-var _thebritican$elm_autocomplete$Autocomplete$State = function (a) {
-	return {ctor: 'State', _0: a};
-};
-var _thebritican$elm_autocomplete$Autocomplete$empty = _thebritican$elm_autocomplete$Autocomplete$State(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$empty);
-var _thebritican$elm_autocomplete$Autocomplete$reset = F2(
-	function (_p1, _p0) {
-		var _p2 = _p1;
-		var _p3 = _p0;
-		return _thebritican$elm_autocomplete$Autocomplete$State(
-			A2(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$reset, _p2._0, _p3._0));
-	});
-var _thebritican$elm_autocomplete$Autocomplete$resetToFirstItem = F4(
-	function (_p5, data, howManyToShow, _p4) {
-		var _p6 = _p5;
-		var _p7 = _p4;
-		return _thebritican$elm_autocomplete$Autocomplete$State(
-			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToFirstItem, _p6._0, data, howManyToShow, _p7._0));
-	});
-var _thebritican$elm_autocomplete$Autocomplete$resetToLastItem = F4(
-	function (_p9, data, howManyToShow, _p8) {
-		var _p10 = _p9;
-		var _p11 = _p8;
-		return _thebritican$elm_autocomplete$Autocomplete$State(
-			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$resetToLastItem, _p10._0, data, howManyToShow, _p11._0));
-	});
-var _thebritican$elm_autocomplete$Autocomplete$update = F5(
-	function (_p14, _p13, howManyToShow, _p12, data) {
-		var _p15 = _p14;
-		var _p16 = _p13;
-		var _p17 = _p12;
-		var _p18 = A5(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$update, _p15._0, _p16._0, howManyToShow, _p17._0, data);
-		var newState = _p18._0;
-		var maybeMsg = _p18._1;
-		return {
-			ctor: '_Tuple2',
-			_0: _thebritican$elm_autocomplete$Autocomplete$State(newState),
-			_1: maybeMsg
-		};
-	});
-var _thebritican$elm_autocomplete$Autocomplete$Msg = function (a) {
-	return {ctor: 'Msg', _0: a};
-};
-var _thebritican$elm_autocomplete$Autocomplete$subscription = A2(_elm_lang$core$Platform_Sub$map, _thebritican$elm_autocomplete$Autocomplete$Msg, _thebritican$elm_autocomplete$Autocomplete_Autocomplete$subscription);
-var _thebritican$elm_autocomplete$Autocomplete$view = F4(
-	function (_p20, howManyToShow, _p19, data) {
-		var _p21 = _p20;
-		var _p22 = _p19;
-		return A2(
-			_elm_lang$html$Html$map,
-			_thebritican$elm_autocomplete$Autocomplete$Msg,
-			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$view, _p21._0, howManyToShow, _p22._0, data));
-	});
-var _thebritican$elm_autocomplete$Autocomplete$viewWithSections = F4(
-	function (_p24, howManyToShow, _p23, sections) {
-		var _p25 = _p24;
-		var _p26 = _p23;
-		return A2(
-			_elm_lang$html$Html$map,
-			_thebritican$elm_autocomplete$Autocomplete$Msg,
-			A4(_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSections, _p25._0, howManyToShow, _p26._0, sections));
-	});
-var _thebritican$elm_autocomplete$Autocomplete$UpdateConfig = function (a) {
-	return {ctor: 'UpdateConfig', _0: a};
-};
-var _thebritican$elm_autocomplete$Autocomplete$updateConfig = function (config) {
-	return _thebritican$elm_autocomplete$Autocomplete$UpdateConfig(
-		_thebritican$elm_autocomplete$Autocomplete_Autocomplete$updateConfig(config));
-};
-var _thebritican$elm_autocomplete$Autocomplete$ViewConfig = function (a) {
-	return {ctor: 'ViewConfig', _0: a};
-};
-var _thebritican$elm_autocomplete$Autocomplete$viewConfig = function (config) {
-	return _thebritican$elm_autocomplete$Autocomplete$ViewConfig(
-		_thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewConfig(config));
-};
-var _thebritican$elm_autocomplete$Autocomplete$ViewWithSectionsConfig = function (a) {
-	return {ctor: 'ViewWithSectionsConfig', _0: a};
-};
-var _thebritican$elm_autocomplete$Autocomplete$viewWithSectionsConfig = function (config) {
-	return _thebritican$elm_autocomplete$Autocomplete$ViewWithSectionsConfig(
-		function () {
-			var _p27 = config.section;
-			return _thebritican$elm_autocomplete$Autocomplete_Autocomplete$viewWithSectionsConfig(
-				_elm_lang$core$Native_Utils.update(
-					config,
-					{section: _p27._0}));
-		}());
-};
-var _thebritican$elm_autocomplete$Autocomplete$SectionConfig = function (a) {
-	return {ctor: 'SectionConfig', _0: a};
-};
-var _thebritican$elm_autocomplete$Autocomplete$sectionConfig = function (section) {
-	return _thebritican$elm_autocomplete$Autocomplete$SectionConfig(
-		_thebritican$elm_autocomplete$Autocomplete_Autocomplete$sectionConfig(section));
-};
+var _rtfeldman$elm_css$Css_Colors$white = _rtfeldman$elm_css$Css$hex('ffffff');
+var _rtfeldman$elm_css$Css_Colors$silver = _rtfeldman$elm_css$Css$hex('dddddd');
+var _rtfeldman$elm_css$Css_Colors$gray = _rtfeldman$elm_css$Css$hex('AAAAAA');
+var _rtfeldman$elm_css$Css_Colors$black = _rtfeldman$elm_css$Css$hex('111111');
+var _rtfeldman$elm_css$Css_Colors$purple = _rtfeldman$elm_css$Css$hex('B10DC9');
+var _rtfeldman$elm_css$Css_Colors$fuchsia = _rtfeldman$elm_css$Css$hex('F012BE');
+var _rtfeldman$elm_css$Css_Colors$maroon = _rtfeldman$elm_css$Css$hex('85144b');
+var _rtfeldman$elm_css$Css_Colors$red = _rtfeldman$elm_css$Css$hex('FF4136');
+var _rtfeldman$elm_css$Css_Colors$orange = _rtfeldman$elm_css$Css$hex('FF851B');
+var _rtfeldman$elm_css$Css_Colors$yellow = _rtfeldman$elm_css$Css$hex('FFDC00');
+var _rtfeldman$elm_css$Css_Colors$lime = _rtfeldman$elm_css$Css$hex('01FF70');
+var _rtfeldman$elm_css$Css_Colors$green = _rtfeldman$elm_css$Css$hex('2ECC40');
+var _rtfeldman$elm_css$Css_Colors$olive = _rtfeldman$elm_css$Css$hex('3D9970');
+var _rtfeldman$elm_css$Css_Colors$teal = _rtfeldman$elm_css$Css$hex('39CCCC');
+var _rtfeldman$elm_css$Css_Colors$aqua = _rtfeldman$elm_css$Css$hex('7FDBFF');
+var _rtfeldman$elm_css$Css_Colors$blue = _rtfeldman$elm_css$Css$hex('0074D9');
+var _rtfeldman$elm_css$Css_Colors$navy = _rtfeldman$elm_css$Css$hex('001F3F');
 var _rtfeldman$elm_css$Css_Media$unparameterizedFeature = function (key) {
 	return {feature: key, value: _elm_lang$core$Maybe$Nothing};
 };
@@ -18630,163 +18516,457 @@ var _rtfeldman$elm_css$Css_Foreign$global = function (snippets) {
 							_elm_lang$core$List$singleton(
 								_rtfeldman$elm_css$Css_Preprocess$stylesheet(snippets))))))));
 };
-var _rtfeldman$elm_css$Html_Styled_Events$keyCode = A2(_elm_lang$core$Json_Decode$field, 'keyCode', _elm_lang$core$Json_Decode$int);
-var _rtfeldman$elm_css$Html_Styled_Events$targetChecked = A2(
-	_elm_lang$core$Json_Decode$at,
+var _mburri$elm_webpack_seed$Styles$departuresTable = A2(
+	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
+	_rtfeldman$elm_css$Html_Styled$table,
 	{
 		ctor: '::',
-		_0: 'target',
+		_0: _rtfeldman$elm_css$Css$margin(
+			_rtfeldman$elm_css$Css$rem(2.0)),
 		_1: {
 			ctor: '::',
-			_0: 'checked',
-			_1: {ctor: '[]'}
+			_0: _rtfeldman$elm_css$Css$width(
+				_rtfeldman$elm_css$Css$px(880)),
+			_1: {
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$borderCollapse(_rtfeldman$elm_css$Css$collapse),
+				_1: {ctor: '[]'}
+			}
 		}
-	},
-	_elm_lang$core$Json_Decode$bool);
-var _rtfeldman$elm_css$Html_Styled_Events$targetValue = A2(
-	_elm_lang$core$Json_Decode$at,
+	});
+var _mburri$elm_webpack_seed$Styles$recentStationList = A2(
+	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
+	_rtfeldman$elm_css$Html_Styled$ul,
 	{
 		ctor: '::',
-		_0: 'target',
+		_0: _rtfeldman$elm_css$Css$fontSize(
+			_rtfeldman$elm_css$Css$rem(2.0)),
 		_1: {
 			ctor: '::',
-			_0: 'value',
+			_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+			_1: {
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$listStyle(_rtfeldman$elm_css$Css$none),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$padding(
+						_rtfeldman$elm_css$Css$rem(2.0)),
+					_1: {ctor: '[]'}
+				}
+			}
+		}
+	});
+var _mburri$elm_webpack_seed$Styles$rowStyle = _rtfeldman$elm_css$Html_Styled_Attributes$css(
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+		_1: {
+			ctor: '::',
+			_0: A3(
+				_rtfeldman$elm_css$Css$borderBottom3,
+				_rtfeldman$elm_css$Css$px(1),
+				_rtfeldman$elm_css$Css$solid,
+				_rtfeldman$elm_css$Css_Colors$red),
 			_1: {ctor: '[]'}
 		}
-	},
-	_elm_lang$core$Json_Decode$string);
-var _rtfeldman$elm_css$Html_Styled_Events$defaultOptions = _elm_lang$virtual_dom$VirtualDom$defaultOptions;
-var _rtfeldman$elm_css$Html_Styled_Events$onWithOptions = F3(
-	function (eventName, options, decoder) {
-		return A3(
-			_rtfeldman$elm_css$Html_Styled_Internal$InternalAttribute,
-			A3(_elm_lang$virtual_dom$VirtualDom$onWithOptions, eventName, options, decoder),
-			{ctor: '[]'},
-			'');
 	});
-var _rtfeldman$elm_css$Html_Styled_Events$on = F2(
-	function (eventName, decoder) {
-		return A3(
-			_rtfeldman$elm_css$Html_Styled_Internal$InternalAttribute,
-			A2(_elm_lang$virtual_dom$VirtualDom$on, eventName, decoder),
-			{ctor: '[]'},
-			'');
+var _mburri$elm_webpack_seed$Styles$title = _rtfeldman$elm_css$Html_Styled_Attributes$css(
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$display(_rtfeldman$elm_css$Css$block),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+			_1: {
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$fontSize(
+					_rtfeldman$elm_css$Css$rem(2.5)),
+				_1: {ctor: '[]'}
+			}
+		}
 	});
-var _rtfeldman$elm_css$Html_Styled_Events$onFocus = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'focus',
-		_elm_lang$core$Json_Decode$succeed(msg));
+var _mburri$elm_webpack_seed$Styles$theme = {
+	primary1: _rtfeldman$elm_css$Css$hex('#003399'),
+	primary2: _rtfeldman$elm_css$Css$hex('#333399'),
+	primary3: _rtfeldman$elm_css$Css$hex('#003366'),
+	primary4: _rtfeldman$elm_css$Css$hex('#3366CC'),
+	primary5: _rtfeldman$elm_css$Css$hex('#6699CC'),
+	secondary1: _rtfeldman$elm_css$Css$hex('#FF9900'),
+	secondary2: _rtfeldman$elm_css$Css$hex('#CC9933'),
+	secondary3: _rtfeldman$elm_css$Css$hex('#996600'),
+	secondary4: _rtfeldman$elm_css$Css$hex('#FFCC33'),
+	secondary5: _rtfeldman$elm_css$Css$hex('#FFCC66')
 };
-var _rtfeldman$elm_css$Html_Styled_Events$onBlur = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'blur',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onSubmitOptions = _elm_lang$core$Native_Utils.update(
-	_rtfeldman$elm_css$Html_Styled_Events$defaultOptions,
-	{preventDefault: true});
-var _rtfeldman$elm_css$Html_Styled_Events$onSubmit = function (msg) {
-	return A3(
-		_rtfeldman$elm_css$Html_Styled_Events$onWithOptions,
-		'submit',
-		_rtfeldman$elm_css$Html_Styled_Events$onSubmitOptions,
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onCheck = function (tagger) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'change',
-		A2(_elm_lang$core$Json_Decode$map, tagger, _rtfeldman$elm_css$Html_Styled_Events$targetChecked));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onInput = function (tagger) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'input',
-		A2(_elm_lang$core$Json_Decode$map, tagger, _rtfeldman$elm_css$Html_Styled_Events$targetValue));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onMouseOut = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'mouseout',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onMouseOver = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'mouseover',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onMouseLeave = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'mouseleave',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onMouseEnter = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'mouseenter',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onMouseUp = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'mouseup',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onMouseDown = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'mousedown',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onDoubleClick = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'dblclick',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$onClick = function (msg) {
-	return A2(
-		_rtfeldman$elm_css$Html_Styled_Events$on,
-		'click',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _rtfeldman$elm_css$Html_Styled_Events$Options = F2(
-	function (a, b) {
-		return {stopPropagation: a, preventDefault: b};
+var _mburri$elm_webpack_seed$Styles$cellStyle = _rtfeldman$elm_css$Html_Styled_Attributes$css(
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css$fontSize(
+				_rtfeldman$elm_css$Css$rem(1.5)),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_rtfeldman$elm_css$Css$padding2,
+					_rtfeldman$elm_css$Css$rem(0.5),
+					_rtfeldman$elm_css$Css$rem(0.8)),
+				_1: {
+					ctor: '::',
+					_0: A3(
+						_rtfeldman$elm_css$Css$borderBottom3,
+						_rtfeldman$elm_css$Css$px(1),
+						_rtfeldman$elm_css$Css$solid,
+						_mburri$elm_webpack_seed$Styles$theme.primary5),
+					_1: {ctor: '[]'}
+				}
+			}
+		}
 	});
-var _mburri$elm_webpack_seed$Station$matches = F2(
-	function (query, station) {
-		return A2(
-			_elm_lang$core$String$contains,
-			_elm_lang$core$String$toLower(query),
-			_elm_lang$core$String$toLower(station.name));
+var _mburri$elm_webpack_seed$Styles$modeButton = A2(
+	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
+	_rtfeldman$elm_css$Html_Styled$button,
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$padding(
+			_rtfeldman$elm_css$Css$rem(0.5)),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css$marginBottom(
+				_rtfeldman$elm_css$Css$rem(0.5)),
+			_1: {
+				ctor: '::',
+				_0: A3(
+					_rtfeldman$elm_css$Css$border3,
+					_rtfeldman$elm_css$Css$px(1),
+					_rtfeldman$elm_css$Css$solid,
+					_mburri$elm_webpack_seed$Styles$theme.primary3),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$fontSize(
+						_rtfeldman$elm_css$Css$rem(1.0)),
+					_1: {
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Css$fontWeight(_rtfeldman$elm_css$Css$bold),
+						_1: {
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Css$color(_mburri$elm_webpack_seed$Styles$theme.primary1),
+							_1: {
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.secondary1),
+								_1: {
+									ctor: '::',
+									_0: _rtfeldman$elm_css$Css$hover(
+										{
+											ctor: '::',
+											_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.secondary2),
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	});
-var _mburri$elm_webpack_seed$Station$acceptableStations = F2(
-	function (query, stations) {
-		return A2(
-			_elm_lang$core$List$filter,
-			_mburri$elm_webpack_seed$Station$matches(query),
-			stations);
+var _mburri$elm_webpack_seed$Styles$searchField = A2(
+	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
+	_rtfeldman$elm_css$Html_Styled$input,
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$fontSize(
+			_rtfeldman$elm_css$Css$rem(2.0)),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css$width(
+				_rtfeldman$elm_css$Css$pct(90)),
+			_1: {
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$padding(
+						_rtfeldman$elm_css$Css$rem(0.5)),
+					_1: {
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Css$borderRadius(
+							_rtfeldman$elm_css$Css$rem(0.2)),
+						_1: {
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Css$backgroundColor(_rtfeldman$elm_css$Css_Colors$white),
+							_1: {
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Css$color(_mburri$elm_webpack_seed$Styles$theme.primary5),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		}
 	});
-var _mburri$elm_webpack_seed$Station$Station = function (a) {
+var _mburri$elm_webpack_seed$Styles$recentStationListItem = A2(
+	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
+	_rtfeldman$elm_css$Html_Styled$li,
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css$paddingLeft(
+				_rtfeldman$elm_css$Css$rem(2.0)),
+			_1: {
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$paddingRight(
+					_rtfeldman$elm_css$Css$rem(2.0)),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$width(
+						_rtfeldman$elm_css$Css$pct(30)),
+					_1: {
+						ctor: '::',
+						_0: A3(
+							_rtfeldman$elm_css$Css$borderBottom3,
+							_rtfeldman$elm_css$Css$px(1),
+							_rtfeldman$elm_css$Css$solid,
+							_mburri$elm_webpack_seed$Styles$theme.primary5),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
+var _mburri$elm_webpack_seed$Styles$errorBox = A2(
+	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
+	_rtfeldman$elm_css$Html_Styled$div,
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.secondary1),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+			_1: {
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$margin(
+					_rtfeldman$elm_css$Css$rem(2.0)),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$padding(
+						_rtfeldman$elm_css$Css$rem(1.5)),
+					_1: {ctor: '[]'}
+				}
+			}
+		}
+	});
+var _mburri$elm_webpack_seed$Styles$AutocompleteItem = {ctor: 'AutocompleteItem'};
+var _mburri$elm_webpack_seed$Styles$AutocompleteList = {ctor: 'AutocompleteList'};
+var _mburri$elm_webpack_seed$Styles$AutocompleteMenu = {ctor: 'AutocompleteMenu'};
+var _mburri$elm_webpack_seed$Styles$MouseSelected = {ctor: 'MouseSelected'};
+var _mburri$elm_webpack_seed$Styles$KeySelected = {ctor: 'KeySelected'};
+var _mburri$elm_webpack_seed$Styles$globalStyles = _rtfeldman$elm_css$Css_Foreign$global(
+	{
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css_Foreign$html(
+			{
+				ctor: '::',
+				_0: _rtfeldman$elm_css$Css$fontSize(
+					_rtfeldman$elm_css$Css$px(20)),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$width(
+						_rtfeldman$elm_css$Css$pct(100)),
+					_1: {ctor: '[]'}
+				}
+			}),
+		_1: {
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Css_Foreign$body(
+				{
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$width(
+						_rtfeldman$elm_css$Css$px(960)),
+					_1: {
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
+						_1: {
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Css$fontFamily(_rtfeldman$elm_css$Css$sansSerif),
+							_1: {
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.primary1),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_rtfeldman$elm_css$Css_Foreign$class,
+					_mburri$elm_webpack_seed$Styles$KeySelected,
+					{
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.primary3),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_rtfeldman$elm_css$Css_Foreign$class,
+						_mburri$elm_webpack_seed$Styles$MouseSelected,
+						{
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.primary3),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_rtfeldman$elm_css$Css_Foreign$class,
+							_mburri$elm_webpack_seed$Styles$AutocompleteMenu,
+							{
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Css$margin(
+									_rtfeldman$elm_css$Css$rem(2.0)),
+								_1: {
+									ctor: '::',
+									_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
+									_1: {ctor: '[]'}
+								}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_rtfeldman$elm_css$Css_Foreign$class,
+								_mburri$elm_webpack_seed$Styles$AutocompleteItem,
+								{
+									ctor: '::',
+									_0: _rtfeldman$elm_css$Css$display(_rtfeldman$elm_css$Css$block),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_rtfeldman$elm_css$Css$padding2,
+											_rtfeldman$elm_css$Css$rem(0.3),
+											_rtfeldman$elm_css$Css$rem(0.8)),
+										_1: {
+											ctor: '::',
+											_0: _rtfeldman$elm_css$Css$fontSize(
+												_rtfeldman$elm_css$Css$rem(1.5)),
+											_1: {
+												ctor: '::',
+												_0: A3(
+													_rtfeldman$elm_css$Css$borderBottom3,
+													_rtfeldman$elm_css$Css$px(1),
+													_rtfeldman$elm_css$Css$solid,
+													_mburri$elm_webpack_seed$Styles$theme.primary5),
+												_1: {
+													ctor: '::',
+													_0: _rtfeldman$elm_css$Css$cursor(_rtfeldman$elm_css$Css$pointer),
+													_1: {ctor: '[]'}
+												}
+											}
+										}
+									}
+								}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_rtfeldman$elm_css$Css_Foreign$class,
+									_mburri$elm_webpack_seed$Styles$AutocompleteList,
+									{
+										ctor: '::',
+										_0: _rtfeldman$elm_css$Css$listStyle(_rtfeldman$elm_css$Css$none),
+										_1: {
+											ctor: '::',
+											_0: _rtfeldman$elm_css$Css$padding(
+												_rtfeldman$elm_css$Css$px(0)),
+											_1: {
+												ctor: '::',
+												_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
+												_1: {
+													ctor: '::',
+													_0: _rtfeldman$elm_css$Css$maxHeight(
+														_rtfeldman$elm_css$Css$rem(12)),
+													_1: {
+														ctor: '::',
+														_0: _rtfeldman$elm_css$Css$overflowY(_rtfeldman$elm_css$Css$auto),
+														_1: {ctor: '[]'}
+													}
+												}
+											}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+var _mburri$elm_webpack_seed$TransportApi$baseUrl = 'https://transport.opendata.ch/v1';
+var _mburri$elm_webpack_seed$TransportApi$Station = function (a) {
 	return {name: a};
 };
-var _mburri$elm_webpack_seed$Station$decodeStation = A2(
+var _mburri$elm_webpack_seed$TransportApi$decodeStation = A2(
 	_elm_lang$core$Json_Decode$map,
-	_mburri$elm_webpack_seed$Station$Station,
+	_mburri$elm_webpack_seed$TransportApi$Station,
 	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
-var _mburri$elm_webpack_seed$Station$decodeStations = A2(
+var _mburri$elm_webpack_seed$TransportApi$decodeStations = A2(
 	_elm_lang$core$Json_Decode$map,
 	_elm_lang$core$Basics$identity,
 	A2(
 		_elm_lang$core$Json_Decode$field,
 		'stations',
-		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$Station$decodeStation)));
-var _mburri$elm_webpack_seed$Main$toErrorMessage = function (error) {
+		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$TransportApi$decodeStation)));
+var _mburri$elm_webpack_seed$TransportApi$searchStation = function (query) {
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_mburri$elm_webpack_seed$TransportApi$baseUrl,
+		A2(_elm_lang$core$Basics_ops['++'], '/locations?query=', query));
+	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$TransportApi$decodeStations);
+};
+var _mburri$elm_webpack_seed$TransportApi$Departure = F3(
+	function (a, b, c) {
+		return {to: a, departure: b, name: c};
+	});
+var _mburri$elm_webpack_seed$TransportApi$decodeDeparture = A4(
+	_elm_lang$core$Json_Decode$map3,
+	_mburri$elm_webpack_seed$TransportApi$Departure,
+	A2(_elm_lang$core$Json_Decode$field, 'to', _elm_lang$core$Json_Decode$string),
+	A2(
+		_elm_lang$core$Json_Decode$at,
+		{
+			ctor: '::',
+			_0: 'stop',
+			_1: {
+				ctor: '::',
+				_0: 'departure',
+				_1: {ctor: '[]'}
+			}
+		},
+		_elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
+var _mburri$elm_webpack_seed$TransportApi$decode = A2(
+	_elm_lang$core$Json_Decode$map,
+	_elm_lang$core$Basics$identity,
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'stationboard',
+		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$TransportApi$decodeDeparture)));
+var _mburri$elm_webpack_seed$TransportApi$getDepartures = function (stationName) {
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_mburri$elm_webpack_seed$TransportApi$baseUrl,
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			'/stationboard?station=',
+			A2(_elm_lang$core$Basics_ops['++'], stationName, '&limit=20')));
+	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$TransportApi$decode);
+};
+var _mburri$elm_webpack_seed$StationBoard$toErrorMessage = function (error) {
 	var _p0 = error;
 	switch (_p0.ctor) {
 		case 'BadUrl':
@@ -18808,7 +18988,151 @@ var _mburri$elm_webpack_seed$Main$toErrorMessage = function (error) {
 			return 'Bad Payload - unable to handle response from server';
 	}
 };
-var _mburri$elm_webpack_seed$Main$viewConfig = function () {
+var _mburri$elm_webpack_seed$StationBoard$viewSingleDeparture = function (departure) {
+	var departureTime = function () {
+		var _p2 = _elm_lang$core$Date$fromString(departure.departure);
+		if (_p2.ctor === 'Err') {
+			return _rtfeldman$elm_css$Html_Styled$text('');
+		} else {
+			return _rtfeldman$elm_css$Html_Styled$text(
+				A2(_mgold$elm_date_format$Date_Format$format, '%k:%M', _p2._0));
+		}
+	}();
+	return A2(
+		_rtfeldman$elm_css$Html_Styled$tr,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_rtfeldman$elm_css$Html_Styled$td,
+				{
+					ctor: '::',
+					_0: _mburri$elm_webpack_seed$Styles$cellStyle,
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: departureTime,
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_rtfeldman$elm_css$Html_Styled$td,
+					{
+						ctor: '::',
+						_0: _mburri$elm_webpack_seed$Styles$cellStyle,
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Html_Styled$text(departure.name),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_rtfeldman$elm_css$Html_Styled$td,
+						{
+							ctor: '::',
+							_0: _mburri$elm_webpack_seed$Styles$cellStyle,
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Html_Styled$text(departure.to),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _mburri$elm_webpack_seed$StationBoard$viewDepartures = function (departures) {
+	return (!_elm_lang$core$List$isEmpty(departures)) ? A2(
+		_mburri$elm_webpack_seed$Styles$departuresTable,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_rtfeldman$elm_css$Html_Styled$thead,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: A2(
+						_rtfeldman$elm_css$Html_Styled$tr,
+						{
+							ctor: '::',
+							_0: _mburri$elm_webpack_seed$Styles$rowStyle,
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: A2(
+								_rtfeldman$elm_css$Html_Styled$th,
+								{
+									ctor: '::',
+									_0: _mburri$elm_webpack_seed$Styles$cellStyle,
+									_1: {
+										ctor: '::',
+										_0: _rtfeldman$elm_css$Html_Styled_Attributes$align('left'),
+										_1: {ctor: '[]'}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _rtfeldman$elm_css$Html_Styled$text('Zeit'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_rtfeldman$elm_css$Html_Styled$th,
+									{
+										ctor: '::',
+										_0: _mburri$elm_webpack_seed$Styles$cellStyle,
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _rtfeldman$elm_css$Html_Styled$text(''),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_rtfeldman$elm_css$Html_Styled$th,
+										{
+											ctor: '::',
+											_0: _mburri$elm_webpack_seed$Styles$cellStyle,
+											_1: {
+												ctor: '::',
+												_0: _rtfeldman$elm_css$Html_Styled_Attributes$align('left'),
+												_1: {ctor: '[]'}
+											}
+										},
+										{
+											ctor: '::',
+											_0: _rtfeldman$elm_css$Html_Styled$text('Nach'),
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}
+							}
+						}),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_rtfeldman$elm_css$Html_Styled$tbody,
+					{ctor: '[]'},
+					A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$StationBoard$viewSingleDeparture, departures)),
+				_1: {ctor: '[]'}
+			}
+		}) : _rtfeldman$elm_css$Html_Styled$text('');
+};
+var _mburri$elm_webpack_seed$StationBoard$viewConfig = function () {
 	var stationListItem = F3(
 		function (keySelected, mouseSelected, station) {
 			return {
@@ -18854,82 +19178,20 @@ var _mburri$elm_webpack_seed$Main$viewConfig = function () {
 			li: stationListItem
 		});
 }();
-var _mburri$elm_webpack_seed$Main$viewErrors = function (fetchStationTableFailedMessage) {
+var _mburri$elm_webpack_seed$StationBoard$viewErrors = function (fetchStationTableFailedMessage) {
 	return _elm_lang$core$String$isEmpty(fetchStationTableFailedMessage) ? A2(
 		_rtfeldman$elm_css$Html_Styled$div,
 		{ctor: '[]'},
 		{ctor: '[]'}) : A2(
-		_rtfeldman$elm_css$Html_Styled$div,
-		{
-			ctor: '::',
-			_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Theme$theme.secondary1),
-					_1: {
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$margin(
-								_rtfeldman$elm_css$Css$rem(2.0)),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$padding(
-									_rtfeldman$elm_css$Css$rem(1.5)),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}),
-			_1: {ctor: '[]'}
-		},
+		_mburri$elm_webpack_seed$Styles$errorBox,
+		{ctor: '[]'},
 		{
 			ctor: '::',
 			_0: _rtfeldman$elm_css$Html_Styled$text(fetchStationTableFailedMessage),
 			_1: {ctor: '[]'}
 		});
 };
-var _mburri$elm_webpack_seed$Main$modeButton = A2(
-	_rtfeldman$elm_css$Html_Styled_Attributes$styled,
-	_rtfeldman$elm_css$Html_Styled$button,
-	{
-		ctor: '::',
-		_0: _rtfeldman$elm_css$Css$padding(
-			_rtfeldman$elm_css$Css$rem(0.5)),
-		_1: {
-			ctor: '::',
-			_0: _rtfeldman$elm_css$Css$marginBottom(
-				_rtfeldman$elm_css$Css$rem(0.5)),
-			_1: {
-				ctor: '::',
-				_0: A3(
-					_rtfeldman$elm_css$Css$border3,
-					_rtfeldman$elm_css$Css$px(1),
-					_rtfeldman$elm_css$Css$solid,
-					_mburri$elm_webpack_seed$Theme$theme.primary3),
-				_1: {
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$fontSize(
-						_rtfeldman$elm_css$Css$rem(1.0)),
-					_1: {
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$fontWeight(_rtfeldman$elm_css$Css$bold),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$color(_mburri$elm_webpack_seed$Theme$theme.primary5),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Theme$theme.secondary5),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}
-			}
-		}
-	});
-var _mburri$elm_webpack_seed$Main$viewTitle = A2(
+var _mburri$elm_webpack_seed$StationBoard$viewTitle = A2(
 	_rtfeldman$elm_css$Html_Styled$div,
 	{
 		ctor: '::',
@@ -18947,21 +19209,7 @@ var _mburri$elm_webpack_seed$Main$viewTitle = A2(
 			_rtfeldman$elm_css$Html_Styled$h1,
 			{
 				ctor: '::',
-				_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-					{
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$display(_rtfeldman$elm_css$Css$block),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$fontSize(
-									_rtfeldman$elm_css$Css$rem(2.5)),
-								_1: {ctor: '[]'}
-							}
-						}
-					}),
+				_0: _mburri$elm_webpack_seed$Styles$title,
 				_1: {ctor: '[]'}
 			},
 			{
@@ -18971,21 +19219,35 @@ var _mburri$elm_webpack_seed$Main$viewTitle = A2(
 			}),
 		_1: {ctor: '[]'}
 	});
-var _mburri$elm_webpack_seed$Main$addStation = F2(
+var _mburri$elm_webpack_seed$StationBoard$matches = F2(
+	function (query, station) {
+		return A2(
+			_elm_lang$core$String$contains,
+			_elm_lang$core$String$toLower(query),
+			_elm_lang$core$String$toLower(station.name));
+	});
+var _mburri$elm_webpack_seed$StationBoard$acceptableStations = F2(
+	function (query, stations) {
+		return A2(
+			_elm_lang$core$List$filter,
+			_mburri$elm_webpack_seed$StationBoard$matches(query),
+			stations);
+	});
+var _mburri$elm_webpack_seed$StationBoard$addStation = F2(
 	function (stations, maybeStation) {
-		var _p2 = maybeStation;
-		if (_p2.ctor === 'Just') {
+		var _p3 = maybeStation;
+		if (_p3.ctor === 'Just') {
 			return A2(
 				_elm_community$list_extra$List_Extra$uniqueBy,
 				function (station) {
 					return station.name;
 				},
-				{ctor: '::', _0: _p2._0, _1: stations});
+				{ctor: '::', _0: _p3._0, _1: stations});
 		} else {
 			return stations;
 		}
 	});
-var _mburri$elm_webpack_seed$Main$selectStation = F3(
+var _mburri$elm_webpack_seed$StationBoard$selectStation = F3(
 	function (model, selectedStation, id) {
 		return _elm_lang$core$Native_Utils.update(
 			model,
@@ -18995,7 +19257,7 @@ var _mburri$elm_webpack_seed$Main$selectStation = F3(
 				}(
 					A2(
 						_elm_lang$core$Maybe$withDefault,
-						_mburri$elm_webpack_seed$Station$Station(''),
+						_mburri$elm_webpack_seed$TransportApi$Station(''),
 						_elm_lang$core$List$head(
 							A2(
 								_elm_lang$core$List$filter,
@@ -19006,10 +19268,10 @@ var _mburri$elm_webpack_seed$Main$selectStation = F3(
 				autoState: _thebritican$elm_autocomplete$Autocomplete$empty,
 				showStations: false,
 				selectedStation: selectedStation,
-				latest: A2(_mburri$elm_webpack_seed$Main$addStation, model.latest, selectedStation)
+				latest: A2(_mburri$elm_webpack_seed$StationBoard$addStation, model.latest, selectedStation)
 			});
 	});
-var _mburri$elm_webpack_seed$Main$Model = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$Model = function (a) {
 	return function (b) {
 		return function (c) {
 			return function (d) {
@@ -19030,103 +19292,66 @@ var _mburri$elm_webpack_seed$Main$Model = function (a) {
 		};
 	};
 };
-var _mburri$elm_webpack_seed$Main$Recent = {ctor: 'Recent'};
-var _mburri$elm_webpack_seed$Main$Search = {ctor: 'Search'};
-var _mburri$elm_webpack_seed$Main$init = {
+var _mburri$elm_webpack_seed$StationBoard$Recent = {ctor: 'Recent'};
+var _mburri$elm_webpack_seed$StationBoard$Search = {ctor: 'Search'};
+var _mburri$elm_webpack_seed$StationBoard$init = {
 	ctor: '_Tuple2',
-	_0: _mburri$elm_webpack_seed$Main$Model('')(_thebritican$elm_autocomplete$Autocomplete$empty)(
+	_0: _mburri$elm_webpack_seed$StationBoard$Model('')(_thebritican$elm_autocomplete$Autocomplete$empty)(
 		{ctor: '[]'})(5)(false)(_elm_lang$core$Maybe$Nothing)(
 		{ctor: '[]'})('')(
-		{ctor: '[]'})(_mburri$elm_webpack_seed$Main$Search),
+		{ctor: '[]'})(_mburri$elm_webpack_seed$StationBoard$Search),
 	_1: _elm_lang$core$Platform_Cmd$none
 };
-var _mburri$elm_webpack_seed$Main$toggle = function (mode) {
-	var _p3 = mode;
-	if (_p3.ctor === 'Search') {
-		return _mburri$elm_webpack_seed$Main$Recent;
+var _mburri$elm_webpack_seed$StationBoard$toggle = function (mode) {
+	var _p4 = mode;
+	if (_p4.ctor === 'Search') {
+		return _mburri$elm_webpack_seed$StationBoard$Recent;
 	} else {
-		return _mburri$elm_webpack_seed$Main$Search;
+		return _mburri$elm_webpack_seed$StationBoard$Search;
 	}
 };
-var _mburri$elm_webpack_seed$Main$ToggleMode = {ctor: 'ToggleMode'};
-var _mburri$elm_webpack_seed$Main$HandleEscape = {ctor: 'HandleEscape'};
-var _mburri$elm_webpack_seed$Main$FetchStationSucceed = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$ToggleMode = {ctor: 'ToggleMode'};
+var _mburri$elm_webpack_seed$StationBoard$HandleEscape = {ctor: 'HandleEscape'};
+var _mburri$elm_webpack_seed$StationBoard$FetchStationSucceed = function (a) {
 	return {ctor: 'FetchStationSucceed', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$getStations = function (query) {
-	var url = A2(_elm_lang$core$Basics_ops['++'], 'https://transport.opendata.ch/v1/locations?query=', query);
+var _mburri$elm_webpack_seed$StationBoard$getStations = function (query) {
 	return (_elm_lang$core$Native_Utils.cmp(
 		_elm_lang$core$String$length(query),
 		3) > -1) ? A2(
 		_elm_lang$http$Http$send,
-		_mburri$elm_webpack_seed$Main$FetchStationSucceed,
-		A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$Station$decodeStations)) : _elm_lang$core$Platform_Cmd$none;
+		_mburri$elm_webpack_seed$StationBoard$FetchStationSucceed,
+		_mburri$elm_webpack_seed$TransportApi$searchStation(query)) : _elm_lang$core$Platform_Cmd$none;
 };
-var _mburri$elm_webpack_seed$Main$FetchStationTableSucceed = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed = function (a) {
 	return {ctor: 'FetchStationTableSucceed', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$getDepartures = function (maybeStation) {
-	var _p4 = maybeStation;
-	if (_p4.ctor === 'Just') {
-		var url = A2(
-			_elm_lang$core$Basics_ops['++'],
-			'https://transport.opendata.ch/v1/stationboard?station=',
-			A2(_elm_lang$core$Basics_ops['++'], _p4._0.name, '&limit=20'));
+var _mburri$elm_webpack_seed$StationBoard$getOpenTransportApis = function (maybeStation) {
+	var _p5 = maybeStation;
+	if (_p5.ctor === 'Just') {
 		return A2(
 			_elm_lang$http$Http$send,
-			_mburri$elm_webpack_seed$Main$FetchStationTableSucceed,
-			A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$Departure$decode));
+			_mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed,
+			_mburri$elm_webpack_seed$TransportApi$getDepartures(_p5._0.name));
 	} else {
 		return _elm_lang$core$Platform_Cmd$none;
 	}
 };
-var _mburri$elm_webpack_seed$Main$Reset = {ctor: 'Reset'};
-var _mburri$elm_webpack_seed$Main$Wrap = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$Reset = {ctor: 'Reset'};
+var _mburri$elm_webpack_seed$StationBoard$Wrap = function (a) {
 	return {ctor: 'Wrap', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$SelectStationFromRecent = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$SelectStationFromRecent = function (a) {
 	return {ctor: 'SelectStationFromRecent', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$viewRecent = function (station) {
+var _mburri$elm_webpack_seed$StationBoard$viewRecent = function (station) {
 	return A2(
-		_rtfeldman$elm_css$Html_Styled$li,
+		_mburri$elm_webpack_seed$Styles$recentStationListItem,
 		{
 			ctor: '::',
-			_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
-					_1: {
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$paddingLeft(
-							_rtfeldman$elm_css$Css$rem(2.0)),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$paddingRight(
-								_rtfeldman$elm_css$Css$rem(2.0)),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$width(
-									_rtfeldman$elm_css$Css$pct(30)),
-								_1: {
-									ctor: '::',
-									_0: A3(
-										_rtfeldman$elm_css$Css$borderBottom3,
-										_rtfeldman$elm_css$Css$px(1),
-										_rtfeldman$elm_css$Css$solid,
-										_mburri$elm_webpack_seed$Theme$theme.primary5),
-									_1: {ctor: '[]'}
-								}
-							}
-						}
-					}
-				}),
-			_1: {
-				ctor: '::',
-				_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(
-					_mburri$elm_webpack_seed$Main$SelectStationFromRecent(station)),
-				_1: {ctor: '[]'}
-			}
+			_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(
+				_mburri$elm_webpack_seed$StationBoard$SelectStationFromRecent(station)),
+			_1: {ctor: '[]'}
 		},
 		{
 			ctor: '::',
@@ -19134,34 +19359,11 @@ var _mburri$elm_webpack_seed$Main$viewRecent = function (station) {
 			_1: {ctor: '[]'}
 		});
 };
-var _mburri$elm_webpack_seed$Main$viewRecentlySelected = function (recents) {
+var _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected = function (recents) {
 	var recentSearches = A2(
-		_rtfeldman$elm_css$Html_Styled$ul,
-		{
-			ctor: '::',
-			_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$fontSize(
-						_rtfeldman$elm_css$Css$rem(2.0)),
-					_1: {
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$listStyle(_rtfeldman$elm_css$Css$none),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$padding(
-									_rtfeldman$elm_css$Css$rem(2.0)),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}),
-			_1: {ctor: '[]'}
-		},
-		A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$Main$viewRecent, recents));
+		_mburri$elm_webpack_seed$Styles$recentStationList,
+		{ctor: '[]'},
+		A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$StationBoard$viewRecent, recents));
 	return A2(
 		_rtfeldman$elm_css$Html_Styled$div,
 		{
@@ -19177,10 +19379,10 @@ var _mburri$elm_webpack_seed$Main$viewRecentlySelected = function (recents) {
 		{
 			ctor: '::',
 			_0: A2(
-				_mburri$elm_webpack_seed$Main$modeButton,
+				_mburri$elm_webpack_seed$Styles$modeButton,
 				{
 					ctor: '::',
-					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$Main$ToggleMode),
+					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$ToggleMode),
 					_1: {ctor: '[]'}
 				},
 				{
@@ -19195,87 +19397,87 @@ var _mburri$elm_webpack_seed$Main$viewRecentlySelected = function (recents) {
 			}
 		});
 };
-var _mburri$elm_webpack_seed$Main$SelectStation = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$SelectStation = function (a) {
 	return {ctor: 'SelectStation', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$updateConfig = _thebritican$elm_autocomplete$Autocomplete$updateConfig(
+var _mburri$elm_webpack_seed$StationBoard$updateConfig = _thebritican$elm_autocomplete$Autocomplete$updateConfig(
 	{
 		toId: function (_) {
 			return _.name;
 		},
 		onKeyDown: F2(
 			function (code, maybeId) {
-				return _elm_lang$core$Native_Utils.eq(code, 13) ? A2(_elm_lang$core$Maybe$map, _mburri$elm_webpack_seed$Main$SelectStation, maybeId) : _elm_lang$core$Maybe$Nothing;
+				return _elm_lang$core$Native_Utils.eq(code, 13) ? A2(_elm_lang$core$Maybe$map, _mburri$elm_webpack_seed$StationBoard$SelectStation, maybeId) : _elm_lang$core$Maybe$Nothing;
 			}),
 		onTooLow: _elm_lang$core$Maybe$Just(
-			_mburri$elm_webpack_seed$Main$Wrap(false)),
+			_mburri$elm_webpack_seed$StationBoard$Wrap(false)),
 		onTooHigh: _elm_lang$core$Maybe$Just(
-			_mburri$elm_webpack_seed$Main$Wrap(true)),
-		onMouseEnter: function (_p5) {
+			_mburri$elm_webpack_seed$StationBoard$Wrap(true)),
+		onMouseEnter: function (_p6) {
 			return _elm_lang$core$Maybe$Nothing;
 		},
-		onMouseLeave: function (_p6) {
+		onMouseLeave: function (_p7) {
 			return _elm_lang$core$Maybe$Nothing;
 		},
 		onMouseClick: function (id) {
 			return _elm_lang$core$Maybe$Just(
-				_mburri$elm_webpack_seed$Main$SelectStation(id));
+				_mburri$elm_webpack_seed$StationBoard$SelectStation(id));
 		},
 		separateSelections: false
 	});
-var _mburri$elm_webpack_seed$Main$update = F2(
+var _mburri$elm_webpack_seed$StationBoard$update = F2(
 	function (msg, model) {
 		update:
 		while (true) {
-			var _p7 = msg;
-			switch (_p7.ctor) {
+			var _p8 = msg;
+			switch (_p8.ctor) {
 				case 'NoOp':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				case 'SearchStation':
-					var _p8 = _p7._0;
+					var _p9 = _p8._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{query: _p8}),
-						_1: _mburri$elm_webpack_seed$Main$getStations(_p8)
+							{query: _p9}),
+						_1: _mburri$elm_webpack_seed$StationBoard$getStations(_p9)
 					};
 				case 'SetAutoState':
-					var _p9 = A5(
+					var _p10 = A5(
 						_thebritican$elm_autocomplete$Autocomplete$update,
-						_mburri$elm_webpack_seed$Main$updateConfig,
-						_p7._0,
+						_mburri$elm_webpack_seed$StationBoard$updateConfig,
+						_p8._0,
 						model.howManyToShow,
 						model.autoState,
-						A2(_mburri$elm_webpack_seed$Station$acceptableStations, model.query, model.stations));
-					var newState = _p9._0;
-					var maybeMsg = _p9._1;
+						A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations));
+					var newState = _p10._0;
+					var maybeMsg = _p10._1;
 					var newModel = _elm_lang$core$Native_Utils.update(
 						model,
 						{autoState: newState});
-					var _p10 = maybeMsg;
-					if (_p10.ctor === 'Nothing') {
+					var _p11 = maybeMsg;
+					if (_p11.ctor === 'Nothing') {
 						return {ctor: '_Tuple2', _0: newModel, _1: _elm_lang$core$Platform_Cmd$none};
 					} else {
-						var _v6 = _p10._0,
-							_v7 = newModel;
-						msg = _v6;
-						model = _v7;
+						var _v7 = _p11._0,
+							_v8 = newModel;
+						msg = _v7;
+						model = _v8;
 						continue update;
 					}
 				case 'SelectStation':
-					var _p11 = _p7._0;
+					var _p12 = _p8._0;
 					var selectedStation = _elm_lang$core$List$head(
 						A2(
 							_elm_lang$core$List$filter,
 							function (station) {
-								return _elm_lang$core$Native_Utils.eq(station.name, _p11);
+								return _elm_lang$core$Native_Utils.eq(station.name, _p12);
 							},
 							model.stations));
 					return {
 						ctor: '_Tuple2',
-						_0: A3(_mburri$elm_webpack_seed$Main$selectStation, model, selectedStation, _p11),
-						_1: _mburri$elm_webpack_seed$Main$getDepartures(selectedStation)
+						_0: A3(_mburri$elm_webpack_seed$StationBoard$selectStation, model, selectedStation, _p12),
+						_1: _mburri$elm_webpack_seed$StationBoard$getOpenTransportApis(selectedStation)
 					};
 				case 'Reset':
 					return A2(
@@ -19283,29 +19485,29 @@ var _mburri$elm_webpack_seed$Main$update = F2(
 						_elm_lang$core$Native_Utils.update(
 							model,
 							{
-								autoState: A2(_thebritican$elm_autocomplete$Autocomplete$reset, _mburri$elm_webpack_seed$Main$updateConfig, model.autoState),
+								autoState: A2(_thebritican$elm_autocomplete$Autocomplete$reset, _mburri$elm_webpack_seed$StationBoard$updateConfig, model.autoState),
 								selectedStation: _elm_lang$core$Maybe$Nothing,
 								fetchStationTableFailedMessage: ''
 							}),
 						{ctor: '[]'});
 				case 'Wrap':
-					var _p12 = model.selectedStation;
-					if (_p12.ctor === 'Just') {
-						var _v9 = _mburri$elm_webpack_seed$Main$Reset,
-							_v10 = model;
-						msg = _v9;
-						model = _v10;
+					var _p13 = model.selectedStation;
+					if (_p13.ctor === 'Just') {
+						var _v10 = _mburri$elm_webpack_seed$StationBoard$Reset,
+							_v11 = model;
+						msg = _v10;
+						model = _v11;
 						continue update;
 					} else {
-						return _p7._0 ? A2(
+						return _p8._0 ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							_elm_lang$core$Native_Utils.update(
 								model,
 								{
 									autoState: A4(
 										_thebritican$elm_autocomplete$Autocomplete$resetToLastItem,
-										_mburri$elm_webpack_seed$Main$updateConfig,
-										A2(_mburri$elm_webpack_seed$Station$acceptableStations, model.query, model.stations),
+										_mburri$elm_webpack_seed$StationBoard$updateConfig,
+										A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations),
 										model.howManyToShow,
 										model.autoState),
 									selectedStation: _elm_lang$core$List$head(
@@ -19313,7 +19515,7 @@ var _mburri$elm_webpack_seed$Main$update = F2(
 											A2(
 												_elm_lang$core$List$take,
 												model.howManyToShow,
-												A2(_mburri$elm_webpack_seed$Station$acceptableStations, model.query, model.stations))))
+												A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations))))
 								}),
 							{ctor: '[]'}) : A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
@@ -19322,60 +19524,60 @@ var _mburri$elm_webpack_seed$Main$update = F2(
 								{
 									autoState: A4(
 										_thebritican$elm_autocomplete$Autocomplete$resetToFirstItem,
-										_mburri$elm_webpack_seed$Main$updateConfig,
-										A2(_mburri$elm_webpack_seed$Station$acceptableStations, model.query, model.stations),
+										_mburri$elm_webpack_seed$StationBoard$updateConfig,
+										A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations),
 										model.howManyToShow,
 										model.autoState),
 									selectedStation: _elm_lang$core$List$head(
 										A2(
 											_elm_lang$core$List$take,
 											model.howManyToShow,
-											A2(_mburri$elm_webpack_seed$Station$acceptableStations, model.query, model.stations)))
+											A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations)))
 								}),
 							{ctor: '[]'});
 					}
 				case 'FetchStationTableSucceed':
-					var _p13 = _p7._0;
-					if (_p13.ctor === 'Ok') {
+					var _p14 = _p8._0;
+					if (_p14.ctor === 'Ok') {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{departures: _p13._0, fetchStationTableFailedMessage: ''}),
+								{departures: _p14._0, fetchStationTableFailedMessage: ''}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p15 = _p13._0;
-						var _p14 = A2(_elm_lang$core$Debug$log, 'Error retrieving departures', _p15);
+						var _p16 = _p14._0;
+						var _p15 = A2(_elm_lang$core$Debug$log, 'Error retrieving departures', _p16);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									fetchStationTableFailedMessage: _elm_lang$core$Basics$toString(_p15)
+									fetchStationTableFailedMessage: _elm_lang$core$Basics$toString(_p16)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					}
 				case 'FetchStationSucceed':
-					var _p16 = _p7._0;
-					if (_p16.ctor === 'Ok') {
+					var _p17 = _p8._0;
+					if (_p17.ctor === 'Ok') {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{stations: _p16._0, showStations: true, fetchStationTableFailedMessage: ''}),
+								{stations: _p17._0, showStations: true, fetchStationTableFailedMessage: ''}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p18 = _p16._0;
-						var _p17 = A2(_elm_lang$core$Debug$log, 'Error retrieving stations', _p18);
+						var _p19 = _p17._0;
+						var _p18 = A2(_elm_lang$core$Debug$log, 'Error retrieving stations', _p19);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									fetchStationTableFailedMessage: _mburri$elm_webpack_seed$Main$toErrorMessage(_p18)
+									fetchStationTableFailedMessage: _mburri$elm_webpack_seed$StationBoard$toErrorMessage(_p19)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
@@ -19400,7 +19602,7 @@ var _mburri$elm_webpack_seed$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								mode: _mburri$elm_webpack_seed$Main$toggle(model.mode)
+								mode: _mburri$elm_webpack_seed$StationBoard$toggle(model.mode)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -19408,25 +19610,25 @@ var _mburri$elm_webpack_seed$Main$update = F2(
 					return {
 						ctor: '_Tuple2',
 						_0: model,
-						_1: _mburri$elm_webpack_seed$Main$getDepartures(
-							_elm_lang$core$Maybe$Just(_p7._0))
+						_1: _mburri$elm_webpack_seed$StationBoard$getOpenTransportApis(
+							_elm_lang$core$Maybe$Just(_p8._0))
 					};
 			}
 		}
 	});
-var _mburri$elm_webpack_seed$Main$SetAutoState = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$SetAutoState = function (a) {
 	return {ctor: 'SetAutoState', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$subscriptions = function (model) {
-	return A2(_elm_lang$core$Platform_Sub$map, _mburri$elm_webpack_seed$Main$SetAutoState, _thebritican$elm_autocomplete$Autocomplete$subscription);
+var _mburri$elm_webpack_seed$StationBoard$subscriptions = function (model) {
+	return A2(_elm_lang$core$Platform_Sub$map, _mburri$elm_webpack_seed$StationBoard$SetAutoState, _thebritican$elm_autocomplete$Autocomplete$subscription);
 };
-var _mburri$elm_webpack_seed$Main$viewAutocomplete = function (model) {
+var _mburri$elm_webpack_seed$StationBoard$viewAutocomplete = function (model) {
 	var autocompleteView = A4(
 		_thebritican$elm_autocomplete$Autocomplete$view,
-		_mburri$elm_webpack_seed$Main$viewConfig,
+		_mburri$elm_webpack_seed$StationBoard$viewConfig,
 		model.howManyToShow,
 		model.autoState,
-		A2(_mburri$elm_webpack_seed$Station$acceptableStations, model.query, model.stations));
+		A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations));
 	return model.showStations ? A2(
 		_rtfeldman$elm_css$Html_Styled$div,
 		{
@@ -19438,7 +19640,7 @@ var _mburri$elm_webpack_seed$Main$viewAutocomplete = function (model) {
 			ctor: '::',
 			_0: A2(
 				_rtfeldman$elm_css$Html_Styled$map,
-				_mburri$elm_webpack_seed$Main$SetAutoState,
+				_mburri$elm_webpack_seed$StationBoard$SetAutoState,
 				_rtfeldman$elm_css$Html_Styled$fromUnstyled(autocompleteView)),
 			_1: {ctor: '[]'}
 		}) : A2(
@@ -19446,10 +19648,10 @@ var _mburri$elm_webpack_seed$Main$viewAutocomplete = function (model) {
 		{ctor: '[]'},
 		{ctor: '[]'});
 };
-var _mburri$elm_webpack_seed$Main$SearchStation = function (a) {
+var _mburri$elm_webpack_seed$StationBoard$SearchStation = function (a) {
 	return {ctor: 'SearchStation', _0: a};
 };
-var _mburri$elm_webpack_seed$Main$viewSearchBar = function (searchString) {
+var _mburri$elm_webpack_seed$StationBoard$viewSearchBar = function (searchString) {
 	return A2(
 		_rtfeldman$elm_css$Html_Styled$div,
 		{
@@ -19465,10 +19667,10 @@ var _mburri$elm_webpack_seed$Main$viewSearchBar = function (searchString) {
 		{
 			ctor: '::',
 			_0: A2(
-				_mburri$elm_webpack_seed$Main$modeButton,
+				_mburri$elm_webpack_seed$Styles$modeButton,
 				{
 					ctor: '::',
-					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$Main$ToggleMode),
+					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$ToggleMode),
 					_1: {ctor: '[]'}
 				},
 				{
@@ -19479,57 +19681,20 @@ var _mburri$elm_webpack_seed$Main$viewSearchBar = function (searchString) {
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_rtfeldman$elm_css$Html_Styled$input,
+					_mburri$elm_webpack_seed$Styles$searchField,
 					{
 						ctor: '::',
-						_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-							{
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$fontSize(
-									_rtfeldman$elm_css$Css$rem(2.0)),
-								_1: {
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Css$width(
-										_rtfeldman$elm_css$Css$pct(90)),
-									_1: {
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
-										_1: {
-											ctor: '::',
-											_0: _rtfeldman$elm_css$Css$padding(
-												_rtfeldman$elm_css$Css$rem(0.5)),
-											_1: {
-												ctor: '::',
-												_0: _rtfeldman$elm_css$Css$borderRadius(
-													_rtfeldman$elm_css$Css$rem(0.2)),
-												_1: {
-													ctor: '::',
-													_0: _rtfeldman$elm_css$Css$backgroundColor(_rtfeldman$elm_css$Css_Colors$white),
-													_1: {
-														ctor: '::',
-														_0: _rtfeldman$elm_css$Css$color(_mburri$elm_webpack_seed$Theme$theme.primary5),
-														_1: {ctor: '[]'}
-													}
-												}
-											}
-										}
-									}
-								}
-							}),
+						_0: _rtfeldman$elm_css$Html_Styled_Events$onInput(_mburri$elm_webpack_seed$StationBoard$SearchStation),
 						_1: {
 							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled_Events$onInput(_mburri$elm_webpack_seed$Main$SearchStation),
+							_0: _rtfeldman$elm_css$Html_Styled_Attributes$value(searchString),
 							_1: {
 								ctor: '::',
-								_0: _rtfeldman$elm_css$Html_Styled_Attributes$value(searchString),
+								_0: _rtfeldman$elm_css$Html_Styled_Attributes$autocomplete(false),
 								_1: {
 									ctor: '::',
-									_0: _rtfeldman$elm_css$Html_Styled_Attributes$autocomplete(false),
-									_1: {
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Html_Styled_Attributes$placeholder('search  station...'),
-										_1: {ctor: '[]'}
-									}
+									_0: _rtfeldman$elm_css$Html_Styled_Attributes$placeholder('search  station...'),
+									_1: {ctor: '[]'}
 								}
 							}
 						}
@@ -19539,157 +19704,11 @@ var _mburri$elm_webpack_seed$Main$viewSearchBar = function (searchString) {
 			}
 		});
 };
-var _mburri$elm_webpack_seed$Main$NoOp = {ctor: 'NoOp'};
-var _mburri$elm_webpack_seed$Main$AutocompleteItem = {ctor: 'AutocompleteItem'};
-var _mburri$elm_webpack_seed$Main$AutocompleteList = {ctor: 'AutocompleteList'};
-var _mburri$elm_webpack_seed$Main$AutocompleteMenu = {ctor: 'AutocompleteMenu'};
-var _mburri$elm_webpack_seed$Main$MouseSelected = {ctor: 'MouseSelected'};
-var _mburri$elm_webpack_seed$Main$KeySelected = {ctor: 'KeySelected'};
-var _mburri$elm_webpack_seed$Main$globalStyles = _rtfeldman$elm_css$Css_Foreign$global(
-	{
-		ctor: '::',
-		_0: _rtfeldman$elm_css$Css_Foreign$html(
-			{
-				ctor: '::',
-				_0: _rtfeldman$elm_css$Css$fontSize(
-					_rtfeldman$elm_css$Css$px(20)),
-				_1: {
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$width(
-						_rtfeldman$elm_css$Css$pct(100)),
-					_1: {ctor: '[]'}
-				}
-			}),
-		_1: {
-			ctor: '::',
-			_0: _rtfeldman$elm_css$Css_Foreign$body(
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$width(
-						_rtfeldman$elm_css$Css$px(960)),
-					_1: {
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$fontFamily(_rtfeldman$elm_css$Css$sansSerif),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Theme$theme.primary1),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_rtfeldman$elm_css$Css_Foreign$class,
-					_mburri$elm_webpack_seed$Main$KeySelected,
-					{
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Theme$theme.primary3),
-						_1: {ctor: '[]'}
-					}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_rtfeldman$elm_css$Css_Foreign$class,
-						_mburri$elm_webpack_seed$Main$MouseSelected,
-						{
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Theme$theme.primary3),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_rtfeldman$elm_css$Css_Foreign$class,
-							_mburri$elm_webpack_seed$Main$AutocompleteMenu,
-							{
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$margin(
-									_rtfeldman$elm_css$Css$rem(2.0)),
-								_1: {
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Css$color(_rtfeldman$elm_css$Css_Colors$white),
-									_1: {ctor: '[]'}
-								}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_rtfeldman$elm_css$Css_Foreign$class,
-								_mburri$elm_webpack_seed$Main$AutocompleteItem,
-								{
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Css$display(_rtfeldman$elm_css$Css$block),
-									_1: {
-										ctor: '::',
-										_0: A2(
-											_rtfeldman$elm_css$Css$padding2,
-											_rtfeldman$elm_css$Css$rem(0.3),
-											_rtfeldman$elm_css$Css$rem(0.8)),
-										_1: {
-											ctor: '::',
-											_0: _rtfeldman$elm_css$Css$fontSize(
-												_rtfeldman$elm_css$Css$rem(1.5)),
-											_1: {
-												ctor: '::',
-												_0: A3(
-													_rtfeldman$elm_css$Css$borderBottom3,
-													_rtfeldman$elm_css$Css$px(1),
-													_rtfeldman$elm_css$Css$solid,
-													_mburri$elm_webpack_seed$Theme$theme.primary5),
-												_1: {
-													ctor: '::',
-													_0: _rtfeldman$elm_css$Css$cursor(_rtfeldman$elm_css$Css$pointer),
-													_1: {ctor: '[]'}
-												}
-											}
-										}
-									}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
-									_rtfeldman$elm_css$Css_Foreign$class,
-									_mburri$elm_webpack_seed$Main$AutocompleteList,
-									{
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Css$listStyle(_rtfeldman$elm_css$Css$none),
-										_1: {
-											ctor: '::',
-											_0: _rtfeldman$elm_css$Css$padding(
-												_rtfeldman$elm_css$Css$px(0)),
-											_1: {
-												ctor: '::',
-												_0: _rtfeldman$elm_css$Css$margin(_rtfeldman$elm_css$Css$auto),
-												_1: {
-													ctor: '::',
-													_0: _rtfeldman$elm_css$Css$maxHeight(
-														_rtfeldman$elm_css$Css$rem(12)),
-													_1: {
-														ctor: '::',
-														_0: _rtfeldman$elm_css$Css$overflowY(_rtfeldman$elm_css$Css$auto),
-														_1: {ctor: '[]'}
-													}
-												}
-											}
-										}
-									}),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}
-			}
-		}
-	});
-var _mburri$elm_webpack_seed$Main$view = function (model) {
+var _mburri$elm_webpack_seed$StationBoard$NoOp = {ctor: 'NoOp'};
+var _mburri$elm_webpack_seed$StationBoard$viewStyled = function (model) {
 	var dec = _elm_lang$core$Json_Decode$map(
 		function (code) {
-			return (_elm_lang$core$Native_Utils.eq(code, 38) || _elm_lang$core$Native_Utils.eq(code, 40)) ? _elm_lang$core$Result$Ok(_mburri$elm_webpack_seed$Main$NoOp) : (_elm_lang$core$Native_Utils.eq(code, 27) ? _elm_lang$core$Result$Ok(_mburri$elm_webpack_seed$Main$HandleEscape) : _elm_lang$core$Result$Err('not handling that key'));
+			return (_elm_lang$core$Native_Utils.eq(code, 38) || _elm_lang$core$Native_Utils.eq(code, 40)) ? _elm_lang$core$Result$Ok(_mburri$elm_webpack_seed$StationBoard$NoOp) : (_elm_lang$core$Native_Utils.eq(code, 27) ? _elm_lang$core$Result$Ok(_mburri$elm_webpack_seed$StationBoard$HandleEscape) : _elm_lang$core$Result$Err('not handling that key'));
 		});
 	var options = {preventDefault: true, stopPropagation: false};
 	return A2(
@@ -19697,29 +19716,29 @@ var _mburri$elm_webpack_seed$Main$view = function (model) {
 		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: _mburri$elm_webpack_seed$Main$globalStyles,
+			_0: _mburri$elm_webpack_seed$Styles$globalStyles,
 			_1: {
 				ctor: '::',
-				_0: _mburri$elm_webpack_seed$Main$viewTitle,
+				_0: _mburri$elm_webpack_seed$StationBoard$viewTitle,
 				_1: {
 					ctor: '::',
 					_0: function () {
-						var _p19 = model.mode;
-						if (_p19.ctor === 'Search') {
-							return _mburri$elm_webpack_seed$Main$viewSearchBar(model.query);
+						var _p20 = model.mode;
+						if (_p20.ctor === 'Search') {
+							return _mburri$elm_webpack_seed$StationBoard$viewSearchBar(model.query);
 						} else {
-							return _mburri$elm_webpack_seed$Main$viewRecentlySelected(model.latest);
+							return _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected(model.latest);
 						}
 					}(),
 					_1: {
 						ctor: '::',
-						_0: _mburri$elm_webpack_seed$Main$viewErrors(model.fetchStationTableFailedMessage),
+						_0: _mburri$elm_webpack_seed$StationBoard$viewErrors(model.fetchStationTableFailedMessage),
 						_1: {
 							ctor: '::',
-							_0: _mburri$elm_webpack_seed$Main$viewAutocomplete(model),
+							_0: _mburri$elm_webpack_seed$StationBoard$viewAutocomplete(model),
 							_1: {
 								ctor: '::',
-								_0: _mburri$elm_webpack_seed$Departure$view(model.departures),
+								_0: _mburri$elm_webpack_seed$StationBoard$viewDepartures(model.departures),
 								_1: {ctor: '[]'}
 							}
 						}
@@ -19728,16 +19747,12 @@ var _mburri$elm_webpack_seed$Main$view = function (model) {
 			}
 		});
 };
+var _mburri$elm_webpack_seed$StationBoard$view = function (model) {
+	return _rtfeldman$elm_css$Html_Styled$toUnstyled(
+		_mburri$elm_webpack_seed$StationBoard$viewStyled(model));
+};
 var _mburri$elm_webpack_seed$Main$main = _elm_lang$html$Html$program(
-	{
-		init: _mburri$elm_webpack_seed$Main$init,
-		view: function (_p20) {
-			return _rtfeldman$elm_css$Html_Styled$toUnstyled(
-				_mburri$elm_webpack_seed$Main$view(_p20));
-		},
-		update: _mburri$elm_webpack_seed$Main$update,
-		subscriptions: _mburri$elm_webpack_seed$Main$subscriptions
-	})();
+	{init: _mburri$elm_webpack_seed$StationBoard$init, view: _mburri$elm_webpack_seed$StationBoard$view, update: _mburri$elm_webpack_seed$StationBoard$update, subscriptions: _mburri$elm_webpack_seed$StationBoard$subscriptions})();
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _mburri$elm_webpack_seed$Main$main !== 'undefined') {
