@@ -129,7 +129,7 @@ recentStationListItem =
         [ margin auto
         , paddingLeft (Css.rem 2.0)
         , paddingRight (Css.rem 2.0)
-        , width (pct 30)
+        , width (pct 70)
         , borderBottom3 (px 1) solid theme.primary5
         ]
 

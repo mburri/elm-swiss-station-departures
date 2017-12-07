@@ -110,7 +110,7 @@ update msg model =
             let
                 selectedStation =
                     model.stations
-                        |> List.filter (\station -> station.name == name)
+                        |> List.filter (\station -> stationName station == name)
                         |> List.head
             in
                 ( selectStation model selectedStation name
@@ -231,7 +231,7 @@ getDepartures : Maybe Station -> Cmd Msg
 getDepartures maybeStation =
     case maybeStation of
         Just station ->
-            TransportApi.getDepartures station.name |> Http.send FetchStationTableSucceed
+            TransportApi.getDepartures (stationName station) |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -242,14 +242,14 @@ selectStation model selectedStation id =
     { model
         | query =
             model.stations
-                |> List.filter (\station -> station.name == id)
+                |> List.filter (\station -> stationName station == id)
                 |> List.head
-                |> Maybe.withDefault (Station "")
-                |> .name
+                |> Maybe.withDefault (emptyStation)
+                |> stationName
         , autoState = Autocomplete.empty
         , showStations = False
         , selectedStation = selectedStation
-        , latest = addStation model.latest selectedStation
+        , latest = addStation model.latest selectedStation |> List.take 5
     }
 
 
@@ -258,7 +258,7 @@ addStation stations maybeStation =
     case maybeStation of
         Just station ->
             (station :: stations)
-                |> List.Extra.uniqueBy (\station -> station.name)
+                |> List.Extra.uniqueBy (\station -> stationName station)
 
         Nothing ->
             stations
@@ -271,7 +271,7 @@ acceptableStations query stations =
 
 matches : String -> Station -> Bool
 matches query station =
-    String.contains (String.toLower query) (String.toLower station.name)
+    String.contains (String.toLower query) (String.toLower (stationName station))
 
 
 
@@ -366,7 +366,7 @@ viewRecent : Station -> Html Msg
 viewRecent station =
     recentStationListItem
         [ onClick (SelectStationFromRecent station) ]
-        [ text station.name ]
+        [ station |> stationName |> text ]
 
 
 viewErrors : String -> Html Msg
@@ -401,13 +401,13 @@ viewConfig =
                     , ( "KeySelected", keySelected )
                     , ( "MouseSelected", mouseSelected )
                     ]
-                , Html.Attributes.id station.name
+                , station |> stationName |> Html.Attributes.id
                 ]
-            , children = [ Html.text station.name ]
+            , children = [ station |> stationName |> Html.text ]
             }
     in
         Autocomplete.viewConfig
-            { toId = .name
+            { toId = stationName
             , ul = [ Html.Attributes.class "AutocompleteList" ]
             , li = stationListItem
             }
@@ -416,7 +416,7 @@ viewConfig =
 updateConfig : Autocomplete.UpdateConfig Msg Station
 updateConfig =
     Autocomplete.updateConfig
-        { toId = .name
+        { toId = stationName
         , onKeyDown =
             \code maybeId ->
                 if code == 13 then
