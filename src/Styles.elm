@@ -1,8 +1,10 @@
 module Styles exposing (..)
 
 import Css exposing (..)
+import Css.Media as Media
 import Css.Colors
 import Css.Foreign exposing (global)
+import Css.Media exposing (only, screen, withMedia)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, styled)
 
@@ -65,18 +67,35 @@ cellStyle =
 -- pre styled elements - ready to use
 
 
+clearButton : List (Attribute msg) -> List (Html msg) -> Html msg
+clearButton =
+    styled button
+        [ padding (Css.rem 0.5)
+        , border3 (px 1) solid theme.primary4
+        , fontSize (Css.rem 1.0)
+        , fontWeight bold
+        , color theme.primary4
+        , backgroundColor Css.Colors.white
+        , verticalAlign super
+        , marginLeft (Css.rem -2.0)
+        , hover
+            [ backgroundColor theme.primary5
+            ]
+        ]
+
+
 actionButton : List (Attribute msg) -> List (Html msg) -> Html msg
 actionButton =
     styled button
         [ padding (Css.rem 0.5)
-        , border3 (px 1) solid theme.primary3
+        , margin (Css.rem 0.5)
+        , border3 (px 1) solid theme.primary4
         , fontSize (Css.rem 1.0)
         , fontWeight bold
-        , color theme.primary1
-        , backgroundColor theme.secondary1
-        , verticalAlign super
+        , color theme.primary4
+        , backgroundColor Css.Colors.white
         , hover
-            [ backgroundColor theme.secondary2
+            [ backgroundColor theme.primary5
             ]
         ]
 
@@ -153,9 +172,12 @@ globalStyles =
         [ Css.Foreign.html
             [ fontSize (px 20)
             , width (pct 100)
+            , withMedia [ only screen [ Media.minWidth (px 320) ] ]
+                [ fontSize (px 30) ]
             ]
         , Css.Foreign.body
-            [ width (px 960)
+            [ maxWidth (px 960)
+            , width (pct 80)
             , margin auto
             , fontFamily sansSerif
             , backgroundColor theme.primary1

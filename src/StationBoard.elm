@@ -344,11 +344,7 @@ viewSearchBar searchString =
             , placeholder "search  station..."
             ]
             []
-        , actionButton
-            [ onClick Clear
-            , css [ marginLeft (Css.rem -2.0) ]
-            ]
-            [ text "x" ]
+        , clearButton [ onClick Clear ] [ text "x" ]
         ]
 
 
