@@ -1,12 +1,31 @@
-module TransportApi exposing (Station, Departure, getDepartures, searchStation)
+module TransportApi
+    exposing
+        ( Station
+        , Departure
+        , getDepartures
+        , searchStation
+        , emptyStation
+        , stationName
+        )
 
 import Http
 import Json.Decode as Json exposing (field)
 
 
-type alias Station =
-    { name : String
-    }
+type Station
+    = Station
+        { name : String
+        }
+
+
+emptyStation : Station
+emptyStation =
+    Station { name = "" }
+
+
+stationName : Station -> String
+stationName (Station { name }) =
+    name
 
 
 type alias Departure =
@@ -32,7 +51,12 @@ searchStation query =
 
 decodeStation : Json.Decoder Station
 decodeStation =
-    Json.map Station (field "name" Json.string)
+    Json.map toStation (field "name" Json.string)
+
+
+toStation : String -> Station
+toStation name =
+    Station { name = name }
 
 
 decodeStations : Json.Decoder (List Station)

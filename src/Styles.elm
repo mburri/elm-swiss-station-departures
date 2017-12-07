@@ -1,8 +1,10 @@
 module Styles exposing (..)
 
 import Css exposing (..)
+import Css.Media as Media
 import Css.Colors
 import Css.Foreign exposing (global)
+import Css.Media exposing (only, screen, withMedia)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, styled)
 
@@ -33,12 +35,13 @@ theme =
     }
 
 
-title : Attribute msg
+title : List (Attribute msg) -> List (Html msg) -> Html msg
 title =
-    css
+    styled h1
         [ display block
         , color Css.Colors.white
         , fontSize (Css.rem 2.5)
+        , textAlign center
         ]
 
 
@@ -61,21 +64,38 @@ cellStyle =
 
 
 
--- pre styled element - ready to use
+-- pre styled elements - ready to use
 
 
-modeButton : List (Attribute msg) -> List (Html msg) -> Html msg
-modeButton =
+clearButton : List (Attribute msg) -> List (Html msg) -> Html msg
+clearButton =
     styled button
         [ padding (Css.rem 0.5)
-        , marginBottom (Css.rem 0.5)
-        , border3 (px 1) solid theme.primary3
+        , border3 (px 1) solid theme.primary4
         , fontSize (Css.rem 1.0)
         , fontWeight bold
-        , color theme.primary1
-        , backgroundColor theme.secondary1
+        , color theme.primary4
+        , backgroundColor Css.Colors.white
+        , verticalAlign super
+        , marginLeft (Css.rem -2.0)
         , hover
-            [ backgroundColor theme.secondary2
+            [ backgroundColor theme.primary5
+            ]
+        ]
+
+
+actionButton : List (Attribute msg) -> List (Html msg) -> Html msg
+actionButton =
+    styled button
+        [ padding (Css.rem 0.5)
+        , margin (Css.rem 0.5)
+        , border3 (px 1) solid theme.primary4
+        , fontSize (Css.rem 1.0)
+        , fontWeight bold
+        , color theme.primary4
+        , backgroundColor Css.Colors.white
+        , hover
+            [ backgroundColor theme.primary5
             ]
         ]
 
@@ -109,7 +129,7 @@ recentStationListItem =
         [ margin auto
         , paddingLeft (Css.rem 2.0)
         , paddingRight (Css.rem 2.0)
-        , width (pct 30)
+        , width (pct 70)
         , borderBottom3 (px 1) solid theme.primary5
         ]
 
@@ -152,9 +172,12 @@ globalStyles =
         [ Css.Foreign.html
             [ fontSize (px 20)
             , width (pct 100)
+            , withMedia [ only screen [ Media.minWidth (px 320) ] ]
+                [ fontSize (px 30) ]
             ]
         , Css.Foreign.body
-            [ width (px 960)
+            [ maxWidth (px 960)
+            , width (pct 80)
             , margin auto
             , fontFamily sansSerif
             , backgroundColor theme.primary1
