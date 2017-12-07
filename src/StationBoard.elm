@@ -1,7 +1,7 @@
 module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
 
 import Autocomplete exposing (MouseSelected)
-import Css exposing (center, textAlign)
+import Css exposing (center, marginLeft, textAlign)
 import Date
 import Date.Format
 import Html
@@ -38,9 +38,9 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model
+initialModel : Model
+initialModel =
+    Model
         ""
         Autocomplete.empty
         []
@@ -51,6 +51,11 @@ init =
         ""
         []
         Search
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( initialModel
     , Cmd.none
     )
 
@@ -71,6 +76,7 @@ type Msg
     | FetchStationSucceed (Result Http.Error (List Station))
     | HandleEscape
     | ToggleMode
+    | Clear
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,6 +84,9 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        Clear ->
+            ( clear model, Cmd.none )
 
         SearchStation query ->
             ( { model | query = query }, getStations query )
@@ -105,7 +114,7 @@ update msg model =
                         |> List.head
             in
                 ( selectStation model selectedStation name
-                , getOpenTransportApis selectedStation
+                , getDepartures selectedStation
                 )
 
         Reset ->
@@ -192,7 +201,7 @@ update msg model =
             ( { model | mode = toggle model.mode }, Cmd.none )
 
         SelectStationFromRecent station ->
-            ( model, getOpenTransportApis (Just station) )
+            ( model, getDepartures (Just station) )
 
 
 toggle : Mode -> Mode
@@ -205,6 +214,11 @@ toggle mode =
             Search
 
 
+clear : Model -> Model
+clear { latest, mode } =
+    { initialModel | latest = latest, mode = mode }
+
+
 getStations : String -> Cmd Msg
 getStations query =
     if (String.length query) >= 3 then
@@ -213,8 +227,8 @@ getStations query =
         Cmd.none
 
 
-getOpenTransportApis : Maybe Station -> Cmd Msg
-getOpenTransportApis maybeStation =
+getDepartures : Maybe Station -> Cmd Msg
+getDepartures maybeStation =
     case maybeStation of
         Just station ->
             TransportApi.getDepartures station.name |> Http.send FetchStationTableSucceed
@@ -314,21 +328,15 @@ viewStyled model =
 
 viewTitle : Html msg
 viewTitle =
-    div
-        [ css
-            [ textAlign center
-            ]
-        ]
-        [ h1
-            [ Styles.title ]
-            [ text "Next departures from..." ]
+    div []
+        [ Styles.title [] [ text "Next departures from..." ]
         ]
 
 
 viewSearchBar : String -> Html Msg
 viewSearchBar searchString =
     div [ css [ textAlign center ] ]
-        [ modeButton [ onClick ToggleMode ] [ text "Show recent searches" ]
+        [ actionButton [ onClick ToggleMode ] [ text "Show recent searches" ]
         , searchField
             [ onInput SearchStation
             , value searchString
@@ -336,6 +344,11 @@ viewSearchBar searchString =
             , placeholder "search  station..."
             ]
             []
+        , actionButton
+            [ onClick Clear
+            , css [ marginLeft (Css.rem -2.0) ]
+            ]
+            [ text "x" ]
         ]
 
 
@@ -348,7 +361,7 @@ viewRecentlySelected recents =
                 |> recentStationList []
     in
         div [ css [ textAlign center ] ]
-            [ modeButton [ onClick ToggleMode ] [ text "text search" ]
+            [ actionButton [ onClick ToggleMode ] [ text "text search" ]
             , recentSearches
             ]
 
@@ -447,20 +460,21 @@ viewDepartures departures =
 
 viewSingleDeparture : Departure -> Html.Styled.Html msg
 viewSingleDeparture departure =
-    let
-        departureTime =
-            case Date.fromString departure.departure of
-                Err msg ->
-                    text ""
+    tr []
+        [ td [ cellStyle ] [ departureTime departure ]
+        , td [ cellStyle ] [ text departure.name ]
+        , td [ cellStyle ] [ text departure.to ]
+        ]
 
-                Ok departure ->
-                    text (Date.Format.format "%k:%M" departure)
-    in
-        tr []
-            [ td [ cellStyle ] [ departureTime ]
-            , td [ cellStyle ] [ text departure.name ]
-            , td [ cellStyle ] [ text departure.to ]
-            ]
+
+departureTime : { a | departure : String } -> Html msg
+departureTime departure =
+    case Date.fromString departure.departure of
+        Err msg ->
+            text ""
+
+        Ok departure ->
+            text (Date.Format.format "%k:%M" departure)
 
 
 toErrorMessage : Http.Error -> String

@@ -33,12 +33,13 @@ theme =
     }
 
 
-title : Attribute msg
+title : List (Attribute msg) -> List (Html msg) -> Html msg
 title =
-    css
+    styled h1
         [ display block
         , color Css.Colors.white
         , fontSize (Css.rem 2.5)
+        , textAlign center
         ]
 
 
@@ -61,19 +62,19 @@ cellStyle =
 
 
 
--- pre styled element - ready to use
+-- pre styled elements - ready to use
 
 
-modeButton : List (Attribute msg) -> List (Html msg) -> Html msg
-modeButton =
+actionButton : List (Attribute msg) -> List (Html msg) -> Html msg
+actionButton =
     styled button
         [ padding (Css.rem 0.5)
-        , marginBottom (Css.rem 0.5)
         , border3 (px 1) solid theme.primary3
         , fontSize (Css.rem 1.0)
         , fontWeight bold
         , color theme.primary1
         , backgroundColor theme.secondary1
+        , verticalAlign super
         , hover
             [ backgroundColor theme.secondary2
             ]
