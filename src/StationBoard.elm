@@ -13,7 +13,8 @@ import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
 import Styles exposing (..)
-import TransportApi exposing (..)
+import OpenTransport.TransportApi as TransportApi exposing (..)
+import OpenTransport.Station exposing (..)
 
 
 -- MODEL
