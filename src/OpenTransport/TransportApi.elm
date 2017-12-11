@@ -33,7 +33,7 @@ searchStation query =
 
 decodeStation : Json.Decoder Station
 decodeStation =
-    Json.map Station.toStation (field "name" Json.string)
+    Json.map Station.create (field "name" Json.string)
 
 
 decodeStations : Json.Decoder (List Station)

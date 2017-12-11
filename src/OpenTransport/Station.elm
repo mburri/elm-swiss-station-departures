@@ -7,16 +7,16 @@ type Station
         }
 
 
-emptyStation : Station
-emptyStation =
+empty : Station
+empty =
     Station { name = "" }
 
 
-stationName : Station -> String
-stationName (Station { name }) =
+name : Station -> String
+name (Station { name }) =
     name
 
 
-toStation : String -> Station
-toStation name =
+create : String -> Station
+create name =
     Station { name = name }
