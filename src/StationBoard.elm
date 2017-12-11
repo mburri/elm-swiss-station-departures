@@ -2,8 +2,6 @@ module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
 
 import Autocomplete exposing (MouseSelected)
 import Css exposing (center, marginLeft, textAlign)
-import Date
-import Date.Format
 import Html
 import Html.Attributes
 import Html.Styled exposing (..)
@@ -12,9 +10,10 @@ import Html.Styled.Events exposing (keyCode, onClick, onFocus, onInput, onWithOp
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
-import Styles exposing (..)
+import OpenTransport.Departure as Departure exposing (Departure, time)
+import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
-import OpenTransport.Station as Station exposing (..)
+import Styles exposing (..)
 
 
 -- MODEL
@@ -458,20 +457,10 @@ viewDepartures departures =
 viewSingleDeparture : Departure -> Html.Styled.Html msg
 viewSingleDeparture departure =
     tr []
-        [ td [ cellStyle ] [ departureTime departure ]
-        , td [ cellStyle ] [ text departure.name ]
-        , td [ cellStyle ] [ text departure.to ]
+        [ td [ cellStyle ] [ Departure.time departure |> text ]
+        , td [ cellStyle ] [ Departure.name departure |> text ]
+        , td [ cellStyle ] [ Departure.destination departure |> text ]
         ]
-
-
-departureTime : { a | departure : String } -> Html msg
-departureTime departure =
-    case Date.fromString departure.departure of
-        Err msg ->
-            text ""
-
-        Ok departure ->
-            text (Date.Format.format "%k:%M" departure)
 
 
 toErrorMessage : Http.Error -> String

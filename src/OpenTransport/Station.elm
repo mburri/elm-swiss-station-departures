@@ -1,4 +1,4 @@
-module OpenTransport.Station exposing (..)
+module OpenTransport.Station exposing (Station, empty, name, create)
 
 
 type Station
