@@ -1,10 +1,8 @@
 module Styles exposing (..)
 
 import Css exposing (..)
-import Css.Media as Media
 import Css.Colors
 import Css.Foreign exposing (global)
-import Css.Media exposing (only, screen, withMedia)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, styled)
 
@@ -172,8 +170,6 @@ globalStyles =
         [ Css.Foreign.html
             [ fontSize (px 20)
             , width (pct 100)
-            , withMedia [ only screen [ Media.minWidth (px 320) ] ]
-                [ fontSize (px 30) ]
             ]
         , Css.Foreign.body
             [ maxWidth (px 960)
@@ -182,11 +178,8 @@ globalStyles =
             , fontFamily sansSerif
             , backgroundColor theme.primary1
             ]
-        , Css.Foreign.class KeySelected
-            [ backgroundColor theme.primary3
-            ]
-        , Css.Foreign.class MouseSelected
-            [ backgroundColor theme.primary3 ]
+        , Css.Foreign.class KeySelected autoCompleteSelectedStyles
+        , Css.Foreign.class MouseSelected autoCompleteSelectedStyles
         , Css.Foreign.class AutocompleteMenu
             [ margin (Css.rem 2.0)
             , color Css.Colors.white
@@ -206,3 +199,13 @@ globalStyles =
             , overflowY auto
             ]
         ]
+
+
+autoCompleteSelectedStyles : List Style
+autoCompleteSelectedStyles =
+    [ backgroundColor theme.primary3
+    , after
+        [ property "content" "' [enter]'"
+        , color theme.primary5
+        ]
+    ]
