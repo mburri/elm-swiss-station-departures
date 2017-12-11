@@ -2,8 +2,6 @@ module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
 
 import Autocomplete exposing (MouseSelected)
 import Css exposing (center, marginLeft, textAlign)
-import Date
-import Date.Format
 import Html
 import Html.Attributes
 import Html.Styled exposing (..)
@@ -12,8 +10,10 @@ import Html.Styled.Events exposing (keyCode, onClick, onFocus, onInput, onWithOp
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
+import OpenTransport.Departure as Departure exposing (Departure, time)
+import OpenTransport.Station as Station exposing (Station)
+import OpenTransport.TransportApi as TransportApi exposing (..)
 import Styles exposing (..)
-import TransportApi exposing (..)
 
 
 -- MODEL
@@ -110,7 +110,7 @@ update msg model =
             let
                 selectedStation =
                     model.stations
-                        |> List.filter (\station -> stationName station == name)
+                        |> List.filter (\station -> Station.name station == name)
                         |> List.head
             in
                 ( selectStation model selectedStation name
@@ -231,7 +231,7 @@ getDepartures : Maybe Station -> Cmd Msg
 getDepartures maybeStation =
     case maybeStation of
         Just station ->
-            TransportApi.getDepartures (stationName station) |> Http.send FetchStationTableSucceed
+            TransportApi.getDepartures (Station.name station) |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -242,10 +242,10 @@ selectStation model selectedStation id =
     { model
         | query =
             model.stations
-                |> List.filter (\station -> stationName station == id)
+                |> List.filter (\station -> Station.name station == id)
                 |> List.head
-                |> Maybe.withDefault (emptyStation)
-                |> stationName
+                |> Maybe.withDefault (Station.empty)
+                |> Station.name
         , autoState = Autocomplete.empty
         , showStations = False
         , selectedStation = selectedStation
@@ -258,7 +258,7 @@ addStation stations maybeStation =
     case maybeStation of
         Just station ->
             (station :: stations)
-                |> List.Extra.uniqueBy (\station -> stationName station)
+                |> List.Extra.uniqueBy (\station -> Station.name station)
 
         Nothing ->
             stations
@@ -271,7 +271,7 @@ acceptableStations query stations =
 
 matches : String -> Station -> Bool
 matches query station =
-    String.contains (String.toLower query) (String.toLower (stationName station))
+    String.contains (String.toLower query) (String.toLower (Station.name station))
 
 
 
@@ -366,7 +366,7 @@ viewRecent : Station -> Html Msg
 viewRecent station =
     recentStationListItem
         [ onClick (SelectStationFromRecent station) ]
-        [ station |> stationName |> text ]
+        [ station |> Station.name |> text ]
 
 
 viewErrors : String -> Html Msg
@@ -401,13 +401,13 @@ viewConfig =
                     , ( "KeySelected", keySelected )
                     , ( "MouseSelected", mouseSelected )
                     ]
-                , station |> stationName |> Html.Attributes.id
+                , station |> Station.name |> Html.Attributes.id
                 ]
-            , children = [ station |> stationName |> Html.text ]
+            , children = [ station |> Station.name |> Html.text ]
             }
     in
         Autocomplete.viewConfig
-            { toId = stationName
+            { toId = Station.name
             , ul = [ Html.Attributes.class "AutocompleteList" ]
             , li = stationListItem
             }
@@ -416,7 +416,7 @@ viewConfig =
 updateConfig : Autocomplete.UpdateConfig Msg Station
 updateConfig =
     Autocomplete.updateConfig
-        { toId = stationName
+        { toId = Station.name
         , onKeyDown =
             \code maybeId ->
                 if code == 13 then
@@ -457,20 +457,10 @@ viewDepartures departures =
 viewSingleDeparture : Departure -> Html.Styled.Html msg
 viewSingleDeparture departure =
     tr []
-        [ td [ cellStyle ] [ departureTime departure ]
-        , td [ cellStyle ] [ text departure.name ]
-        , td [ cellStyle ] [ text departure.to ]
+        [ td [ cellStyle ] [ Departure.time departure |> text ]
+        , td [ cellStyle ] [ Departure.name departure |> text ]
+        , td [ cellStyle ] [ Departure.destination departure |> text ]
         ]
-
-
-departureTime : { a | departure : String } -> Html msg
-departureTime departure =
-    case Date.fromString departure.departure of
-        Err msg ->
-            text ""
-
-        Ok departure ->
-            text (Date.Format.format "%k:%M" departure)
 
 
 toErrorMessage : Http.Error -> String

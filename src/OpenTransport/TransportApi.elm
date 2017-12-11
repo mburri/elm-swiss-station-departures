@@ -1,38 +1,13 @@
-module TransportApi
+module OpenTransport.TransportApi
     exposing
-        ( Station
-        , Departure
+        ( searchStation
         , getDepartures
-        , searchStation
-        , emptyStation
-        , stationName
         )
 
 import Http
 import Json.Decode as Json exposing (field)
-
-
-type Station
-    = Station
-        { name : String
-        }
-
-
-emptyStation : Station
-emptyStation =
-    Station { name = "" }
-
-
-stationName : Station -> String
-stationName (Station { name }) =
-    name
-
-
-type alias Departure =
-    { to : String
-    , departure : String
-    , name : String
-    }
+import OpenTransport.Departure as Departure exposing (Departure)
+import OpenTransport.Station as Station exposing (Station)
 
 
 baseUrl : String
@@ -51,12 +26,7 @@ searchStation query =
 
 decodeStation : Json.Decoder Station
 decodeStation =
-    Json.map toStation (field "name" Json.string)
-
-
-toStation : String -> Station
-toStation name =
-    Station { name = name }
+    Json.map Station.create (field "name" Json.string)
 
 
 decodeStations : Json.Decoder (List Station)
@@ -81,7 +51,7 @@ decode =
 
 decodeDeparture : Json.Decoder Departure
 decodeDeparture =
-    Json.map3 Departure
+    Json.map3 Departure.create
         (field "to" Json.string)
         (Json.at [ "stop", "departure" ] Json.string)
         (field "name" Json.string)
