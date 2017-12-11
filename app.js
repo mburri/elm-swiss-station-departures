@@ -15575,346 +15575,6 @@ var _rtfeldman$elm_css$Css$thin = _rtfeldman$elm_css$Css$IntentionallyUnsupporte
 var _rtfeldman$elm_css$Css$thick = _rtfeldman$elm_css$Css$IntentionallyUnsupportedPleaseSeeDocs;
 var _rtfeldman$elm_css$Css$blink = _rtfeldman$elm_css$Css$IntentionallyUnsupportedPleaseSeeDocs;
 
-var _mgold$elm_date_format$Date_Local$french = {
-	date: {
-		months: {jan: 'Janvier', feb: 'Février', mar: 'Mars', apr: 'Avril', may: 'Mai', jun: 'Juin', jul: 'Juillet', aug: 'Août', sep: 'Septembre', oct: 'Octobre', nov: 'Novembre', dec: 'Décembre'},
-		monthsAbbrev: {jan: 'Jan', feb: 'Fév', mar: 'Mar', apr: 'Avr', may: 'Mai', jun: 'Jui', jul: 'Jul', aug: 'Aoû', sep: 'Sep', oct: 'Oct', nov: 'Nov', dec: 'Déc'},
-		wdays: {mon: 'Lundi', tue: 'Mardi', wed: 'Mercredi', thu: 'Jeudi', fri: 'Vendredi', sat: 'Samedi', sun: 'Dimanche'},
-		wdaysAbbrev: {mon: 'Lun', tue: 'Mar', wed: 'Mer', thu: 'Jeu', fri: 'Ven', sat: 'Sam', sun: 'Dim'},
-		defaultFormat: _elm_lang$core$Maybe$Nothing
-	},
-	time: {am: 'am', pm: 'pm', defaultFormat: _elm_lang$core$Maybe$Nothing},
-	timeZones: _elm_lang$core$Maybe$Nothing,
-	defaultFormat: _elm_lang$core$Maybe$Nothing
-};
-var _mgold$elm_date_format$Date_Local$international = {
-	date: {
-		months: {jan: 'January', feb: 'February', mar: 'March', apr: 'April', may: 'May', jun: 'June', jul: 'July', aug: 'August', sep: 'September', oct: 'October', nov: 'November', dec: 'December'},
-		monthsAbbrev: {jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun', jul: 'Jul', aug: 'Aug', sep: 'Sep', oct: 'Oct', nov: 'Nov', dec: 'Dec'},
-		wdays: {mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday'},
-		wdaysAbbrev: {mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun'},
-		defaultFormat: _elm_lang$core$Maybe$Nothing
-	},
-	time: {am: 'am', pm: 'pm', defaultFormat: _elm_lang$core$Maybe$Nothing},
-	timeZones: _elm_lang$core$Maybe$Nothing,
-	defaultFormat: _elm_lang$core$Maybe$Nothing
-};
-var _mgold$elm_date_format$Date_Local$Local = F4(
-	function (a, b, c, d) {
-		return {date: a, time: b, timeZones: c, defaultFormat: d};
-	});
-var _mgold$elm_date_format$Date_Local$Months = function (a) {
-	return function (b) {
-		return function (c) {
-			return function (d) {
-				return function (e) {
-					return function (f) {
-						return function (g) {
-							return function (h) {
-								return function (i) {
-									return function (j) {
-										return function (k) {
-											return function (l) {
-												return {jan: a, feb: b, mar: c, apr: d, may: e, jun: f, jul: g, aug: h, sep: i, oct: j, nov: k, dec: l};
-											};
-										};
-									};
-								};
-							};
-						};
-					};
-				};
-			};
-		};
-	};
-};
-var _mgold$elm_date_format$Date_Local$WeekDays = F7(
-	function (a, b, c, d, e, f, g) {
-		return {mon: a, tue: b, wed: c, thu: d, fri: e, sat: f, sun: g};
-	});
-
-var _mgold$elm_date_format$Date_Format$padWith = function (padding) {
-	var padder = function () {
-		var _p0 = padding;
-		switch (_p0.ctor) {
-			case 'NoPadding':
-				return _elm_lang$core$Basics$identity;
-			case 'Zero':
-				return A2(
-					_elm_lang$core$String$padLeft,
-					2,
-					_elm_lang$core$Native_Utils.chr('0'));
-			case 'ZeroThreeDigits':
-				return A2(
-					_elm_lang$core$String$padLeft,
-					3,
-					_elm_lang$core$Native_Utils.chr('0'));
-			default:
-				return A2(
-					_elm_lang$core$String$padLeft,
-					2,
-					_elm_lang$core$Native_Utils.chr(' '));
-		}
-	}();
-	return function (_p1) {
-		return padder(
-			_elm_lang$core$Basics$toString(_p1));
-	};
-};
-var _mgold$elm_date_format$Date_Format$zero2twelve = function (n) {
-	return _elm_lang$core$Native_Utils.eq(n, 0) ? 12 : n;
-};
-var _mgold$elm_date_format$Date_Format$mod12 = function (h) {
-	return A2(_elm_lang$core$Basics_ops['%'], h, 12);
-};
-var _mgold$elm_date_format$Date_Format$dayOfWeekToWord = F2(
-	function (loc, dow) {
-		var _p2 = dow;
-		switch (_p2.ctor) {
-			case 'Mon':
-				return loc.mon;
-			case 'Tue':
-				return loc.tue;
-			case 'Wed':
-				return loc.wed;
-			case 'Thu':
-				return loc.thu;
-			case 'Fri':
-				return loc.fri;
-			case 'Sat':
-				return loc.sat;
-			default:
-				return loc.sun;
-		}
-	});
-var _mgold$elm_date_format$Date_Format$monthToWord = F2(
-	function (loc, m) {
-		var _p3 = m;
-		switch (_p3.ctor) {
-			case 'Jan':
-				return loc.jan;
-			case 'Feb':
-				return loc.feb;
-			case 'Mar':
-				return loc.mar;
-			case 'Apr':
-				return loc.apr;
-			case 'May':
-				return loc.may;
-			case 'Jun':
-				return loc.jun;
-			case 'Jul':
-				return loc.jul;
-			case 'Aug':
-				return loc.aug;
-			case 'Sep':
-				return loc.sep;
-			case 'Oct':
-				return loc.oct;
-			case 'Nov':
-				return loc.nov;
-			default:
-				return loc.dec;
-		}
-	});
-var _mgold$elm_date_format$Date_Format$monthToInt = function (m) {
-	var _p4 = m;
-	switch (_p4.ctor) {
-		case 'Jan':
-			return 1;
-		case 'Feb':
-			return 2;
-		case 'Mar':
-			return 3;
-		case 'Apr':
-			return 4;
-		case 'May':
-			return 5;
-		case 'Jun':
-			return 6;
-		case 'Jul':
-			return 7;
-		case 'Aug':
-			return 8;
-		case 'Sep':
-			return 9;
-		case 'Oct':
-			return 10;
-		case 'Nov':
-			return 11;
-		default:
-			return 12;
-	}
-};
-var _mgold$elm_date_format$Date_Format$re = _elm_lang$core$Regex$regex('%(_|-|0)?(%|Y|y|m|B|b|d|e|a|A|H|k|I|l|L|p|P|M|S)');
-var _mgold$elm_date_format$Date_Format$ZeroThreeDigits = {ctor: 'ZeroThreeDigits'};
-var _mgold$elm_date_format$Date_Format$Zero = {ctor: 'Zero'};
-var _mgold$elm_date_format$Date_Format$Space = {ctor: 'Space'};
-var _mgold$elm_date_format$Date_Format$NoPadding = {ctor: 'NoPadding'};
-var _mgold$elm_date_format$Date_Format$formatToken = F3(
-	function (loc, d, m) {
-		var _p5 = function () {
-			var _p6 = m.submatches;
-			_v4_4:
-			do {
-				if (_p6.ctor === '::') {
-					if (_p6._0.ctor === 'Just') {
-						if (((_p6._1.ctor === '::') && (_p6._1._0.ctor === 'Just')) && (_p6._1._1.ctor === '[]')) {
-							switch (_p6._0._0) {
-								case '-':
-									return {
-										ctor: '_Tuple2',
-										_0: _elm_lang$core$Maybe$Just(_mgold$elm_date_format$Date_Format$NoPadding),
-										_1: _p6._1._0._0
-									};
-								case '_':
-									return {
-										ctor: '_Tuple2',
-										_0: _elm_lang$core$Maybe$Just(_mgold$elm_date_format$Date_Format$Space),
-										_1: _p6._1._0._0
-									};
-								case '0':
-									return {
-										ctor: '_Tuple2',
-										_0: _elm_lang$core$Maybe$Just(_mgold$elm_date_format$Date_Format$Zero),
-										_1: _p6._1._0._0
-									};
-								default:
-									break _v4_4;
-							}
-						} else {
-							break _v4_4;
-						}
-					} else {
-						if (((_p6._1.ctor === '::') && (_p6._1._0.ctor === 'Just')) && (_p6._1._1.ctor === '[]')) {
-							return {ctor: '_Tuple2', _0: _elm_lang$core$Maybe$Nothing, _1: _p6._1._0._0};
-						} else {
-							break _v4_4;
-						}
-					}
-				} else {
-					break _v4_4;
-				}
-			} while(false);
-			return {ctor: '_Tuple2', _0: _elm_lang$core$Maybe$Nothing, _1: ' '};
-		}();
-		var padding = _p5._0;
-		var symbol = _p5._1;
-		var _p7 = symbol;
-		switch (_p7) {
-			case '%':
-				return '%';
-			case 'Y':
-				return _elm_lang$core$Basics$toString(
-					_elm_lang$core$Date$year(d));
-			case 'y':
-				return A2(
-					_elm_lang$core$String$right,
-					2,
-					_elm_lang$core$Basics$toString(
-						_elm_lang$core$Date$year(d)));
-			case 'm':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
-					_mgold$elm_date_format$Date_Format$monthToInt(
-						_elm_lang$core$Date$month(d)));
-			case 'B':
-				return A2(
-					_mgold$elm_date_format$Date_Format$monthToWord,
-					loc.date.months,
-					_elm_lang$core$Date$month(d));
-			case 'b':
-				return A2(
-					_mgold$elm_date_format$Date_Format$monthToWord,
-					loc.date.monthsAbbrev,
-					_elm_lang$core$Date$month(d));
-			case 'd':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
-					_elm_lang$core$Date$day(d));
-			case 'e':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Space, padding),
-					_elm_lang$core$Date$day(d));
-			case 'a':
-				return A2(
-					_mgold$elm_date_format$Date_Format$dayOfWeekToWord,
-					loc.date.wdaysAbbrev,
-					_elm_lang$core$Date$dayOfWeek(d));
-			case 'A':
-				return A2(
-					_mgold$elm_date_format$Date_Format$dayOfWeekToWord,
-					loc.date.wdays,
-					_elm_lang$core$Date$dayOfWeek(d));
-			case 'H':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
-					_elm_lang$core$Date$hour(d));
-			case 'k':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Space, padding),
-					_elm_lang$core$Date$hour(d));
-			case 'I':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
-					_mgold$elm_date_format$Date_Format$zero2twelve(
-						_mgold$elm_date_format$Date_Format$mod12(
-							_elm_lang$core$Date$hour(d))));
-			case 'l':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Space, padding),
-					_mgold$elm_date_format$Date_Format$zero2twelve(
-						_mgold$elm_date_format$Date_Format$mod12(
-							_elm_lang$core$Date$hour(d))));
-			case 'p':
-				return (_elm_lang$core$Native_Utils.cmp(
-					_elm_lang$core$Date$hour(d),
-					12) < 0) ? _elm_lang$core$String$toUpper(loc.time.am) : _elm_lang$core$String$toUpper(loc.time.pm);
-			case 'P':
-				return (_elm_lang$core$Native_Utils.cmp(
-					_elm_lang$core$Date$hour(d),
-					12) < 0) ? loc.time.am : loc.time.pm;
-			case 'M':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
-					_elm_lang$core$Date$minute(d));
-			case 'S':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
-					_elm_lang$core$Date$second(d));
-			case 'L':
-				return A2(
-					_mgold$elm_date_format$Date_Format$padWith,
-					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$ZeroThreeDigits, padding),
-					_elm_lang$core$Date$millisecond(d));
-			default:
-				return '';
-		}
-	});
-var _mgold$elm_date_format$Date_Format$localFormat = F3(
-	function (loc, s, d) {
-		return A4(
-			_elm_lang$core$Regex$replace,
-			_elm_lang$core$Regex$All,
-			_mgold$elm_date_format$Date_Format$re,
-			A2(_mgold$elm_date_format$Date_Format$formatToken, loc, d),
-			s);
-	});
-var _mgold$elm_date_format$Date_Format$format = F2(
-	function (s, d) {
-		return A3(_mgold$elm_date_format$Date_Format$localFormat, _mgold$elm_date_format$Date_Local$international, s, d);
-	});
-var _mgold$elm_date_format$Date_Format$formatISO8601 = _mgold$elm_date_format$Date_Format$format('%Y-%m-%dT%H:%M:%SZ');
-
 var _rtfeldman$elm_css$Css_Structure_Output$noIndent = '';
 var _rtfeldman$elm_css$Css_Structure_Output$spaceIndent = '    ';
 var _rtfeldman$elm_css$Css_Structure_Output$indent = function (str) {
@@ -18011,6 +17671,458 @@ var _rtfeldman$elm_css$Html_Styled_Events$Options = F2(
 		return {stopPropagation: a, preventDefault: b};
 	});
 
+var _mgold$elm_date_format$Date_Local$french = {
+	date: {
+		months: {jan: 'Janvier', feb: 'Février', mar: 'Mars', apr: 'Avril', may: 'Mai', jun: 'Juin', jul: 'Juillet', aug: 'Août', sep: 'Septembre', oct: 'Octobre', nov: 'Novembre', dec: 'Décembre'},
+		monthsAbbrev: {jan: 'Jan', feb: 'Fév', mar: 'Mar', apr: 'Avr', may: 'Mai', jun: 'Jui', jul: 'Jul', aug: 'Aoû', sep: 'Sep', oct: 'Oct', nov: 'Nov', dec: 'Déc'},
+		wdays: {mon: 'Lundi', tue: 'Mardi', wed: 'Mercredi', thu: 'Jeudi', fri: 'Vendredi', sat: 'Samedi', sun: 'Dimanche'},
+		wdaysAbbrev: {mon: 'Lun', tue: 'Mar', wed: 'Mer', thu: 'Jeu', fri: 'Ven', sat: 'Sam', sun: 'Dim'},
+		defaultFormat: _elm_lang$core$Maybe$Nothing
+	},
+	time: {am: 'am', pm: 'pm', defaultFormat: _elm_lang$core$Maybe$Nothing},
+	timeZones: _elm_lang$core$Maybe$Nothing,
+	defaultFormat: _elm_lang$core$Maybe$Nothing
+};
+var _mgold$elm_date_format$Date_Local$international = {
+	date: {
+		months: {jan: 'January', feb: 'February', mar: 'March', apr: 'April', may: 'May', jun: 'June', jul: 'July', aug: 'August', sep: 'September', oct: 'October', nov: 'November', dec: 'December'},
+		monthsAbbrev: {jan: 'Jan', feb: 'Feb', mar: 'Mar', apr: 'Apr', may: 'May', jun: 'Jun', jul: 'Jul', aug: 'Aug', sep: 'Sep', oct: 'Oct', nov: 'Nov', dec: 'Dec'},
+		wdays: {mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday'},
+		wdaysAbbrev: {mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun'},
+		defaultFormat: _elm_lang$core$Maybe$Nothing
+	},
+	time: {am: 'am', pm: 'pm', defaultFormat: _elm_lang$core$Maybe$Nothing},
+	timeZones: _elm_lang$core$Maybe$Nothing,
+	defaultFormat: _elm_lang$core$Maybe$Nothing
+};
+var _mgold$elm_date_format$Date_Local$Local = F4(
+	function (a, b, c, d) {
+		return {date: a, time: b, timeZones: c, defaultFormat: d};
+	});
+var _mgold$elm_date_format$Date_Local$Months = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return function (k) {
+											return function (l) {
+												return {jan: a, feb: b, mar: c, apr: d, may: e, jun: f, jul: g, aug: h, sep: i, oct: j, nov: k, dec: l};
+											};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
+var _mgold$elm_date_format$Date_Local$WeekDays = F7(
+	function (a, b, c, d, e, f, g) {
+		return {mon: a, tue: b, wed: c, thu: d, fri: e, sat: f, sun: g};
+	});
+
+var _mgold$elm_date_format$Date_Format$padWith = function (padding) {
+	var padder = function () {
+		var _p0 = padding;
+		switch (_p0.ctor) {
+			case 'NoPadding':
+				return _elm_lang$core$Basics$identity;
+			case 'Zero':
+				return A2(
+					_elm_lang$core$String$padLeft,
+					2,
+					_elm_lang$core$Native_Utils.chr('0'));
+			case 'ZeroThreeDigits':
+				return A2(
+					_elm_lang$core$String$padLeft,
+					3,
+					_elm_lang$core$Native_Utils.chr('0'));
+			default:
+				return A2(
+					_elm_lang$core$String$padLeft,
+					2,
+					_elm_lang$core$Native_Utils.chr(' '));
+		}
+	}();
+	return function (_p1) {
+		return padder(
+			_elm_lang$core$Basics$toString(_p1));
+	};
+};
+var _mgold$elm_date_format$Date_Format$zero2twelve = function (n) {
+	return _elm_lang$core$Native_Utils.eq(n, 0) ? 12 : n;
+};
+var _mgold$elm_date_format$Date_Format$mod12 = function (h) {
+	return A2(_elm_lang$core$Basics_ops['%'], h, 12);
+};
+var _mgold$elm_date_format$Date_Format$dayOfWeekToWord = F2(
+	function (loc, dow) {
+		var _p2 = dow;
+		switch (_p2.ctor) {
+			case 'Mon':
+				return loc.mon;
+			case 'Tue':
+				return loc.tue;
+			case 'Wed':
+				return loc.wed;
+			case 'Thu':
+				return loc.thu;
+			case 'Fri':
+				return loc.fri;
+			case 'Sat':
+				return loc.sat;
+			default:
+				return loc.sun;
+		}
+	});
+var _mgold$elm_date_format$Date_Format$monthToWord = F2(
+	function (loc, m) {
+		var _p3 = m;
+		switch (_p3.ctor) {
+			case 'Jan':
+				return loc.jan;
+			case 'Feb':
+				return loc.feb;
+			case 'Mar':
+				return loc.mar;
+			case 'Apr':
+				return loc.apr;
+			case 'May':
+				return loc.may;
+			case 'Jun':
+				return loc.jun;
+			case 'Jul':
+				return loc.jul;
+			case 'Aug':
+				return loc.aug;
+			case 'Sep':
+				return loc.sep;
+			case 'Oct':
+				return loc.oct;
+			case 'Nov':
+				return loc.nov;
+			default:
+				return loc.dec;
+		}
+	});
+var _mgold$elm_date_format$Date_Format$monthToInt = function (m) {
+	var _p4 = m;
+	switch (_p4.ctor) {
+		case 'Jan':
+			return 1;
+		case 'Feb':
+			return 2;
+		case 'Mar':
+			return 3;
+		case 'Apr':
+			return 4;
+		case 'May':
+			return 5;
+		case 'Jun':
+			return 6;
+		case 'Jul':
+			return 7;
+		case 'Aug':
+			return 8;
+		case 'Sep':
+			return 9;
+		case 'Oct':
+			return 10;
+		case 'Nov':
+			return 11;
+		default:
+			return 12;
+	}
+};
+var _mgold$elm_date_format$Date_Format$re = _elm_lang$core$Regex$regex('%(_|-|0)?(%|Y|y|m|B|b|d|e|a|A|H|k|I|l|L|p|P|M|S)');
+var _mgold$elm_date_format$Date_Format$ZeroThreeDigits = {ctor: 'ZeroThreeDigits'};
+var _mgold$elm_date_format$Date_Format$Zero = {ctor: 'Zero'};
+var _mgold$elm_date_format$Date_Format$Space = {ctor: 'Space'};
+var _mgold$elm_date_format$Date_Format$NoPadding = {ctor: 'NoPadding'};
+var _mgold$elm_date_format$Date_Format$formatToken = F3(
+	function (loc, d, m) {
+		var _p5 = function () {
+			var _p6 = m.submatches;
+			_v4_4:
+			do {
+				if (_p6.ctor === '::') {
+					if (_p6._0.ctor === 'Just') {
+						if (((_p6._1.ctor === '::') && (_p6._1._0.ctor === 'Just')) && (_p6._1._1.ctor === '[]')) {
+							switch (_p6._0._0) {
+								case '-':
+									return {
+										ctor: '_Tuple2',
+										_0: _elm_lang$core$Maybe$Just(_mgold$elm_date_format$Date_Format$NoPadding),
+										_1: _p6._1._0._0
+									};
+								case '_':
+									return {
+										ctor: '_Tuple2',
+										_0: _elm_lang$core$Maybe$Just(_mgold$elm_date_format$Date_Format$Space),
+										_1: _p6._1._0._0
+									};
+								case '0':
+									return {
+										ctor: '_Tuple2',
+										_0: _elm_lang$core$Maybe$Just(_mgold$elm_date_format$Date_Format$Zero),
+										_1: _p6._1._0._0
+									};
+								default:
+									break _v4_4;
+							}
+						} else {
+							break _v4_4;
+						}
+					} else {
+						if (((_p6._1.ctor === '::') && (_p6._1._0.ctor === 'Just')) && (_p6._1._1.ctor === '[]')) {
+							return {ctor: '_Tuple2', _0: _elm_lang$core$Maybe$Nothing, _1: _p6._1._0._0};
+						} else {
+							break _v4_4;
+						}
+					}
+				} else {
+					break _v4_4;
+				}
+			} while(false);
+			return {ctor: '_Tuple2', _0: _elm_lang$core$Maybe$Nothing, _1: ' '};
+		}();
+		var padding = _p5._0;
+		var symbol = _p5._1;
+		var _p7 = symbol;
+		switch (_p7) {
+			case '%':
+				return '%';
+			case 'Y':
+				return _elm_lang$core$Basics$toString(
+					_elm_lang$core$Date$year(d));
+			case 'y':
+				return A2(
+					_elm_lang$core$String$right,
+					2,
+					_elm_lang$core$Basics$toString(
+						_elm_lang$core$Date$year(d)));
+			case 'm':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
+					_mgold$elm_date_format$Date_Format$monthToInt(
+						_elm_lang$core$Date$month(d)));
+			case 'B':
+				return A2(
+					_mgold$elm_date_format$Date_Format$monthToWord,
+					loc.date.months,
+					_elm_lang$core$Date$month(d));
+			case 'b':
+				return A2(
+					_mgold$elm_date_format$Date_Format$monthToWord,
+					loc.date.monthsAbbrev,
+					_elm_lang$core$Date$month(d));
+			case 'd':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
+					_elm_lang$core$Date$day(d));
+			case 'e':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Space, padding),
+					_elm_lang$core$Date$day(d));
+			case 'a':
+				return A2(
+					_mgold$elm_date_format$Date_Format$dayOfWeekToWord,
+					loc.date.wdaysAbbrev,
+					_elm_lang$core$Date$dayOfWeek(d));
+			case 'A':
+				return A2(
+					_mgold$elm_date_format$Date_Format$dayOfWeekToWord,
+					loc.date.wdays,
+					_elm_lang$core$Date$dayOfWeek(d));
+			case 'H':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
+					_elm_lang$core$Date$hour(d));
+			case 'k':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Space, padding),
+					_elm_lang$core$Date$hour(d));
+			case 'I':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
+					_mgold$elm_date_format$Date_Format$zero2twelve(
+						_mgold$elm_date_format$Date_Format$mod12(
+							_elm_lang$core$Date$hour(d))));
+			case 'l':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Space, padding),
+					_mgold$elm_date_format$Date_Format$zero2twelve(
+						_mgold$elm_date_format$Date_Format$mod12(
+							_elm_lang$core$Date$hour(d))));
+			case 'p':
+				return (_elm_lang$core$Native_Utils.cmp(
+					_elm_lang$core$Date$hour(d),
+					12) < 0) ? _elm_lang$core$String$toUpper(loc.time.am) : _elm_lang$core$String$toUpper(loc.time.pm);
+			case 'P':
+				return (_elm_lang$core$Native_Utils.cmp(
+					_elm_lang$core$Date$hour(d),
+					12) < 0) ? loc.time.am : loc.time.pm;
+			case 'M':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
+					_elm_lang$core$Date$minute(d));
+			case 'S':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$Zero, padding),
+					_elm_lang$core$Date$second(d));
+			case 'L':
+				return A2(
+					_mgold$elm_date_format$Date_Format$padWith,
+					A2(_elm_lang$core$Maybe$withDefault, _mgold$elm_date_format$Date_Format$ZeroThreeDigits, padding),
+					_elm_lang$core$Date$millisecond(d));
+			default:
+				return '';
+		}
+	});
+var _mgold$elm_date_format$Date_Format$localFormat = F3(
+	function (loc, s, d) {
+		return A4(
+			_elm_lang$core$Regex$replace,
+			_elm_lang$core$Regex$All,
+			_mgold$elm_date_format$Date_Format$re,
+			A2(_mgold$elm_date_format$Date_Format$formatToken, loc, d),
+			s);
+	});
+var _mgold$elm_date_format$Date_Format$format = F2(
+	function (s, d) {
+		return A3(_mgold$elm_date_format$Date_Format$localFormat, _mgold$elm_date_format$Date_Local$international, s, d);
+	});
+var _mgold$elm_date_format$Date_Format$formatISO8601 = _mgold$elm_date_format$Date_Format$format('%Y-%m-%dT%H:%M:%SZ');
+
+var _mburri$elm_webpack_seed$OpenTransport_Departure$time = function (_p0) {
+	var _p1 = _p0;
+	var _p2 = _elm_lang$core$Date$fromString(_p1._0.departure);
+	if (_p2.ctor === 'Err') {
+		return '-';
+	} else {
+		return A2(_mgold$elm_date_format$Date_Format$format, '%k:%M', _p2._0);
+	}
+};
+var _mburri$elm_webpack_seed$OpenTransport_Departure$name = function (_p3) {
+	var _p4 = _p3;
+	return _p4._0.name;
+};
+var _mburri$elm_webpack_seed$OpenTransport_Departure$destination = function (_p5) {
+	var _p6 = _p5;
+	return _p6._0.to;
+};
+var _mburri$elm_webpack_seed$OpenTransport_Departure$Departure = function (a) {
+	return {ctor: 'Departure', _0: a};
+};
+var _mburri$elm_webpack_seed$OpenTransport_Departure$create = F3(
+	function (to, departure, name) {
+		return _mburri$elm_webpack_seed$OpenTransport_Departure$Departure(
+			{to: to, departure: departure, name: name});
+	});
+
+var _mburri$elm_webpack_seed$OpenTransport_Station$name = function (_p0) {
+	var _p1 = _p0;
+	return _p1._0.name;
+};
+var _mburri$elm_webpack_seed$OpenTransport_Station$Station = function (a) {
+	return {ctor: 'Station', _0: a};
+};
+var _mburri$elm_webpack_seed$OpenTransport_Station$empty = _mburri$elm_webpack_seed$OpenTransport_Station$Station(
+	{name: ''});
+var _mburri$elm_webpack_seed$OpenTransport_Station$create = function (name) {
+	return _mburri$elm_webpack_seed$OpenTransport_Station$Station(
+		{name: name});
+};
+
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeDeparture = A4(
+	_elm_lang$core$Json_Decode$map3,
+	_mburri$elm_webpack_seed$OpenTransport_Departure$create,
+	A2(_elm_lang$core$Json_Decode$field, 'to', _elm_lang$core$Json_Decode$string),
+	A2(
+		_elm_lang$core$Json_Decode$at,
+		{
+			ctor: '::',
+			_0: 'stop',
+			_1: {
+				ctor: '::',
+				_0: 'departure',
+				_1: {ctor: '[]'}
+			}
+		},
+		_elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$decode = A2(
+	_elm_lang$core$Json_Decode$map,
+	_elm_lang$core$Basics$identity,
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'stationboard',
+		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeDeparture)));
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeStation = A2(
+	_elm_lang$core$Json_Decode$map,
+	_mburri$elm_webpack_seed$OpenTransport_Station$create,
+	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeStations = A2(
+	_elm_lang$core$Json_Decode$map,
+	_elm_lang$core$Basics$identity,
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'stations',
+		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeStation)));
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$baseUrl = 'https://transport.opendata.ch/v1';
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$searchStation = function (query) {
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_mburri$elm_webpack_seed$OpenTransport_TransportApi$baseUrl,
+		A2(_elm_lang$core$Basics_ops['++'], '/locations?query=', query));
+	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeStations);
+};
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$getDepartures = function (stationName) {
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_mburri$elm_webpack_seed$OpenTransport_TransportApi$baseUrl,
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			'/stationboard?station=',
+			A2(_elm_lang$core$Basics_ops['++'], stationName, '&limit=20')));
+	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$OpenTransport_TransportApi$decode);
+};
+
+var _rtfeldman$elm_css$Css_Colors$white = _rtfeldman$elm_css$Css$hex('ffffff');
+var _rtfeldman$elm_css$Css_Colors$silver = _rtfeldman$elm_css$Css$hex('dddddd');
+var _rtfeldman$elm_css$Css_Colors$gray = _rtfeldman$elm_css$Css$hex('AAAAAA');
+var _rtfeldman$elm_css$Css_Colors$black = _rtfeldman$elm_css$Css$hex('111111');
+var _rtfeldman$elm_css$Css_Colors$purple = _rtfeldman$elm_css$Css$hex('B10DC9');
+var _rtfeldman$elm_css$Css_Colors$fuchsia = _rtfeldman$elm_css$Css$hex('F012BE');
+var _rtfeldman$elm_css$Css_Colors$maroon = _rtfeldman$elm_css$Css$hex('85144b');
+var _rtfeldman$elm_css$Css_Colors$red = _rtfeldman$elm_css$Css$hex('FF4136');
+var _rtfeldman$elm_css$Css_Colors$orange = _rtfeldman$elm_css$Css$hex('FF851B');
+var _rtfeldman$elm_css$Css_Colors$yellow = _rtfeldman$elm_css$Css$hex('FFDC00');
+var _rtfeldman$elm_css$Css_Colors$lime = _rtfeldman$elm_css$Css$hex('01FF70');
+var _rtfeldman$elm_css$Css_Colors$green = _rtfeldman$elm_css$Css$hex('2ECC40');
+var _rtfeldman$elm_css$Css_Colors$olive = _rtfeldman$elm_css$Css$hex('3D9970');
+var _rtfeldman$elm_css$Css_Colors$teal = _rtfeldman$elm_css$Css$hex('39CCCC');
+var _rtfeldman$elm_css$Css_Colors$aqua = _rtfeldman$elm_css$Css$hex('7FDBFF');
+var _rtfeldman$elm_css$Css_Colors$blue = _rtfeldman$elm_css$Css$hex('0074D9');
+var _rtfeldman$elm_css$Css_Colors$navy = _rtfeldman$elm_css$Css$hex('001F3F');
+
 var _rtfeldman$elm_css$Css_Media$unparameterizedFeature = function (key) {
 	return {feature: key, value: _elm_lang$core$Maybe$Nothing};
 };
@@ -18282,24 +18394,6 @@ var _rtfeldman$elm_css$Css_Media$Enabled = F2(
 	function (a, b) {
 		return {value: a, scriptingSupport: b};
 	});
-
-var _rtfeldman$elm_css$Css_Colors$white = _rtfeldman$elm_css$Css$hex('ffffff');
-var _rtfeldman$elm_css$Css_Colors$silver = _rtfeldman$elm_css$Css$hex('dddddd');
-var _rtfeldman$elm_css$Css_Colors$gray = _rtfeldman$elm_css$Css$hex('AAAAAA');
-var _rtfeldman$elm_css$Css_Colors$black = _rtfeldman$elm_css$Css$hex('111111');
-var _rtfeldman$elm_css$Css_Colors$purple = _rtfeldman$elm_css$Css$hex('B10DC9');
-var _rtfeldman$elm_css$Css_Colors$fuchsia = _rtfeldman$elm_css$Css$hex('F012BE');
-var _rtfeldman$elm_css$Css_Colors$maroon = _rtfeldman$elm_css$Css$hex('85144b');
-var _rtfeldman$elm_css$Css_Colors$red = _rtfeldman$elm_css$Css$hex('FF4136');
-var _rtfeldman$elm_css$Css_Colors$orange = _rtfeldman$elm_css$Css$hex('FF851B');
-var _rtfeldman$elm_css$Css_Colors$yellow = _rtfeldman$elm_css$Css$hex('FFDC00');
-var _rtfeldman$elm_css$Css_Colors$lime = _rtfeldman$elm_css$Css$hex('01FF70');
-var _rtfeldman$elm_css$Css_Colors$green = _rtfeldman$elm_css$Css$hex('2ECC40');
-var _rtfeldman$elm_css$Css_Colors$olive = _rtfeldman$elm_css$Css$hex('3D9970');
-var _rtfeldman$elm_css$Css_Colors$teal = _rtfeldman$elm_css$Css$hex('39CCCC');
-var _rtfeldman$elm_css$Css_Colors$aqua = _rtfeldman$elm_css$Css$hex('7FDBFF');
-var _rtfeldman$elm_css$Css_Colors$blue = _rtfeldman$elm_css$Css$hex('0074D9');
-var _rtfeldman$elm_css$Css_Colors$navy = _rtfeldman$elm_css$Css$hex('001F3F');
 
 var _rtfeldman$elm_css$Css_Foreign$collectSelectors = function (declarations) {
 	collectSelectors:
@@ -18887,6 +18981,24 @@ var _mburri$elm_webpack_seed$Styles$errorBox = A2(
 			}
 		}
 	});
+var _mburri$elm_webpack_seed$Styles$autoCompleteSelectedStyles = {
+	ctor: '::',
+	_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.primary3),
+	_1: {
+		ctor: '::',
+		_0: _rtfeldman$elm_css$Css$after(
+			{
+				ctor: '::',
+				_0: A2(_rtfeldman$elm_css$Css$property, 'content', '\' [enter]\''),
+				_1: {
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$color(_mburri$elm_webpack_seed$Styles$theme.primary5),
+					_1: {ctor: '[]'}
+				}
+			}),
+		_1: {ctor: '[]'}
+	}
+};
 var _mburri$elm_webpack_seed$Styles$AutocompleteItem = {ctor: 'AutocompleteItem'};
 var _mburri$elm_webpack_seed$Styles$AutocompleteList = {ctor: 'AutocompleteList'};
 var _mburri$elm_webpack_seed$Styles$AutocompleteMenu = {ctor: 'AutocompleteMenu'};
@@ -18904,31 +19016,7 @@ var _mburri$elm_webpack_seed$Styles$globalStyles = _rtfeldman$elm_css$Css_Foreig
 					ctor: '::',
 					_0: _rtfeldman$elm_css$Css$width(
 						_rtfeldman$elm_css$Css$pct(100)),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_rtfeldman$elm_css$Css_Media$withMedia,
-							{
-								ctor: '::',
-								_0: A2(
-									_rtfeldman$elm_css$Css_Media$only,
-									_rtfeldman$elm_css$Css_Media$screen,
-									{
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Css_Media$minWidth(
-											_rtfeldman$elm_css$Css$px(320)),
-										_1: {ctor: '[]'}
-									}),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Css$fontSize(
-									_rtfeldman$elm_css$Css$px(30)),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
+					_1: {ctor: '[]'}
 				}
 			}),
 		_1: {
@@ -18959,24 +19047,10 @@ var _mburri$elm_webpack_seed$Styles$globalStyles = _rtfeldman$elm_css$Css_Foreig
 				}),
 			_1: {
 				ctor: '::',
-				_0: A2(
-					_rtfeldman$elm_css$Css_Foreign$class,
-					_mburri$elm_webpack_seed$Styles$KeySelected,
-					{
-						ctor: '::',
-						_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.primary3),
-						_1: {ctor: '[]'}
-					}),
+				_0: A2(_rtfeldman$elm_css$Css_Foreign$class, _mburri$elm_webpack_seed$Styles$KeySelected, _mburri$elm_webpack_seed$Styles$autoCompleteSelectedStyles),
 				_1: {
 					ctor: '::',
-					_0: A2(
-						_rtfeldman$elm_css$Css_Foreign$class,
-						_mburri$elm_webpack_seed$Styles$MouseSelected,
-						{
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Css$backgroundColor(_mburri$elm_webpack_seed$Styles$theme.primary3),
-							_1: {ctor: '[]'}
-						}),
+					_0: A2(_rtfeldman$elm_css$Css_Foreign$class, _mburri$elm_webpack_seed$Styles$MouseSelected, _mburri$elm_webpack_seed$Styles$autoCompleteSelectedStyles),
 					_1: {
 						ctor: '::',
 						_0: A2(
@@ -19063,77 +19137,6 @@ var _mburri$elm_webpack_seed$Styles$globalStyles = _rtfeldman$elm_css$Css_Foreig
 		}
 	});
 
-var _mburri$elm_webpack_seed$TransportApi$baseUrl = 'https://transport.opendata.ch/v1';
-var _mburri$elm_webpack_seed$TransportApi$stationName = function (_p0) {
-	var _p1 = _p0;
-	return _p1._0.name;
-};
-var _mburri$elm_webpack_seed$TransportApi$Departure = F3(
-	function (a, b, c) {
-		return {to: a, departure: b, name: c};
-	});
-var _mburri$elm_webpack_seed$TransportApi$decodeDeparture = A4(
-	_elm_lang$core$Json_Decode$map3,
-	_mburri$elm_webpack_seed$TransportApi$Departure,
-	A2(_elm_lang$core$Json_Decode$field, 'to', _elm_lang$core$Json_Decode$string),
-	A2(
-		_elm_lang$core$Json_Decode$at,
-		{
-			ctor: '::',
-			_0: 'stop',
-			_1: {
-				ctor: '::',
-				_0: 'departure',
-				_1: {ctor: '[]'}
-			}
-		},
-		_elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
-var _mburri$elm_webpack_seed$TransportApi$decode = A2(
-	_elm_lang$core$Json_Decode$map,
-	_elm_lang$core$Basics$identity,
-	A2(
-		_elm_lang$core$Json_Decode$field,
-		'stationboard',
-		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$TransportApi$decodeDeparture)));
-var _mburri$elm_webpack_seed$TransportApi$getDepartures = function (stationName) {
-	var url = A2(
-		_elm_lang$core$Basics_ops['++'],
-		_mburri$elm_webpack_seed$TransportApi$baseUrl,
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			'/stationboard?station=',
-			A2(_elm_lang$core$Basics_ops['++'], stationName, '&limit=20')));
-	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$TransportApi$decode);
-};
-var _mburri$elm_webpack_seed$TransportApi$Station = function (a) {
-	return {ctor: 'Station', _0: a};
-};
-var _mburri$elm_webpack_seed$TransportApi$emptyStation = _mburri$elm_webpack_seed$TransportApi$Station(
-	{name: ''});
-var _mburri$elm_webpack_seed$TransportApi$toStation = function (name) {
-	return _mburri$elm_webpack_seed$TransportApi$Station(
-		{name: name});
-};
-var _mburri$elm_webpack_seed$TransportApi$decodeStation = A2(
-	_elm_lang$core$Json_Decode$map,
-	_mburri$elm_webpack_seed$TransportApi$toStation,
-	A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string));
-var _mburri$elm_webpack_seed$TransportApi$decodeStations = A2(
-	_elm_lang$core$Json_Decode$map,
-	_elm_lang$core$Basics$identity,
-	A2(
-		_elm_lang$core$Json_Decode$field,
-		'stations',
-		_elm_lang$core$Json_Decode$list(_mburri$elm_webpack_seed$TransportApi$decodeStation)));
-var _mburri$elm_webpack_seed$TransportApi$searchStation = function (query) {
-	var url = A2(
-		_elm_lang$core$Basics_ops['++'],
-		_mburri$elm_webpack_seed$TransportApi$baseUrl,
-		A2(_elm_lang$core$Basics_ops['++'], '/locations?query=', query));
-	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$TransportApi$decodeStations);
-};
-
 var _mburri$elm_webpack_seed$StationBoard$toErrorMessage = function (error) {
 	var _p0 = error;
 	switch (_p0.ctor) {
@@ -19156,15 +19159,6 @@ var _mburri$elm_webpack_seed$StationBoard$toErrorMessage = function (error) {
 			return 'Bad Payload - unable to handle response from server';
 	}
 };
-var _mburri$elm_webpack_seed$StationBoard$departureTime = function (departure) {
-	var _p2 = _elm_lang$core$Date$fromString(departure.departure);
-	if (_p2.ctor === 'Err') {
-		return _rtfeldman$elm_css$Html_Styled$text('');
-	} else {
-		return _rtfeldman$elm_css$Html_Styled$text(
-			A2(_mgold$elm_date_format$Date_Format$format, '%k:%M', _p2._0));
-	}
-};
 var _mburri$elm_webpack_seed$StationBoard$viewSingleDeparture = function (departure) {
 	return A2(
 		_rtfeldman$elm_css$Html_Styled$tr,
@@ -19180,7 +19174,8 @@ var _mburri$elm_webpack_seed$StationBoard$viewSingleDeparture = function (depart
 				},
 				{
 					ctor: '::',
-					_0: _mburri$elm_webpack_seed$StationBoard$departureTime(departure),
+					_0: _rtfeldman$elm_css$Html_Styled$text(
+						_mburri$elm_webpack_seed$OpenTransport_Departure$time(departure)),
 					_1: {ctor: '[]'}
 				}),
 			_1: {
@@ -19194,7 +19189,8 @@ var _mburri$elm_webpack_seed$StationBoard$viewSingleDeparture = function (depart
 					},
 					{
 						ctor: '::',
-						_0: _rtfeldman$elm_css$Html_Styled$text(departure.name),
+						_0: _rtfeldman$elm_css$Html_Styled$text(
+							_mburri$elm_webpack_seed$OpenTransport_Departure$name(departure)),
 						_1: {ctor: '[]'}
 					}),
 				_1: {
@@ -19208,7 +19204,8 @@ var _mburri$elm_webpack_seed$StationBoard$viewSingleDeparture = function (depart
 						},
 						{
 							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled$text(departure.to),
+							_0: _rtfeldman$elm_css$Html_Styled$text(
+								_mburri$elm_webpack_seed$OpenTransport_Departure$destination(departure)),
 							_1: {ctor: '[]'}
 						}),
 					_1: {ctor: '[]'}
@@ -19323,21 +19320,21 @@ var _mburri$elm_webpack_seed$StationBoard$viewConfig = function () {
 					_1: {
 						ctor: '::',
 						_0: _elm_lang$html$Html_Attributes$id(
-							_mburri$elm_webpack_seed$TransportApi$stationName(station)),
+							_mburri$elm_webpack_seed$OpenTransport_Station$name(station)),
 						_1: {ctor: '[]'}
 					}
 				},
 				children: {
 					ctor: '::',
 					_0: _elm_lang$html$Html$text(
-						_mburri$elm_webpack_seed$TransportApi$stationName(station)),
+						_mburri$elm_webpack_seed$OpenTransport_Station$name(station)),
 					_1: {ctor: '[]'}
 				}
 			};
 		});
 	return _thebritican$elm_autocomplete$Autocomplete$viewConfig(
 		{
-			toId: _mburri$elm_webpack_seed$TransportApi$stationName,
+			toId: _mburri$elm_webpack_seed$OpenTransport_Station$name,
 			ul: {
 				ctor: '::',
 				_0: _elm_lang$html$Html_Attributes$class('AutocompleteList'),
@@ -19380,7 +19377,7 @@ var _mburri$elm_webpack_seed$StationBoard$matches = F2(
 			_elm_lang$core$String$contains,
 			_elm_lang$core$String$toLower(query),
 			_elm_lang$core$String$toLower(
-				_mburri$elm_webpack_seed$TransportApi$stationName(station)));
+				_mburri$elm_webpack_seed$OpenTransport_Station$name(station)));
 	});
 var _mburri$elm_webpack_seed$StationBoard$acceptableStations = F2(
 	function (query, stations) {
@@ -19391,14 +19388,14 @@ var _mburri$elm_webpack_seed$StationBoard$acceptableStations = F2(
 	});
 var _mburri$elm_webpack_seed$StationBoard$addStation = F2(
 	function (stations, maybeStation) {
-		var _p3 = maybeStation;
-		if (_p3.ctor === 'Just') {
+		var _p2 = maybeStation;
+		if (_p2.ctor === 'Just') {
 			return A2(
 				_elm_community$list_extra$List_Extra$uniqueBy,
 				function (station) {
-					return _mburri$elm_webpack_seed$TransportApi$stationName(station);
+					return _mburri$elm_webpack_seed$OpenTransport_Station$name(station);
 				},
-				{ctor: '::', _0: _p3._0, _1: stations});
+				{ctor: '::', _0: _p2._0, _1: stations});
 		} else {
 			return stations;
 		}
@@ -19408,16 +19405,16 @@ var _mburri$elm_webpack_seed$StationBoard$selectStation = F3(
 		return _elm_lang$core$Native_Utils.update(
 			model,
 			{
-				query: _mburri$elm_webpack_seed$TransportApi$stationName(
+				query: _mburri$elm_webpack_seed$OpenTransport_Station$name(
 					A2(
 						_elm_lang$core$Maybe$withDefault,
-						_mburri$elm_webpack_seed$TransportApi$emptyStation,
+						_mburri$elm_webpack_seed$OpenTransport_Station$empty,
 						_elm_lang$core$List$head(
 							A2(
 								_elm_lang$core$List$filter,
 								function (station) {
 									return _elm_lang$core$Native_Utils.eq(
-										_mburri$elm_webpack_seed$TransportApi$stationName(station),
+										_mburri$elm_webpack_seed$OpenTransport_Station$name(station),
 										id);
 								},
 								model.stations)))),
@@ -19458,15 +19455,15 @@ var _mburri$elm_webpack_seed$StationBoard$initialModel = _mburri$elm_webpack_see
 	{ctor: '[]'})('')(
 	{ctor: '[]'})(_mburri$elm_webpack_seed$StationBoard$Search);
 var _mburri$elm_webpack_seed$StationBoard$init = {ctor: '_Tuple2', _0: _mburri$elm_webpack_seed$StationBoard$initialModel, _1: _elm_lang$core$Platform_Cmd$none};
-var _mburri$elm_webpack_seed$StationBoard$clear = function (_p4) {
-	var _p5 = _p4;
+var _mburri$elm_webpack_seed$StationBoard$clear = function (_p3) {
+	var _p4 = _p3;
 	return _elm_lang$core$Native_Utils.update(
 		_mburri$elm_webpack_seed$StationBoard$initialModel,
-		{latest: _p5.latest, mode: _p5.mode});
+		{latest: _p4.latest, mode: _p4.mode});
 };
 var _mburri$elm_webpack_seed$StationBoard$toggle = function (mode) {
-	var _p6 = mode;
-	if (_p6.ctor === 'Search') {
+	var _p5 = mode;
+	if (_p5.ctor === 'Search') {
 		return _mburri$elm_webpack_seed$StationBoard$Recent;
 	} else {
 		return _mburri$elm_webpack_seed$StationBoard$Search;
@@ -19484,19 +19481,19 @@ var _mburri$elm_webpack_seed$StationBoard$getStations = function (query) {
 		3) > -1) ? A2(
 		_elm_lang$http$Http$send,
 		_mburri$elm_webpack_seed$StationBoard$FetchStationSucceed,
-		_mburri$elm_webpack_seed$TransportApi$searchStation(query)) : _elm_lang$core$Platform_Cmd$none;
+		_mburri$elm_webpack_seed$OpenTransport_TransportApi$searchStation(query)) : _elm_lang$core$Platform_Cmd$none;
 };
 var _mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed = function (a) {
 	return {ctor: 'FetchStationTableSucceed', _0: a};
 };
 var _mburri$elm_webpack_seed$StationBoard$getDepartures = function (maybeStation) {
-	var _p7 = maybeStation;
-	if (_p7.ctor === 'Just') {
+	var _p6 = maybeStation;
+	if (_p6.ctor === 'Just') {
 		return A2(
 			_elm_lang$http$Http$send,
 			_mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed,
-			_mburri$elm_webpack_seed$TransportApi$getDepartures(
-				_mburri$elm_webpack_seed$TransportApi$stationName(_p7._0)));
+			_mburri$elm_webpack_seed$OpenTransport_TransportApi$getDepartures(
+				_mburri$elm_webpack_seed$OpenTransport_Station$name(_p6._0)));
 	} else {
 		return _elm_lang$core$Platform_Cmd$none;
 	}
@@ -19520,7 +19517,7 @@ var _mburri$elm_webpack_seed$StationBoard$viewRecent = function (station) {
 		{
 			ctor: '::',
 			_0: _rtfeldman$elm_css$Html_Styled$text(
-				_mburri$elm_webpack_seed$TransportApi$stationName(station)),
+				_mburri$elm_webpack_seed$OpenTransport_Station$name(station)),
 			_1: {ctor: '[]'}
 		});
 };
@@ -19567,7 +19564,7 @@ var _mburri$elm_webpack_seed$StationBoard$SelectStation = function (a) {
 };
 var _mburri$elm_webpack_seed$StationBoard$updateConfig = _thebritican$elm_autocomplete$Autocomplete$updateConfig(
 	{
-		toId: _mburri$elm_webpack_seed$TransportApi$stationName,
+		toId: _mburri$elm_webpack_seed$OpenTransport_Station$name,
 		onKeyDown: F2(
 			function (code, maybeId) {
 				return _elm_lang$core$Native_Utils.eq(code, 13) ? A2(_elm_lang$core$Maybe$map, _mburri$elm_webpack_seed$StationBoard$SelectStation, maybeId) : _elm_lang$core$Maybe$Nothing;
@@ -19576,10 +19573,10 @@ var _mburri$elm_webpack_seed$StationBoard$updateConfig = _thebritican$elm_autoco
 			_mburri$elm_webpack_seed$StationBoard$Wrap(false)),
 		onTooHigh: _elm_lang$core$Maybe$Just(
 			_mburri$elm_webpack_seed$StationBoard$Wrap(true)),
-		onMouseEnter: function (_p8) {
+		onMouseEnter: function (_p7) {
 			return _elm_lang$core$Maybe$Nothing;
 		},
-		onMouseLeave: function (_p9) {
+		onMouseLeave: function (_p8) {
 			return _elm_lang$core$Maybe$Nothing;
 		},
 		onMouseClick: function (id) {
@@ -19592,8 +19589,8 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 	function (msg, model) {
 		update:
 		while (true) {
-			var _p10 = msg;
-			switch (_p10.ctor) {
+			var _p9 = msg;
+			switch (_p9.ctor) {
 				case 'NoOp':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				case 'Clear':
@@ -19603,51 +19600,51 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				case 'SearchStation':
-					var _p11 = _p10._0;
+					var _p10 = _p9._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{query: _p11}),
-						_1: _mburri$elm_webpack_seed$StationBoard$getStations(_p11)
+							{query: _p10}),
+						_1: _mburri$elm_webpack_seed$StationBoard$getStations(_p10)
 					};
 				case 'SetAutoState':
-					var _p12 = A5(
+					var _p11 = A5(
 						_thebritican$elm_autocomplete$Autocomplete$update,
 						_mburri$elm_webpack_seed$StationBoard$updateConfig,
-						_p10._0,
+						_p9._0,
 						model.howManyToShow,
 						model.autoState,
 						A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations));
-					var newState = _p12._0;
-					var maybeMsg = _p12._1;
+					var newState = _p11._0;
+					var maybeMsg = _p11._1;
 					var newModel = _elm_lang$core$Native_Utils.update(
 						model,
 						{autoState: newState});
-					var _p13 = maybeMsg;
-					if (_p13.ctor === 'Nothing') {
+					var _p12 = maybeMsg;
+					if (_p12.ctor === 'Nothing') {
 						return {ctor: '_Tuple2', _0: newModel, _1: _elm_lang$core$Platform_Cmd$none};
 					} else {
-						var _v8 = _p13._0,
-							_v9 = newModel;
-						msg = _v8;
-						model = _v9;
+						var _v7 = _p12._0,
+							_v8 = newModel;
+						msg = _v7;
+						model = _v8;
 						continue update;
 					}
 				case 'SelectStation':
-					var _p14 = _p10._0;
+					var _p13 = _p9._0;
 					var selectedStation = _elm_lang$core$List$head(
 						A2(
 							_elm_lang$core$List$filter,
 							function (station) {
 								return _elm_lang$core$Native_Utils.eq(
-									_mburri$elm_webpack_seed$TransportApi$stationName(station),
-									_p14);
+									_mburri$elm_webpack_seed$OpenTransport_Station$name(station),
+									_p13);
 							},
 							model.stations));
 					return {
 						ctor: '_Tuple2',
-						_0: A3(_mburri$elm_webpack_seed$StationBoard$selectStation, model, selectedStation, _p14),
+						_0: A3(_mburri$elm_webpack_seed$StationBoard$selectStation, model, selectedStation, _p13),
 						_1: _mburri$elm_webpack_seed$StationBoard$getDepartures(selectedStation)
 					};
 				case 'Reset':
@@ -19662,15 +19659,15 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							}),
 						{ctor: '[]'});
 				case 'Wrap':
-					var _p15 = model.selectedStation;
-					if (_p15.ctor === 'Just') {
-						var _v11 = _mburri$elm_webpack_seed$StationBoard$Reset,
-							_v12 = model;
-						msg = _v11;
-						model = _v12;
+					var _p14 = model.selectedStation;
+					if (_p14.ctor === 'Just') {
+						var _v10 = _mburri$elm_webpack_seed$StationBoard$Reset,
+							_v11 = model;
+						msg = _v10;
+						model = _v11;
 						continue update;
 					} else {
-						return _p10._0 ? A2(
+						return _p9._0 ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							_elm_lang$core$Native_Utils.update(
 								model,
@@ -19708,47 +19705,47 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							{ctor: '[]'});
 					}
 				case 'FetchStationTableSucceed':
-					var _p16 = _p10._0;
-					if (_p16.ctor === 'Ok') {
+					var _p15 = _p9._0;
+					if (_p15.ctor === 'Ok') {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{departures: _p16._0, fetchStationTableFailedMessage: ''}),
+								{departures: _p15._0, fetchStationTableFailedMessage: ''}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p18 = _p16._0;
-						var _p17 = A2(_elm_lang$core$Debug$log, 'Error retrieving departures', _p18);
+						var _p17 = _p15._0;
+						var _p16 = A2(_elm_lang$core$Debug$log, 'Error retrieving departures', _p17);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									fetchStationTableFailedMessage: _elm_lang$core$Basics$toString(_p18)
+									fetchStationTableFailedMessage: _elm_lang$core$Basics$toString(_p17)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					}
 				case 'FetchStationSucceed':
-					var _p19 = _p10._0;
-					if (_p19.ctor === 'Ok') {
+					var _p18 = _p9._0;
+					if (_p18.ctor === 'Ok') {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{stations: _p19._0, showStations: true, fetchStationTableFailedMessage: ''}),
+								{stations: _p18._0, showStations: true, fetchStationTableFailedMessage: ''}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p21 = _p19._0;
-						var _p20 = A2(_elm_lang$core$Debug$log, 'Error retrieving stations', _p21);
+						var _p20 = _p18._0;
+						var _p19 = A2(_elm_lang$core$Debug$log, 'Error retrieving stations', _p20);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									fetchStationTableFailedMessage: _mburri$elm_webpack_seed$StationBoard$toErrorMessage(_p21)
+									fetchStationTableFailedMessage: _mburri$elm_webpack_seed$StationBoard$toErrorMessage(_p20)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
@@ -19782,7 +19779,7 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _mburri$elm_webpack_seed$StationBoard$getDepartures(
-							_elm_lang$core$Maybe$Just(_p10._0))
+							_elm_lang$core$Maybe$Just(_p9._0))
 					};
 			}
 		}
@@ -19909,8 +19906,8 @@ var _mburri$elm_webpack_seed$StationBoard$viewStyled = function (model) {
 				_1: {
 					ctor: '::',
 					_0: function () {
-						var _p22 = model.mode;
-						if (_p22.ctor === 'Search') {
+						var _p21 = model.mode;
+						if (_p21.ctor === 'Search') {
 							return _mburri$elm_webpack_seed$StationBoard$viewSearchBar(model.query);
 						} else {
 							return _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected(model.latest);
