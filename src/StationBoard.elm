@@ -175,6 +175,7 @@ update msg model =
                         | stations = stations
                         , showStations = True
                         , fetchStationTableFailedMessage = ""
+                        , autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
                       }
                     , Cmd.none
                     )
