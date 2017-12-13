@@ -5,10 +5,16 @@
     <title>elm-swiss-station-departures</title>
 </head>
 <body>
-    <div id="main"></div>
     <script src="app.js"></script>
     <script>
-        var app = Elm.Main.embed(document.getElementById('main'));
+        var storageKey = 'recent-searches';
+        var storedData = localStorage.getItem(storageKey)
+        var recentStations = storedData ? JSON.parse(storedData) : [];
+        var app = Elm.Main.fullscreen(recentStations);
+
+        app.ports.setStorage.subscribe(function(recentStations){
+            localStorage.setItem(storageKey, JSON.stringify(recentStations));
+        });
     </script>
 </body>
 </html>
