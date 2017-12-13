@@ -1,4 +1,4 @@
-module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
+port module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
 
 import Autocomplete exposing (MouseSelected)
 import Css exposing (center, marginLeft, textAlign)
@@ -14,6 +14,13 @@ import OpenTransport.Departure as Departure exposing (Departure, time)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
 import Styles exposing (..)
+
+
+-- ports
+
+
+port setStorage : List String -> Cmd msg
+
 
 
 -- MODEL
@@ -36,8 +43,8 @@ type alias Model =
     }
 
 
-initialModel : Model
-initialModel =
+initialModel : List Station -> Model
+initialModel recent =
     Model
         ""
         Autocomplete.empty
@@ -45,13 +52,17 @@ initialModel =
         Nothing
         []
         ""
-        []
+        recent
         Search
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( initialModel, Cmd.none )
+init : List String -> ( Model, Cmd Msg )
+init recentStations =
+    let
+        recent =
+            List.map Station.create recentStations
+    in
+        ( initialModel recent, Cmd.none )
 
 
 
@@ -111,9 +122,16 @@ update msg model =
                     model.stations
                         |> List.filter (\station -> Station.name station == name)
                         |> List.head
+
+                newRecent =
+                    addStation model.latest selectedStation
             in
-                ( selectStation model selectedStation name
-                , getDepartures selectedStation
+                ( selectStation model newRecent selectedStation name
+                , Cmd.batch
+                    [ getDepartures selectedStation
+                    , newRecent |> List.map Station.name |> setStorage
+                    , Cmd.none
+                    ]
                 )
 
         Reset ->
@@ -215,7 +233,11 @@ toggle mode =
 
 clear : Model -> Model
 clear { latest, mode } =
-    { initialModel | latest = latest, mode = mode }
+    let
+        initial =
+            initialModel latest
+    in
+        { initial | mode = mode }
 
 
 getStations : String -> Cmd Msg
@@ -236,19 +258,23 @@ getDepartures maybeStation =
             Cmd.none
 
 
-selectStation : Model -> Maybe Station -> String -> Model
-selectStation model selectedStation id =
-    { model
-        | query =
-            model.stations
-                |> List.filter (\station -> Station.name station == id)
-                |> List.head
-                |> Maybe.withDefault (Station.empty)
-                |> Station.name
-        , autoState = Autocomplete.empty
-        , selectedStation = selectedStation
-        , latest = addStation model.latest selectedStation |> List.take 5
-    }
+selectStation : Model -> List Station -> Maybe Station -> String -> Model
+selectStation model newRecent selectedStation id =
+    let
+        _ =
+            Debug.log "newRecent" newRecent
+    in
+        { model
+            | query =
+                model.stations
+                    |> List.filter (\station -> Station.name station == id)
+                    |> List.head
+                    |> Maybe.withDefault (Station.empty)
+                    |> Station.name
+            , autoState = Autocomplete.empty
+            , selectedStation = selectedStation
+            , latest = newRecent |> List.take 5
+        }
 
 
 addStation : List Station -> Maybe Station -> List Station

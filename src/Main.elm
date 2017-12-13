@@ -1,12 +1,13 @@
 module Main exposing (main)
 
-import StationBoard exposing (..)
 import Html
+import OpenTransport.Station exposing (Station)
+import StationBoard exposing (..)
 
 
-main : Program Never Model Msg
+main : Program (List String) Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
         , update = update
