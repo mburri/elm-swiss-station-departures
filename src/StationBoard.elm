@@ -28,8 +28,6 @@ type alias Model =
     { query : String
     , autoState : Autocomplete.State
     , stations : List Station
-    , howManyToShow : Int
-    , showStations : Bool
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
@@ -44,8 +42,6 @@ initialModel =
         ""
         Autocomplete.empty
         []
-        5
-        False
         Nothing
         []
         ""
@@ -55,9 +51,7 @@ initialModel =
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel
-    , Cmd.none
-    )
+    ( initialModel, Cmd.none )
 
 
 
@@ -79,6 +73,11 @@ type Msg
     | Clear
 
 
+howManyToShow : number
+howManyToShow =
+    5
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -94,7 +93,7 @@ update msg model =
         SetAutoState autoMsg ->
             let
                 ( newState, maybeMsg ) =
-                    Autocomplete.update updateConfig autoMsg model.howManyToShow model.autoState (acceptableStations model.query model.stations)
+                    Autocomplete.update updateConfig autoMsg howManyToShow model.autoState (acceptableStations model.query model.stations)
 
                 newModel =
                     { model | autoState = newState }
@@ -133,20 +132,20 @@ update msg model =
                 Nothing ->
                     if toTop then
                         { model
-                            | autoState = Autocomplete.resetToLastItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
+                            | autoState = Autocomplete.resetToLastItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                             , selectedStation =
                                 List.head <|
                                     List.reverse <|
-                                        List.take model.howManyToShow <|
+                                        List.take howManyToShow <|
                                             (acceptableStations model.query model.stations)
                         }
                             ! []
                     else
                         { model
-                            | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
+                            | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                             , selectedStation =
                                 List.head <|
-                                    List.take model.howManyToShow <|
+                                    List.take howManyToShow <|
                                         (acceptableStations model.query model.stations)
                         }
                             ! []
@@ -173,9 +172,8 @@ update msg model =
                 Result.Ok stations ->
                     ( { model
                         | stations = stations
-                        , showStations = True
                         , fetchStationTableFailedMessage = ""
-                        , autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) model.howManyToShow model.autoState
+                        , autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                       }
                     , Cmd.none
                     )
@@ -248,7 +246,6 @@ selectStation model selectedStation id =
                 |> Maybe.withDefault (Station.empty)
                 |> Station.name
         , autoState = Autocomplete.empty
-        , showStations = False
         , selectedStation = selectedStation
         , latest = addStation model.latest selectedStation |> List.take 5
     }
@@ -383,9 +380,12 @@ viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
     let
         autocompleteView =
-            Autocomplete.view viewConfig model.howManyToShow model.autoState (acceptableStations model.query model.stations)
+            Autocomplete.view viewConfig howManyToShow model.autoState (acceptableStations model.query model.stations)
+
+        showStationsMenu =
+            not (List.isEmpty model.stations)
     in
-        if model.showStations then
+        if showStationsMenu then
             div [ class "AutocompleteMenu" ]
                 [ Html.Styled.map SetAutoState (fromUnstyled autocompleteView) ]
         else
