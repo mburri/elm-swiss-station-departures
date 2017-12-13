@@ -260,21 +260,17 @@ getDepartures maybeStation =
 
 selectStation : Model -> List Station -> Maybe Station -> String -> Model
 selectStation model newRecent selectedStation id =
-    let
-        _ =
-            Debug.log "newRecent" newRecent
-    in
-        { model
-            | query =
-                model.stations
-                    |> List.filter (\station -> Station.name station == id)
-                    |> List.head
-                    |> Maybe.withDefault (Station.empty)
-                    |> Station.name
-            , autoState = Autocomplete.empty
-            , selectedStation = selectedStation
-            , latest = newRecent |> List.take 5
-        }
+    { model
+        | query =
+            model.stations
+                |> List.filter (\station -> Station.name station == id)
+                |> List.head
+                |> Maybe.withDefault (Station.empty)
+                |> Station.name
+        , autoState = Autocomplete.empty
+        , selectedStation = selectedStation
+        , latest = newRecent |> List.take 5
+    }
 
 
 addStation : List Station -> Maybe Station -> List Station
