@@ -1,9 +1,11 @@
 module OpenTransport.TransportApi
     exposing
         ( searchStation
+        , nearestStations
         , getDepartures
         )
 
+import Geolocation exposing (Location)
 import Http
 import Json.Decode as Json exposing (field)
 import OpenTransport.Departure as Departure exposing (Departure)
@@ -20,6 +22,18 @@ searchStation query =
     let
         url =
             baseUrl ++ "/locations?query=" ++ query
+    in
+        Http.get url decodeStations
+
+
+nearestStations : Location -> Http.Request (List Station)
+nearestStations { latitude, longitude } =
+    let
+        ( lat, long ) =
+            ( toString latitude, toString longitude )
+
+        url =
+            baseUrl ++ "/locations?x=" ++ lat ++ "&y=" ++ long
     in
         Http.get url decodeStations
 

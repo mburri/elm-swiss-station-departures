@@ -1,7 +1,6 @@
 module Main exposing (main)
 
 import Html
-import OpenTransport.Station exposing (Station)
 import StationBoard exposing (..)
 
 
