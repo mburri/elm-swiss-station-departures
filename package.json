@@ -4,7 +4,8 @@
   "description": "a starting point for elm projects",
   "scripts": {
     "start": "elm-live src/Main.elm --open --path-to-elm-make=node_modules/.bin/elm-make -- --output app.js",
-    "dev": "yarn start --debug"
+    "dev": "yarn start --debug",
+    "build": "elm-make src/Main.elm --output=app.js"
   },
   "keywords": [
     "elm"
