@@ -8203,6 +8203,237 @@ return {
 var _elm_lang$dom$Dom_LowLevel$onWindow = _elm_lang$dom$Native_Dom.onWindow;
 var _elm_lang$dom$Dom_LowLevel$onDocument = _elm_lang$dom$Native_Dom.onDocument;
 
+//import Maybe, Native.Scheduler //
+
+var _elm_lang$geolocation$Native_Geolocation = function() {
+
+
+// LOCATIONS
+
+function toLocation(rawPosition)
+{
+	var coords = rawPosition.coords;
+
+	var rawAltitude = coords.altitude;
+	var rawAccuracy = coords.altitudeAccuracy;
+	var altitude =
+		(rawAltitude === null || rawAccuracy === null)
+			? _elm_lang$core$Maybe$Nothing
+			: _elm_lang$core$Maybe$Just({ value: rawAltitude, accuracy: rawAccuracy });
+
+	var heading = coords.heading;
+	var speed = coords.speed;
+	var movement =
+		(heading === null || speed === null)
+			? _elm_lang$core$Maybe$Nothing
+			: _elm_lang$core$Maybe$Just(
+				speed === 0
+					? { ctor: 'Static' }
+					: { ctor: 'Moving', _0: { speed: speed, degreesFromNorth: heading } }
+			);
+
+	return {
+		latitude: coords.latitude,
+		longitude: coords.longitude,
+		accuracy: coords.accuracy,
+		altitude: altitude,
+		movement: movement,
+		timestamp: rawPosition.timestamp
+	};
+}
+
+
+// ERRORS
+
+var errorTypes = ['PermissionDenied', 'PositionUnavailable', 'Timeout'];
+
+function toError(rawError)
+{
+	return {
+		ctor: errorTypes[rawError.code - 1],
+		_0: rawError.message
+	};
+}
+
+
+// OPTIONS
+
+function fromOptions(options)
+{
+	return {
+		enableHighAccuracy: options.enableHighAccuracy,
+		timeout: options.timeout._0 || Infinity,
+		maximumAge: options.maximumAge._0 || 0
+	};
+}
+
+
+// GET LOCATION
+
+function now(options)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		function onSuccess(rawPosition)
+		{
+			callback(_elm_lang$core$Native_Scheduler.succeed(toLocation(rawPosition)));
+		}
+
+		function onError(rawError)
+		{
+			callback(_elm_lang$core$Native_Scheduler.fail(toError(rawError)));
+		}
+
+		navigator.geolocation.getCurrentPosition(onSuccess, onError, fromOptions(options));
+	});
+}
+
+function watch(options, toSuccessTask, toErrorTask)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		function onSuccess(rawPosition)
+		{
+			var location = toLocation(rawPosition);
+			var task = toSuccessTask(location);
+			_elm_lang$core$Native_Scheduler.rawSpawn(task);
+		}
+
+		function onError(rawError)
+		{
+			var error = toError(rawError);
+			var task = toErrorTask(error);
+			_elm_lang$core$Native_Scheduler.rawSpawn(task);
+		}
+
+		var id = navigator.geolocation.watchPosition(onSuccess, onError, fromOptions(options));
+
+		return function() {
+			navigator.geolocation.clearWatch(id);
+		};
+	});
+}
+
+return {
+	now: now,
+	watch: F3(watch)
+};
+
+}();
+
+var _elm_lang$geolocation$Geolocation$onSelfMsg = F3(
+	function (router, location, state) {
+		var _p0 = state;
+		if (_p0.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(_elm_lang$core$Maybe$Nothing);
+		} else {
+			var send = function (_p1) {
+				var _p2 = _p1;
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					_p2._0(location));
+			};
+			return A2(
+				_elm_lang$core$Task$andThen,
+				function (_p3) {
+					return _elm_lang$core$Task$succeed(state);
+				},
+				_elm_lang$core$Task$sequence(
+					A2(_elm_lang$core$List$map, send, _p0._0.subs)));
+		}
+	});
+var _elm_lang$geolocation$Geolocation$init = _elm_lang$core$Task$succeed(_elm_lang$core$Maybe$Nothing);
+var _elm_lang$geolocation$Geolocation$defaultOptions = {enableHighAccuracy: false, timeout: _elm_lang$core$Maybe$Nothing, maximumAge: _elm_lang$core$Maybe$Nothing};
+var _elm_lang$geolocation$Geolocation$watchWith = _elm_lang$geolocation$Native_Geolocation.watch;
+var _elm_lang$geolocation$Geolocation$watch = _elm_lang$geolocation$Geolocation$watchWith(_elm_lang$geolocation$Geolocation$defaultOptions);
+var _elm_lang$geolocation$Geolocation$onEffects = F3(
+	function (router, subs, state) {
+		var _p4 = state;
+		if (_p4.ctor === 'Nothing') {
+			var _p5 = subs;
+			if (_p5.ctor === '[]') {
+				return _elm_lang$core$Task$succeed(state);
+			} else {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (watcher) {
+						return _elm_lang$core$Task$succeed(
+							_elm_lang$core$Maybe$Just(
+								{subs: subs, watcher: watcher}));
+					},
+					_elm_lang$core$Process$spawn(
+						A2(
+							_elm_lang$geolocation$Geolocation$watch,
+							_elm_lang$core$Platform$sendToSelf(router),
+							function (_p6) {
+								return _elm_lang$core$Task$succeed(
+									{ctor: '_Tuple0'});
+							})));
+			}
+		} else {
+			var _p9 = _p4._0.watcher;
+			var _p7 = subs;
+			if (_p7.ctor === '[]') {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (_p8) {
+						return _elm_lang$core$Task$succeed(_elm_lang$core$Maybe$Nothing);
+					},
+					_elm_lang$core$Process$kill(_p9));
+			} else {
+				return _elm_lang$core$Task$succeed(
+					_elm_lang$core$Maybe$Just(
+						{subs: subs, watcher: _p9}));
+			}
+		}
+	});
+var _elm_lang$geolocation$Geolocation$nowWith = _elm_lang$geolocation$Native_Geolocation.now;
+var _elm_lang$geolocation$Geolocation$now = _elm_lang$geolocation$Geolocation$nowWith(_elm_lang$geolocation$Geolocation$defaultOptions);
+var _elm_lang$geolocation$Geolocation$subscription = _elm_lang$core$Native_Platform.leaf('Geolocation');
+var _elm_lang$geolocation$Geolocation$Location = F6(
+	function (a, b, c, d, e, f) {
+		return {latitude: a, longitude: b, accuracy: c, altitude: d, movement: e, timestamp: f};
+	});
+var _elm_lang$geolocation$Geolocation$Altitude = F2(
+	function (a, b) {
+		return {value: a, accuracy: b};
+	});
+var _elm_lang$geolocation$Geolocation$Options = F3(
+	function (a, b, c) {
+		return {enableHighAccuracy: a, timeout: b, maximumAge: c};
+	});
+var _elm_lang$geolocation$Geolocation$Moving = function (a) {
+	return {ctor: 'Moving', _0: a};
+};
+var _elm_lang$geolocation$Geolocation$Static = {ctor: 'Static'};
+var _elm_lang$geolocation$Geolocation$Timeout = function (a) {
+	return {ctor: 'Timeout', _0: a};
+};
+var _elm_lang$geolocation$Geolocation$LocationUnavailable = function (a) {
+	return {ctor: 'LocationUnavailable', _0: a};
+};
+var _elm_lang$geolocation$Geolocation$PermissionDenied = function (a) {
+	return {ctor: 'PermissionDenied', _0: a};
+};
+var _elm_lang$geolocation$Geolocation$Tagger = function (a) {
+	return {ctor: 'Tagger', _0: a};
+};
+var _elm_lang$geolocation$Geolocation$subMap = F2(
+	function (func, _p10) {
+		var _p11 = _p10;
+		return _elm_lang$geolocation$Geolocation$Tagger(
+			function (_p12) {
+				return func(
+					_p11._0(_p12));
+			});
+	});
+var _elm_lang$geolocation$Geolocation$changes = function (tagger) {
+	return _elm_lang$geolocation$Geolocation$subscription(
+		_elm_lang$geolocation$Geolocation$Tagger(tagger));
+};
+_elm_lang$core$Native_Platform.effectManagers['Geolocation'] = {pkg: 'elm-lang/geolocation', init: _elm_lang$geolocation$Geolocation$init, onEffects: _elm_lang$geolocation$Geolocation$onEffects, onSelfMsg: _elm_lang$geolocation$Geolocation$onSelfMsg, tag: 'sub', subMap: _elm_lang$geolocation$Geolocation$subMap};
+
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrap;
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrapWithFlags;
 
@@ -11239,20 +11470,6 @@ var _elm_lang$keyboard$Keyboard$subMap = F2(
 			});
 	});
 _elm_lang$core$Native_Platform.effectManagers['Keyboard'] = {pkg: 'elm-lang/keyboard', init: _elm_lang$keyboard$Keyboard$init, onEffects: _elm_lang$keyboard$Keyboard$onEffects, onSelfMsg: _elm_lang$keyboard$Keyboard$onSelfMsg, tag: 'sub', subMap: _elm_lang$keyboard$Keyboard$subMap};
-
-var _mburri$elm_webpack_seed$OpenTransport_Station$name = function (_p0) {
-	var _p1 = _p0;
-	return _p1._0.name;
-};
-var _mburri$elm_webpack_seed$OpenTransport_Station$Station = function (a) {
-	return {ctor: 'Station', _0: a};
-};
-var _mburri$elm_webpack_seed$OpenTransport_Station$empty = _mburri$elm_webpack_seed$OpenTransport_Station$Station(
-	{name: ''});
-var _mburri$elm_webpack_seed$OpenTransport_Station$create = function (name) {
-	return _mburri$elm_webpack_seed$OpenTransport_Station$Station(
-		{name: name});
-};
 
 var _thebritican$elm_autocomplete$Autocomplete_Autocomplete$sectionConfig = function (_p0) {
 	var _p1 = _p0;
@@ -18051,6 +18268,20 @@ var _mburri$elm_webpack_seed$OpenTransport_Departure$create = F3(
 			{to: to, departure: departure, name: name});
 	});
 
+var _mburri$elm_webpack_seed$OpenTransport_Station$name = function (_p0) {
+	var _p1 = _p0;
+	return _p1._0.name;
+};
+var _mburri$elm_webpack_seed$OpenTransport_Station$Station = function (a) {
+	return {ctor: 'Station', _0: a};
+};
+var _mburri$elm_webpack_seed$OpenTransport_Station$empty = _mburri$elm_webpack_seed$OpenTransport_Station$Station(
+	{name: ''});
+var _mburri$elm_webpack_seed$OpenTransport_Station$create = function (name) {
+	return _mburri$elm_webpack_seed$OpenTransport_Station$Station(
+		{name: name});
+};
+
 var _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeDeparture = A4(
 	_elm_lang$core$Json_Decode$map3,
 	_mburri$elm_webpack_seed$OpenTransport_Departure$create,
@@ -18092,6 +18323,27 @@ var _mburri$elm_webpack_seed$OpenTransport_TransportApi$searchStation = function
 		_elm_lang$core$Basics_ops['++'],
 		_mburri$elm_webpack_seed$OpenTransport_TransportApi$baseUrl,
 		A2(_elm_lang$core$Basics_ops['++'], '/locations?query=', query));
+	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeStations);
+};
+var _mburri$elm_webpack_seed$OpenTransport_TransportApi$nearestStations = function (_p0) {
+	var _p1 = _p0;
+	var _p2 = {
+		ctor: '_Tuple2',
+		_0: _elm_lang$core$Basics$toString(_p1.latitude),
+		_1: _elm_lang$core$Basics$toString(_p1.longitude)
+	};
+	var lat = _p2._0;
+	var $long = _p2._1;
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_mburri$elm_webpack_seed$OpenTransport_TransportApi$baseUrl,
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			'/locations?x=',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				lat,
+				A2(_elm_lang$core$Basics_ops['++'], '&y=', $long))));
 	return A2(_elm_lang$http$Http$get, url, _mburri$elm_webpack_seed$OpenTransport_TransportApi$decodeStations);
 };
 var _mburri$elm_webpack_seed$OpenTransport_TransportApi$getDepartures = function (stationName) {
@@ -19432,14 +19684,14 @@ var _mburri$elm_webpack_seed$StationBoard$setStorage = _elm_lang$core$Native_Pla
 				return v;
 			});
 	});
-var _mburri$elm_webpack_seed$StationBoard$Model = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {query: a, autoState: b, stations: c, selectedStation: d, departures: e, fetchStationTableFailedMessage: f, latest: g, mode: h};
+var _mburri$elm_webpack_seed$StationBoard$Model = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {query: a, autoState: b, stations: c, selectedStation: d, departures: e, fetchStationTableFailedMessage: f, latest: g, mode: h, location: i};
 	});
 var _mburri$elm_webpack_seed$StationBoard$Recent = {ctor: 'Recent'};
 var _mburri$elm_webpack_seed$StationBoard$Search = {ctor: 'Search'};
 var _mburri$elm_webpack_seed$StationBoard$initialModel = function (recent) {
-	return A8(
+	return A9(
 		_mburri$elm_webpack_seed$StationBoard$Model,
 		'',
 		_thebritican$elm_autocomplete$Autocomplete$empty,
@@ -19448,15 +19700,8 @@ var _mburri$elm_webpack_seed$StationBoard$initialModel = function (recent) {
 		{ctor: '[]'},
 		'',
 		recent,
-		_mburri$elm_webpack_seed$StationBoard$Search);
-};
-var _mburri$elm_webpack_seed$StationBoard$init = function (recentStations) {
-	var recent = A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$OpenTransport_Station$create, recentStations);
-	return {
-		ctor: '_Tuple2',
-		_0: _mburri$elm_webpack_seed$StationBoard$initialModel(recent),
-		_1: _elm_lang$core$Platform_Cmd$none
-	};
+		_mburri$elm_webpack_seed$StationBoard$Search,
+		_elm_lang$core$Maybe$Nothing);
 };
 var _mburri$elm_webpack_seed$StationBoard$clear = function (_p3) {
 	var _p4 = _p3;
@@ -19473,6 +19718,18 @@ var _mburri$elm_webpack_seed$StationBoard$toggle = function (mode) {
 		return _mburri$elm_webpack_seed$StationBoard$Search;
 	}
 };
+var _mburri$elm_webpack_seed$StationBoard$GetLocation = function (a) {
+	return {ctor: 'GetLocation', _0: a};
+};
+var _mburri$elm_webpack_seed$StationBoard$init = function (recentStations) {
+	var recent = A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$OpenTransport_Station$create, recentStations);
+	return {
+		ctor: '_Tuple2',
+		_0: _mburri$elm_webpack_seed$StationBoard$initialModel(recent),
+		_1: A2(_elm_lang$core$Task$attempt, _mburri$elm_webpack_seed$StationBoard$GetLocation, _elm_lang$geolocation$Geolocation$now)
+	};
+};
+var _mburri$elm_webpack_seed$StationBoard$Nearest = {ctor: 'Nearest'};
 var _mburri$elm_webpack_seed$StationBoard$Clear = {ctor: 'Clear'};
 var _mburri$elm_webpack_seed$StationBoard$ToggleMode = {ctor: 'ToggleMode'};
 var _mburri$elm_webpack_seed$StationBoard$HandleEscape = {ctor: 'HandleEscape'};
@@ -19486,6 +19743,12 @@ var _mburri$elm_webpack_seed$StationBoard$getStations = function (query) {
 		_elm_lang$http$Http$send,
 		_mburri$elm_webpack_seed$StationBoard$FetchStationSucceed,
 		_mburri$elm_webpack_seed$OpenTransport_TransportApi$searchStation(query)) : _elm_lang$core$Platform_Cmd$none;
+};
+var _mburri$elm_webpack_seed$StationBoard$getNearestStations = function (location) {
+	return A2(
+		_elm_lang$http$Http$send,
+		_mburri$elm_webpack_seed$StationBoard$FetchStationSucceed,
+		_mburri$elm_webpack_seed$OpenTransport_TransportApi$nearestStations(location));
 };
 var _mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed = function (a) {
 	return {ctor: 'FetchStationTableSucceed', _0: a};
@@ -19802,13 +20065,42 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				default:
+				case 'SelectStationFromRecent':
 					return {
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _mburri$elm_webpack_seed$StationBoard$getDepartures(
 							_elm_lang$core$Maybe$Just(_p9._0))
 					};
+				case 'GetLocation':
+					if (_p9._0.ctor === 'Err') {
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					} else {
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{
+									location: _elm_lang$core$Maybe$Just(_p9._0._0)
+								}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					}
+				default:
+					var _p21 = model.location;
+					if (_p21.ctor === 'Just') {
+						return {
+							ctor: '_Tuple2',
+							_0: model,
+							_1: _mburri$elm_webpack_seed$StationBoard$getNearestStations(_p21._0)
+						};
+					} else {
+						return {
+							ctor: '_Tuple2',
+							_0: model,
+							_1: A2(_elm_lang$core$Task$attempt, _mburri$elm_webpack_seed$StationBoard$GetLocation, _elm_lang$geolocation$Geolocation$now)
+						};
+					}
 			}
 		}
 	});
@@ -19878,40 +20170,55 @@ var _mburri$elm_webpack_seed$StationBoard$viewSearchBar = function (searchString
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_mburri$elm_webpack_seed$Styles$searchField,
+					_mburri$elm_webpack_seed$Styles$actionButton,
 					{
 						ctor: '::',
-						_0: _rtfeldman$elm_css$Html_Styled_Events$onInput(_mburri$elm_webpack_seed$StationBoard$SearchStation),
-						_1: {
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled_Attributes$value(searchString),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Html_Styled_Attributes$autocomplete(false),
-								_1: {
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Html_Styled_Attributes$placeholder('search  station...'),
-									_1: {ctor: '[]'}
-								}
-							}
-						}
+						_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Nearest),
+						_1: {ctor: '[]'}
 					},
-					{ctor: '[]'}),
+					{
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Html_Styled$text('Nearby stations'),
+						_1: {ctor: '[]'}
+					}),
 				_1: {
 					ctor: '::',
 					_0: A2(
-						_mburri$elm_webpack_seed$Styles$clearButton,
+						_mburri$elm_webpack_seed$Styles$searchField,
 						{
 							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Clear),
-							_1: {ctor: '[]'}
+							_0: _rtfeldman$elm_css$Html_Styled_Events$onInput(_mburri$elm_webpack_seed$StationBoard$SearchStation),
+							_1: {
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Html_Styled_Attributes$value(searchString),
+								_1: {
+									ctor: '::',
+									_0: _rtfeldman$elm_css$Html_Styled_Attributes$autocomplete(false),
+									_1: {
+										ctor: '::',
+										_0: _rtfeldman$elm_css$Html_Styled_Attributes$placeholder('search  station...'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}
 						},
-						{
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled$text('x'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
+						{ctor: '[]'}),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_mburri$elm_webpack_seed$Styles$clearButton,
+							{
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Clear),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Html_Styled$text('x'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});
@@ -19935,8 +20242,8 @@ var _mburri$elm_webpack_seed$StationBoard$viewStyled = function (model) {
 				_1: {
 					ctor: '::',
 					_0: function () {
-						var _p21 = model.mode;
-						if (_p21.ctor === 'Search') {
+						var _p22 = model.mode;
+						if (_p22.ctor === 'Search') {
 							return _mburri$elm_webpack_seed$StationBoard$viewSearchBar(model.query);
 						} else {
 							return _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected(model.latest);
