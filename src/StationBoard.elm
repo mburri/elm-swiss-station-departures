@@ -2,6 +2,7 @@ port module StationBoard exposing (init, update, view, subscriptions, Model, Msg
 
 import Autocomplete exposing (MouseSelected)
 import Css exposing (center, marginLeft, textAlign)
+import Geolocation exposing (Location)
 import Html
 import Html.Attributes
 import Html.Styled exposing (..)
@@ -14,6 +15,7 @@ import OpenTransport.Departure as Departure exposing (Departure, time)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
 import Styles exposing (..)
+import Task
 
 
 -- ports
@@ -40,6 +42,7 @@ type alias Model =
     , fetchStationTableFailedMessage : String
     , latest : List Station
     , mode : Mode
+    , location : Maybe Location
     }
 
 
@@ -54,6 +57,7 @@ initialModel recent =
         ""
         recent
         Search
+        Nothing
 
 
 init : List String -> ( Model, Cmd Msg )
@@ -62,7 +66,7 @@ init recentStations =
         recent =
             List.map Station.create recentStations
     in
-        ( initialModel recent, Cmd.none )
+        ( initialModel recent, Task.attempt GetLocation Geolocation.now )
 
 
 
@@ -82,6 +86,8 @@ type Msg
     | HandleEscape
     | ToggleMode
     | Clear
+    | Nearest
+    | GetLocation (Result Geolocation.Error Location)
 
 
 howManyToShow : number
@@ -220,6 +226,20 @@ update msg model =
         SelectStationFromRecent station ->
             ( model, getDepartures (Just station) )
 
+        GetLocation (Err err) ->
+            ( model, Cmd.none )
+
+        GetLocation (Result.Ok location) ->
+            ( { model | location = Just location }, Cmd.none )
+
+        Nearest ->
+            case model.location of
+                Just location ->
+                    ( model, getNearestStations location )
+
+                Nothing ->
+                    ( model, Task.attempt GetLocation Geolocation.now )
+
 
 toggle : Mode -> Mode
 toggle mode =
@@ -246,6 +266,11 @@ getStations query =
         query |> TransportApi.searchStation |> Http.send FetchStationSucceed
     else
         Cmd.none
+
+
+getNearestStations : Location -> Cmd Msg
+getNearestStations location =
+    location |> TransportApi.nearestStations |> Http.send FetchStationSucceed
 
 
 getDepartures : Maybe Station -> Cmd Msg
@@ -357,6 +382,7 @@ viewSearchBar : String -> Html Msg
 viewSearchBar searchString =
     div [ css [ textAlign center ] ]
         [ actionButton [ onClick ToggleMode ] [ text "Show recent searches" ]
+        , actionButton [ onClick Nearest ] [ text "Nearby stations" ]
         , searchField
             [ onInput SearchStation
             , value searchString
