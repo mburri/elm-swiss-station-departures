@@ -19688,6 +19688,7 @@ var _mburri$elm_webpack_seed$StationBoard$Model = F9(
 	function (a, b, c, d, e, f, g, h, i) {
 		return {query: a, autoState: b, stations: c, selectedStation: d, departures: e, fetchStationTableFailedMessage: f, latest: g, mode: h, location: i};
 	});
+var _mburri$elm_webpack_seed$StationBoard$Nearby = {ctor: 'Nearby'};
 var _mburri$elm_webpack_seed$StationBoard$Recent = {ctor: 'Recent'};
 var _mburri$elm_webpack_seed$StationBoard$Search = {ctor: 'Search'};
 var _mburri$elm_webpack_seed$StationBoard$initialModel = function (recent) {
@@ -19710,14 +19711,6 @@ var _mburri$elm_webpack_seed$StationBoard$clear = function (_p3) {
 		initial,
 		{mode: _p4.mode});
 };
-var _mburri$elm_webpack_seed$StationBoard$toggle = function (mode) {
-	var _p5 = mode;
-	if (_p5.ctor === 'Search') {
-		return _mburri$elm_webpack_seed$StationBoard$Recent;
-	} else {
-		return _mburri$elm_webpack_seed$StationBoard$Search;
-	}
-};
 var _mburri$elm_webpack_seed$StationBoard$GetLocation = function (a) {
 	return {ctor: 'GetLocation', _0: a};
 };
@@ -19731,12 +19724,76 @@ var _mburri$elm_webpack_seed$StationBoard$init = function (recentStations) {
 };
 var _mburri$elm_webpack_seed$StationBoard$Nearest = {ctor: 'Nearest'};
 var _mburri$elm_webpack_seed$StationBoard$Clear = {ctor: 'Clear'};
-var _mburri$elm_webpack_seed$StationBoard$ToggleMode = {ctor: 'ToggleMode'};
+var _mburri$elm_webpack_seed$StationBoard$Switch = function (a) {
+	return {ctor: 'Switch', _0: a};
+};
+var _mburri$elm_webpack_seed$StationBoard$viewButtons = function (model) {
+	return A2(
+		_rtfeldman$elm_css$Html_Styled$div,
+		{
+			ctor: '::',
+			_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
+				{
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Css$textAlign(_rtfeldman$elm_css$Css$center),
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_mburri$elm_webpack_seed$Styles$actionButton,
+				{
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(
+						_mburri$elm_webpack_seed$StationBoard$Switch(_mburri$elm_webpack_seed$StationBoard$Search)),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _rtfeldman$elm_css$Html_Styled$text('Search... '),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_mburri$elm_webpack_seed$Styles$actionButton,
+					{
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(
+							_mburri$elm_webpack_seed$StationBoard$Switch(_mburri$elm_webpack_seed$StationBoard$Recent)),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Html_Styled$text('Show recent searches'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_mburri$elm_webpack_seed$Styles$actionButton,
+						{
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Nearest),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Html_Styled$text('Nearby stations'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
 var _mburri$elm_webpack_seed$StationBoard$HandleEscape = {ctor: 'HandleEscape'};
 var _mburri$elm_webpack_seed$StationBoard$FetchStationSucceed = function (a) {
 	return {ctor: 'FetchStationSucceed', _0: a};
 };
-var _mburri$elm_webpack_seed$StationBoard$getStations = function (query) {
+var _mburri$elm_webpack_seed$StationBoard$searchStations = function (query) {
 	return (_elm_lang$core$Native_Utils.cmp(
 		_elm_lang$core$String$length(query),
 		3) > -1) ? A2(
@@ -19744,7 +19801,7 @@ var _mburri$elm_webpack_seed$StationBoard$getStations = function (query) {
 		_mburri$elm_webpack_seed$StationBoard$FetchStationSucceed,
 		_mburri$elm_webpack_seed$OpenTransport_TransportApi$searchStation(query)) : _elm_lang$core$Platform_Cmd$none;
 };
-var _mburri$elm_webpack_seed$StationBoard$getNearestStations = function (location) {
+var _mburri$elm_webpack_seed$StationBoard$getNearbyStations = function (location) {
 	return A2(
 		_elm_lang$http$Http$send,
 		_mburri$elm_webpack_seed$StationBoard$FetchStationSucceed,
@@ -19754,13 +19811,13 @@ var _mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed = function (a
 	return {ctor: 'FetchStationTableSucceed', _0: a};
 };
 var _mburri$elm_webpack_seed$StationBoard$getDepartures = function (maybeStation) {
-	var _p6 = maybeStation;
-	if (_p6.ctor === 'Just') {
+	var _p5 = maybeStation;
+	if (_p5.ctor === 'Just') {
 		return A2(
 			_elm_lang$http$Http$send,
 			_mburri$elm_webpack_seed$StationBoard$FetchStationTableSucceed,
 			_mburri$elm_webpack_seed$OpenTransport_TransportApi$getDepartures(
-				_mburri$elm_webpack_seed$OpenTransport_Station$name(_p6._0)));
+				_mburri$elm_webpack_seed$OpenTransport_Station$name(_p5._0)));
 	} else {
 		return _elm_lang$core$Platform_Cmd$none;
 	}
@@ -19807,23 +19864,8 @@ var _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected = function (recen
 		},
 		{
 			ctor: '::',
-			_0: A2(
-				_mburri$elm_webpack_seed$Styles$actionButton,
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$ToggleMode),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Html_Styled$text('text search'),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: recentSearches,
-				_1: {ctor: '[]'}
-			}
+			_0: recentSearches,
+			_1: {ctor: '[]'}
 		});
 };
 var _mburri$elm_webpack_seed$StationBoard$SelectStation = function (a) {
@@ -19840,10 +19882,10 @@ var _mburri$elm_webpack_seed$StationBoard$updateConfig = _thebritican$elm_autoco
 			_mburri$elm_webpack_seed$StationBoard$Wrap(false)),
 		onTooHigh: _elm_lang$core$Maybe$Just(
 			_mburri$elm_webpack_seed$StationBoard$Wrap(true)),
-		onMouseEnter: function (_p7) {
+		onMouseEnter: function (_p6) {
 			return _elm_lang$core$Maybe$Nothing;
 		},
-		onMouseLeave: function (_p8) {
+		onMouseLeave: function (_p7) {
 			return _elm_lang$core$Maybe$Nothing;
 		},
 		onMouseClick: function (id) {
@@ -19856,8 +19898,8 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 	function (msg, model) {
 		update:
 		while (true) {
-			var _p9 = msg;
-			switch (_p9.ctor) {
+			var _p8 = msg;
+			switch (_p8.ctor) {
 				case 'NoOp':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				case 'Clear':
@@ -19867,52 +19909,52 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				case 'SearchStation':
-					var _p10 = _p9._0;
+					var _p9 = _p8._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{query: _p10}),
-						_1: _mburri$elm_webpack_seed$StationBoard$getStations(_p10)
+							{query: _p9}),
+						_1: _mburri$elm_webpack_seed$StationBoard$searchStations(_p9)
 					};
 				case 'SetAutoState':
-					var _p11 = A5(
+					var _p10 = A5(
 						_thebritican$elm_autocomplete$Autocomplete$update,
 						_mburri$elm_webpack_seed$StationBoard$updateConfig,
-						_p9._0,
+						_p8._0,
 						_mburri$elm_webpack_seed$StationBoard$howManyToShow,
 						model.autoState,
 						A2(_mburri$elm_webpack_seed$StationBoard$acceptableStations, model.query, model.stations));
-					var newState = _p11._0;
-					var maybeMsg = _p11._1;
+					var newState = _p10._0;
+					var maybeMsg = _p10._1;
 					var newModel = _elm_lang$core$Native_Utils.update(
 						model,
 						{autoState: newState});
-					var _p12 = maybeMsg;
-					if (_p12.ctor === 'Nothing') {
+					var _p11 = maybeMsg;
+					if (_p11.ctor === 'Nothing') {
 						return {ctor: '_Tuple2', _0: newModel, _1: _elm_lang$core$Platform_Cmd$none};
 					} else {
-						var _v7 = _p12._0,
-							_v8 = newModel;
-						msg = _v7;
-						model = _v8;
+						var _v6 = _p11._0,
+							_v7 = newModel;
+						msg = _v6;
+						model = _v7;
 						continue update;
 					}
 				case 'SelectStation':
-					var _p13 = _p9._0;
+					var _p12 = _p8._0;
 					var selectedStation = _elm_lang$core$List$head(
 						A2(
 							_elm_lang$core$List$filter,
 							function (station) {
 								return _elm_lang$core$Native_Utils.eq(
 									_mburri$elm_webpack_seed$OpenTransport_Station$name(station),
-									_p13);
+									_p12);
 							},
 							model.stations));
 					var newRecent = A2(_mburri$elm_webpack_seed$StationBoard$addStation, model.latest, selectedStation);
 					return {
 						ctor: '_Tuple2',
-						_0: A4(_mburri$elm_webpack_seed$StationBoard$selectStation, model, newRecent, selectedStation, _p13),
+						_0: A4(_mburri$elm_webpack_seed$StationBoard$selectStation, model, newRecent, selectedStation, _p12),
 						_1: _elm_lang$core$Platform_Cmd$batch(
 							{
 								ctor: '::',
@@ -19921,11 +19963,7 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 									ctor: '::',
 									_0: _mburri$elm_webpack_seed$StationBoard$setStorage(
 										A2(_elm_lang$core$List$map, _mburri$elm_webpack_seed$OpenTransport_Station$name, newRecent)),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$core$Platform_Cmd$none,
-										_1: {ctor: '[]'}
-									}
+									_1: {ctor: '[]'}
 								}
 							})
 					};
@@ -19941,15 +19979,15 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							}),
 						{ctor: '[]'});
 				case 'Wrap':
-					var _p14 = model.selectedStation;
-					if (_p14.ctor === 'Just') {
-						var _v10 = _mburri$elm_webpack_seed$StationBoard$Reset,
-							_v11 = model;
-						msg = _v10;
-						model = _v11;
+					var _p13 = model.selectedStation;
+					if (_p13.ctor === 'Just') {
+						var _v9 = _mburri$elm_webpack_seed$StationBoard$Reset,
+							_v10 = model;
+						msg = _v9;
+						model = _v10;
 						continue update;
 					} else {
-						return _p9._0 ? A2(
+						return _p8._0 ? A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							_elm_lang$core$Native_Utils.update(
 								model,
@@ -19987,37 +20025,37 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							{ctor: '[]'});
 					}
 				case 'FetchStationTableSucceed':
-					var _p15 = _p9._0;
-					if (_p15.ctor === 'Ok') {
+					var _p14 = _p8._0;
+					if (_p14.ctor === 'Ok') {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{departures: _p15._0, fetchStationTableFailedMessage: ''}),
+								{departures: _p14._0, fetchStationTableFailedMessage: ''}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p17 = _p15._0;
-						var _p16 = A2(_elm_lang$core$Debug$log, 'Error retrieving departures', _p17);
+						var _p16 = _p14._0;
+						var _p15 = A2(_elm_lang$core$Debug$log, 'Error retrieving departures', _p16);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									fetchStationTableFailedMessage: _elm_lang$core$Basics$toString(_p17)
+									fetchStationTableFailedMessage: _elm_lang$core$Basics$toString(_p16)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					}
 				case 'FetchStationSucceed':
-					var _p18 = _p9._0;
-					if (_p18.ctor === 'Ok') {
+					var _p17 = _p8._0;
+					if (_p17.ctor === 'Ok') {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									stations: _p18._0,
+									stations: _p17._0,
 									fetchStationTableFailedMessage: '',
 									autoState: A4(
 										_thebritican$elm_autocomplete$Autocomplete$resetToFirstItem,
@@ -20029,14 +20067,14 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						var _p20 = _p18._0;
-						var _p19 = A2(_elm_lang$core$Debug$log, 'Error retrieving stations', _p20);
+						var _p19 = _p17._0;
+						var _p18 = A2(_elm_lang$core$Debug$log, 'Error retrieving stations', _p19);
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									fetchStationTableFailedMessage: _mburri$elm_webpack_seed$StationBoard$toErrorMessage(_p20)
+									fetchStationTableFailedMessage: _mburri$elm_webpack_seed$StationBoard$toErrorMessage(_p19)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
@@ -20055,14 +20093,12 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'ToggleMode':
+				case 'Switch':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{
-								mode: _mburri$elm_webpack_seed$StationBoard$toggle(model.mode)
-							}),
+							{mode: _p8._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				case 'SelectStationFromRecent':
@@ -20070,10 +20106,10 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _mburri$elm_webpack_seed$StationBoard$getDepartures(
-							_elm_lang$core$Maybe$Just(_p9._0))
+							_elm_lang$core$Maybe$Just(_p8._0))
 					};
 				case 'GetLocation':
-					if (_p9._0.ctor === 'Err') {
+					if (_p8._0.ctor === 'Err') {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					} else {
 						return {
@@ -20081,18 +20117,20 @@ var _mburri$elm_webpack_seed$StationBoard$update = F2(
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									location: _elm_lang$core$Maybe$Just(_p9._0._0)
+									location: _elm_lang$core$Maybe$Just(_p8._0._0)
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					}
 				default:
-					var _p21 = model.location;
-					if (_p21.ctor === 'Just') {
+					var _p20 = model.location;
+					if (_p20.ctor === 'Just') {
 						return {
 							ctor: '_Tuple2',
-							_0: model,
-							_1: _mburri$elm_webpack_seed$StationBoard$getNearestStations(_p21._0)
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{mode: _mburri$elm_webpack_seed$StationBoard$Nearby}),
+							_1: _mburri$elm_webpack_seed$StationBoard$getNearbyStations(_p20._0)
 						};
 					} else {
 						return {
@@ -20140,85 +20178,50 @@ var _mburri$elm_webpack_seed$StationBoard$viewAutocomplete = function (model) {
 var _mburri$elm_webpack_seed$StationBoard$SearchStation = function (a) {
 	return {ctor: 'SearchStation', _0: a};
 };
-var _mburri$elm_webpack_seed$StationBoard$viewSearchBar = function (searchString) {
+var _mburri$elm_webpack_seed$StationBoard$viewSearchBar = function (model) {
 	return A2(
 		_rtfeldman$elm_css$Html_Styled$div,
-		{
-			ctor: '::',
-			_0: _rtfeldman$elm_css$Html_Styled_Attributes$css(
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Css$textAlign(_rtfeldman$elm_css$Css$center),
-					_1: {ctor: '[]'}
-				}),
-			_1: {ctor: '[]'}
-		},
+		{ctor: '[]'},
 		{
 			ctor: '::',
 			_0: A2(
-				_mburri$elm_webpack_seed$Styles$actionButton,
+				_mburri$elm_webpack_seed$Styles$searchField,
 				{
 					ctor: '::',
-					_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$ToggleMode),
-					_1: {ctor: '[]'}
+					_0: _rtfeldman$elm_css$Html_Styled_Events$onInput(_mburri$elm_webpack_seed$StationBoard$SearchStation),
+					_1: {
+						ctor: '::',
+						_0: _rtfeldman$elm_css$Html_Styled_Attributes$value(model.query),
+						_1: {
+							ctor: '::',
+							_0: _rtfeldman$elm_css$Html_Styled_Attributes$autocomplete(false),
+							_1: {
+								ctor: '::',
+								_0: _rtfeldman$elm_css$Html_Styled_Attributes$placeholder('search  station...'),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
 				},
-				{
-					ctor: '::',
-					_0: _rtfeldman$elm_css$Html_Styled$text('Show recent searches'),
-					_1: {ctor: '[]'}
-				}),
+				{ctor: '[]'}),
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_mburri$elm_webpack_seed$Styles$actionButton,
+					_mburri$elm_webpack_seed$Styles$clearButton,
 					{
 						ctor: '::',
-						_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Nearest),
+						_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Clear),
 						_1: {ctor: '[]'}
 					},
 					{
 						ctor: '::',
-						_0: _rtfeldman$elm_css$Html_Styled$text('Nearby stations'),
+						_0: _rtfeldman$elm_css$Html_Styled$text('x'),
 						_1: {ctor: '[]'}
 					}),
 				_1: {
 					ctor: '::',
-					_0: A2(
-						_mburri$elm_webpack_seed$Styles$searchField,
-						{
-							ctor: '::',
-							_0: _rtfeldman$elm_css$Html_Styled_Events$onInput(_mburri$elm_webpack_seed$StationBoard$SearchStation),
-							_1: {
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Html_Styled_Attributes$value(searchString),
-								_1: {
-									ctor: '::',
-									_0: _rtfeldman$elm_css$Html_Styled_Attributes$autocomplete(false),
-									_1: {
-										ctor: '::',
-										_0: _rtfeldman$elm_css$Html_Styled_Attributes$placeholder('search  station...'),
-										_1: {ctor: '[]'}
-									}
-								}
-							}
-						},
-						{ctor: '[]'}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_mburri$elm_webpack_seed$Styles$clearButton,
-							{
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Html_Styled_Events$onClick(_mburri$elm_webpack_seed$StationBoard$Clear),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _rtfeldman$elm_css$Html_Styled$text('x'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
+					_0: _mburri$elm_webpack_seed$StationBoard$viewAutocomplete(model),
+					_1: {ctor: '[]'}
 				}
 			}
 		});
@@ -20241,20 +20244,23 @@ var _mburri$elm_webpack_seed$StationBoard$viewStyled = function (model) {
 				_0: _mburri$elm_webpack_seed$StationBoard$viewTitle,
 				_1: {
 					ctor: '::',
-					_0: function () {
-						var _p22 = model.mode;
-						if (_p22.ctor === 'Search') {
-							return _mburri$elm_webpack_seed$StationBoard$viewSearchBar(model.query);
-						} else {
-							return _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected(model.latest);
-						}
-					}(),
+					_0: _mburri$elm_webpack_seed$StationBoard$viewErrors(model.fetchStationTableFailedMessage),
 					_1: {
 						ctor: '::',
-						_0: _mburri$elm_webpack_seed$StationBoard$viewErrors(model.fetchStationTableFailedMessage),
+						_0: _mburri$elm_webpack_seed$StationBoard$viewButtons(model.mode),
 						_1: {
 							ctor: '::',
-							_0: _mburri$elm_webpack_seed$StationBoard$viewAutocomplete(model),
+							_0: function () {
+								var _p21 = model.mode;
+								switch (_p21.ctor) {
+									case 'Search':
+										return _mburri$elm_webpack_seed$StationBoard$viewSearchBar(model);
+									case 'Recent':
+										return _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected(model.latest);
+									default:
+										return _mburri$elm_webpack_seed$StationBoard$viewRecentlySelected(model.stations);
+								}
+							}(),
 							_1: {
 								ctor: '::',
 								_0: _mburri$elm_webpack_seed$StationBoard$viewDepartures(model.departures),
