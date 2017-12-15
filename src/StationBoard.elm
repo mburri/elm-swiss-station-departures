@@ -31,6 +31,7 @@ port setStorage : List String -> Cmd msg
 type Mode
     = Search
     | Recent
+    | Nearby
 
 
 type alias Model =
@@ -84,7 +85,7 @@ type Msg
     | FetchStationTableSucceed (Result Http.Error (List Departure))
     | FetchStationSucceed (Result Http.Error (List Station))
     | HandleEscape
-    | ToggleMode
+    | Switch Mode
     | Clear
     | Nearest
     | GetLocation (Result Geolocation.Error Location)
@@ -105,7 +106,7 @@ update msg model =
             ( clear model, Cmd.none )
 
         SearchStation query ->
-            ( { model | query = query }, getStations query )
+            ( { model | query = query }, searchStations query )
 
         SetAutoState autoMsg ->
             let
@@ -136,7 +137,6 @@ update msg model =
                 , Cmd.batch
                     [ getDepartures selectedStation
                     , newRecent |> List.map Station.name |> setStorage
-                    , Cmd.none
                     ]
                 )
 
@@ -220,8 +220,8 @@ update msg model =
             , Cmd.none
             )
 
-        ToggleMode ->
-            ( { model | mode = toggle model.mode }, Cmd.none )
+        Switch mode ->
+            ( { model | mode = mode }, Cmd.none )
 
         SelectStationFromRecent station ->
             ( model, getDepartures (Just station) )
@@ -235,20 +235,10 @@ update msg model =
         Nearest ->
             case model.location of
                 Just location ->
-                    ( model, getNearestStations location )
+                    ( { model | mode = Nearby }, getNearbyStations location )
 
                 Nothing ->
                     ( model, Task.attempt GetLocation Geolocation.now )
-
-
-toggle : Mode -> Mode
-toggle mode =
-    case mode of
-        Search ->
-            Recent
-
-        Recent ->
-            Search
 
 
 clear : Model -> Model
@@ -258,29 +248,6 @@ clear { latest, mode } =
             initialModel latest
     in
         { initial | mode = mode }
-
-
-getStations : String -> Cmd Msg
-getStations query =
-    if (String.length query) >= 3 then
-        query |> TransportApi.searchStation |> Http.send FetchStationSucceed
-    else
-        Cmd.none
-
-
-getNearestStations : Location -> Cmd Msg
-getNearestStations location =
-    location |> TransportApi.nearestStations |> Http.send FetchStationSucceed
-
-
-getDepartures : Maybe Station -> Cmd Msg
-getDepartures maybeStation =
-    case maybeStation of
-        Just station ->
-            TransportApi.getDepartures (Station.name station) |> Http.send FetchStationTableSucceed
-
-        Nothing ->
-            Cmd.none
 
 
 selectStation : Model -> List Station -> Maybe Station -> String -> Model
@@ -307,6 +274,29 @@ addStation stations maybeStation =
 
         Nothing ->
             stations
+
+
+searchStations : String -> Cmd Msg
+searchStations query =
+    if (String.length query) >= 3 then
+        query |> TransportApi.searchStation |> Http.send FetchStationSucceed
+    else
+        Cmd.none
+
+
+getNearbyStations : Location -> Cmd Msg
+getNearbyStations location =
+    location |> TransportApi.nearestStations |> Http.send FetchStationSucceed
+
+
+getDepartures : Maybe Station -> Cmd Msg
+getDepartures maybeStation =
+    case maybeStation of
+        Just station ->
+            TransportApi.getDepartures (Station.name station) |> Http.send FetchStationTableSucceed
+
+        Nothing ->
+            Cmd.none
 
 
 acceptableStations : String -> List Station -> List Station
@@ -359,14 +349,17 @@ viewStyled model =
         div []
             [ globalStyles
             , viewTitle
+            , viewErrors model.fetchStationTableFailedMessage
+            , viewButtons model.mode
             , case model.mode of
                 Search ->
-                    viewSearchBar model.query
+                    viewSearchBar model
 
                 Recent ->
                     viewRecentlySelected model.latest
-            , viewErrors model.fetchStationTableFailedMessage
-            , viewAutocomplete model
+
+                Nearby ->
+                    viewRecentlySelected model.stations
             , viewDepartures model.departures
             ]
 
@@ -378,19 +371,27 @@ viewTitle =
         ]
 
 
-viewSearchBar : String -> Html Msg
-viewSearchBar searchString =
+viewButtons : a -> Html Msg
+viewButtons model =
     div [ css [ textAlign center ] ]
-        [ actionButton [ onClick ToggleMode ] [ text "Show recent searches" ]
+        [ actionButton [ onClick (Switch Search) ] [ text "Search... " ]
+        , actionButton [ onClick (Switch Recent) ] [ text "Show recent searches" ]
         , actionButton [ onClick Nearest ] [ text "Nearby stations" ]
-        , searchField
+        ]
+
+
+viewSearchBar : Model -> Html Msg
+viewSearchBar model =
+    div []
+        [ searchField
             [ onInput SearchStation
-            , value searchString
+            , value model.query
             , autocomplete False
             , placeholder "search  station..."
             ]
             []
         , clearButton [ onClick Clear ] [ text "x" ]
+        , viewAutocomplete model
         ]
 
 
@@ -403,9 +404,7 @@ viewRecentlySelected recents =
                 |> recentStationList []
     in
         div [ css [ textAlign center ] ]
-            [ actionButton [ onClick ToggleMode ] [ text "text search" ]
-            , recentSearches
-            ]
+            [ recentSearches ]
 
 
 viewRecent : Station -> Html Msg
