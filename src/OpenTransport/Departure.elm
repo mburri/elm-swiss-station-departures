@@ -1,7 +1,10 @@
-module OpenTransport.Departure exposing (Departure, create, destination, name, time)
-
-import Date
-import Date.Format
+module OpenTransport.Departure exposing
+    ( Departure
+    , create
+    , departureName
+    , destination
+    , time
+    )
 
 
 type Departure
@@ -13,11 +16,11 @@ type Departure
 
 
 create : String -> String -> String -> Departure
-create to departure name =
+create to departure stationName =
     Departure
         { to = to
         , departure = departure
-        , name = name
+        , name = stationName
         }
 
 
@@ -26,16 +29,12 @@ destination (Departure { to }) =
     to
 
 
-name : Departure -> String
-name (Departure { name }) =
+departureName : Departure -> String
+departureName (Departure { name }) =
     name
 
 
 time : Departure -> String
 time (Departure { departure }) =
-    case Date.fromString departure of
-        Err msg ->
-            "-"
-
-        Ok departure ->
-            Date.Format.format "%k:%M" departure
+    {--todo: format date --}
+    departure

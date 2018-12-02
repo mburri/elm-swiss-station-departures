@@ -4,7 +4,7 @@
   "description": "a starting point for elm projects",
   "scripts": {
     "start": "elm-live src/Main.elm --open --path-to-elm-make=node_modules/.bin/elm-make -- --output app.js",
-    "dev": "yarn start --debug",
+    "dev": "npm start --debug",
     "build": "elm-make src/Main.elm --output=app.js"
   },
   "keywords": [
@@ -13,7 +13,8 @@
   "author": "Max Burri",
   "license": "ISC",
   "devDependencies": {
-    "elm": "^0.18.0",
-    "elm-live": "^2.7.5"
+    "elm": "^0.19.0-bugfix2",
+    "elm-format": "^0.8.1",
+    "elm-live": "^3.2.3"
   }
 }

@@ -1,4 +1,9 @@
-module OpenTransport.Station exposing (Station, empty, name, create)
+module OpenTransport.Station exposing
+    ( Station
+    , create
+    , empty
+    , stationName
+    )
 
 
 type Station
@@ -12,8 +17,8 @@ empty =
     Station { name = "" }
 
 
-name : Station -> String
-name (Station { name }) =
+stationName : Station -> String
+stationName (Station { name }) =
     name
 
 

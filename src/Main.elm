@@ -1,14 +1,15 @@
 module Main exposing (main)
 
+import Browser
 import Html
 import StationBoard exposing (..)
 
 
 main : Program (List String) Model Msg
 main =
-    Html.programWithFlags
+    Browser.document
         { init = init
-        , view = view
+        , view = document
         , update = update
         , subscriptions = subscriptions
         }

@@ -1,10 +1,25 @@
-module Styles exposing (..)
+module Styles exposing
+    ( Styles(..)
+    , actionButton
+    , autoCompleteSelectedStyles
+    , cellStyle
+    , clearButton
+    , departuresTable
+    , errorBox
+    , globalStyles
+    , recentStationList
+    , recentStationListItem
+    , rowStyle
+    , searchField
+    , theme
+    , title
+    )
 
+import Color
 import Css exposing (..)
-import Css.Colors
-import Css.Foreign exposing (global)
+import Css.Global
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css, styled)
+import Html.Styled.Attributes exposing (..)
 
 
 theme :
@@ -37,7 +52,6 @@ title : List (Attribute msg) -> List (Html msg) -> Html msg
 title =
     styled h1
         [ display block
-        , color Css.Colors.white
         , fontSize (Css.rem 2.5)
         , textAlign center
         ]
@@ -46,16 +60,13 @@ title =
 rowStyle : Attribute msg
 rowStyle =
     css
-        [ color Css.Colors.white
-        , borderBottom3 (px 1) solid Css.Colors.red
-        ]
+        []
 
 
 cellStyle : Attribute msg
 cellStyle =
     css
-        [ color Css.Colors.white
-        , fontSize (Css.rem 1.5)
+        [ fontSize (Css.rem 1.5)
         , padding2 (Css.rem 0.5) (Css.rem 0.8)
         , borderBottom3 (px 1) solid theme.primary5
         ]
@@ -73,7 +84,6 @@ clearButton =
         , fontSize (Css.rem 1.0)
         , fontWeight bold
         , color theme.primary4
-        , backgroundColor Css.Colors.white
         , verticalAlign super
         , marginLeft (Css.rem -2.0)
         , hover
@@ -91,7 +101,6 @@ actionButton =
         , fontSize (Css.rem 1.0)
         , fontWeight bold
         , color theme.primary4
-        , backgroundColor Css.Colors.white
         , hover
             [ backgroundColor theme.primary5
             ]
@@ -102,11 +111,10 @@ searchField : List (Attribute msg) -> List (Html msg) -> Html msg
 searchField =
     styled input
         [ fontSize (Css.rem 2.0)
-        , width (pct 90)
+        , Css.width (pct 90)
         , margin auto
         , padding (Css.rem 0.5)
         , borderRadius (Css.rem 0.2)
-        , backgroundColor Css.Colors.white
         , color theme.primary5
         ]
 
@@ -115,7 +123,6 @@ recentStationList : List (Attribute msg) -> List (Html msg) -> Html msg
 recentStationList =
     styled ul
         [ fontSize (Css.rem 2.0)
-        , color Css.Colors.white
         , listStyle none
         , padding (Css.rem 2.0)
         ]
@@ -127,7 +134,7 @@ recentStationListItem =
         [ margin auto
         , paddingLeft (Css.rem 2.0)
         , paddingRight (Css.rem 2.0)
-        , width (pct 70)
+        , Css.width (pct 70)
         , borderBottom3 (px 1) solid theme.primary5
         ]
 
@@ -146,7 +153,6 @@ errorBox =
     styled
         div
         [ backgroundColor theme.secondary1
-        , color Css.Colors.white
         , margin (Css.rem 2.0)
         , padding (Css.rem 1.5)
         ]
@@ -166,32 +172,31 @@ type Styles
 
 globalStyles : Html msg
 globalStyles =
-    global
-        [ Css.Foreign.html
+    Css.Global.global
+        [ Css.Global.html
             [ fontSize (px 20)
-            , width (pct 100)
+            , Css.width (pct 100)
             ]
-        , Css.Foreign.body
+        , Css.Global.body
             [ maxWidth (px 960)
-            , width (pct 80)
+            , Css.width (pct 80)
             , margin auto
             , fontFamily sansSerif
             , backgroundColor theme.primary1
             ]
-        , Css.Foreign.class KeySelected autoCompleteSelectedStyles
-        , Css.Foreign.class MouseSelected autoCompleteSelectedStyles
-        , Css.Foreign.class AutocompleteMenu
+        , Css.Global.class "KeySelected" autoCompleteSelectedStyles
+        , Css.Global.class "MouseSelected" autoCompleteSelectedStyles
+        , Css.Global.class "AutocompleteMenu"
             [ margin (Css.rem 2.0)
-            , color Css.Colors.white
             ]
-        , Css.Foreign.class AutocompleteItem
+        , Css.Global.class "AutocompleteItem"
             [ display block
             , padding2 (Css.rem 0.3) (Css.rem 0.8)
             , fontSize (Css.rem 1.5)
             , borderBottom3 (px 1) solid theme.primary5
             , cursor pointer
             ]
-        , Css.Foreign.class AutocompleteList
+        , Css.Global.class "AutocompleteList"
             [ listStyle none
             , padding (px 0)
             , margin auto
@@ -205,7 +210,7 @@ autoCompleteSelectedStyles : List Style
 autoCompleteSelectedStyles =
     [ backgroundColor theme.primary3
     , after
-        [ property "content" "' [enter]'"
+        [ Css.property "content" "' [enter]'"
         , color theme.primary5
         ]
     ]
