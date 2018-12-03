@@ -1,12 +1,9 @@
 port module StationBoard exposing (Model, Msg, document, init, subscriptions, update)
 
 import Browser
-import Css exposing (center, marginLeft, textAlign)
-import Html
-import Html.Attributes
-import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (align, attribute, autocomplete, class, classList, css, id, placeholder, style, value)
-import Html.Styled.Events exposing (keyCode, onClick, onFocus, onInput)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
@@ -14,7 +11,6 @@ import Menu exposing (MouseSelected)
 import OpenTransport.Departure as Departure exposing (Departure, time)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
-import Styles exposing (..)
 import Task
 
 
@@ -312,7 +308,7 @@ document model =
 
 view : Model -> Html.Html Msg
 view model =
-    toUnstyled (viewStyled model)
+    viewStyled model
 
 
 viewStyled : Model -> Html Msg
@@ -336,8 +332,7 @@ viewStyled model =
                 )
     in
     div []
-        [ globalStyles
-        , viewTitle
+        [ viewTitle
         , viewErrors model.fetchStationTableFailedMessage
         , viewButtons model.mode
         , case model.mode of
@@ -356,29 +351,29 @@ viewStyled model =
 viewTitle : Html msg
 viewTitle =
     div []
-        [ Styles.title [] [ text "Next departures from..." ]
+        [ h1 [] [ text "Next departures from..." ]
         ]
 
 
 viewButtons : a -> Html Msg
 viewButtons model =
-    div [ css [ textAlign center ] ]
-        [ actionButton [ onClick (Switch Search) ] [ text "Search... " ]
-        , actionButton [ onClick (Switch Recent) ] [ text "Show recent searches" ]
+    div []
+        [ button [ onClick (Switch Search) ] [ text "Search... " ]
+        , button [ onClick (Switch Recent) ] [ text "Show recent searches" ]
         ]
 
 
 viewSearchBar : Model -> Html Msg
 viewSearchBar model =
     div []
-        [ searchField
+        [ input
             [ onInput SearchStation
             , value model.query
             , autocomplete False
             , placeholder "search  station..."
             ]
             []
-        , clearButton [ onClick Clear ] [ text "x" ]
+        , button [ onClick Clear ] [ text "x" ]
         , viewAutocomplete model
         ]
 
@@ -389,16 +384,15 @@ viewRecentlySelected recents =
         recentSearches =
             recents
                 |> List.map viewRecent
-                |> recentStationList []
+                |> li []
     in
-    div [ css [ textAlign center ] ]
+    div []
         [ recentSearches ]
 
 
 viewRecent : Station -> Html Msg
 viewRecent station =
-    recentStationListItem
-        [ onClick (SelectStationFromRecent station) ]
+    li [ onClick (SelectStationFromRecent station) ]
         [ station |> Station.stationName |> text ]
 
 
@@ -408,7 +402,7 @@ viewErrors fetchStationTableFailedMessage =
         div [] []
 
     else
-        errorBox []
+        div []
             [ text fetchStationTableFailedMessage ]
 
 
@@ -423,7 +417,7 @@ viewAutocomplete model =
     in
     if showStationsMenu then
         div [ class "AutocompleteMenu" ]
-            [ Html.Styled.map SetAutoState (fromUnstyled autocompleteView) ]
+            [ Html.map SetAutoState autocompleteView ]
 
     else
         div [] []
@@ -471,19 +465,18 @@ updateConfig =
         }
 
 
-viewDepartures : List Departure -> Html.Styled.Html msg
+viewDepartures : List Departure -> Html msg
 viewDepartures departures =
     if not (List.isEmpty departures) then
-        departuresTable []
+        table []
             [ thead []
                 [ tr
-                    [ rowStyle
-                    ]
-                    [ th [ cellStyle, align "left" ]
+                    []
+                    [ th [ align "left" ]
                         [ text "Zeit" ]
-                    , th [ cellStyle ]
+                    , th []
                         [ text "" ]
-                    , th [ cellStyle, align "left" ]
+                    , th [ align "left" ]
                         [ text "Nach" ]
                     ]
                 ]
@@ -494,12 +487,12 @@ viewDepartures departures =
         text ""
 
 
-viewSingleDeparture : Departure -> Html.Styled.Html msg
+viewSingleDeparture : Departure -> Html msg
 viewSingleDeparture departure =
     tr []
-        [ td [ cellStyle ] [ Departure.time departure |> text ]
-        , td [ cellStyle ] [ Departure.departureName departure |> text ]
-        , td [ cellStyle ] [ Departure.destination departure |> text ]
+        [ td [] [ Departure.time departure |> text ]
+        , td [] [ Departure.departureName departure |> text ]
+        , td [] [ Departure.destination departure |> text ]
         ]
 
 
