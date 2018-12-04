@@ -1,21 +1,20 @@
-port module StationBoard exposing (init, update, view, subscriptions, Model, Msg)
+port module StationBoard exposing (Model, Msg, document, init, subscriptions, update)
 
-import Autocomplete exposing (MouseSelected)
-import Css exposing (center, marginLeft, textAlign)
-import Geolocation exposing (Location)
-import Html
-import Html.Attributes
-import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (align, attribute, autocomplete, class, classList, css, id, placeholder, style, styled, value)
-import Html.Styled.Events exposing (keyCode, onClick, onFocus, onInput, onWithOptions)
+import Browser
+import Element exposing (Element)
+import Element.Font as Font
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
+import Menu exposing (MouseSelected)
 import OpenTransport.Departure as Departure exposing (Departure, time)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
-import Styles exposing (..)
 import Task
+
 
 
 -- ports
@@ -36,14 +35,13 @@ type Mode
 
 type alias Model =
     { query : String
-    , autoState : Autocomplete.State
+    , autoState : Menu.State
     , stations : List Station
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
     , latest : List Station
     , mode : Mode
-    , location : Maybe Location
     }
 
 
@@ -51,14 +49,13 @@ initialModel : List Station -> Model
 initialModel recent =
     Model
         ""
-        Autocomplete.empty
+        Menu.empty
         []
         Nothing
         []
         ""
         recent
         Search
-        Nothing
 
 
 init : List String -> ( Model, Cmd Msg )
@@ -67,7 +64,7 @@ init recentStations =
         recent =
             List.map Station.create recentStations
     in
-        ( initialModel recent, Task.attempt GetLocation Geolocation.now )
+    ( initialModel recent, Cmd.none )
 
 
 
@@ -77,7 +74,7 @@ init recentStations =
 type Msg
     = NoOp
     | SearchStation String
-    | SetAutoState Autocomplete.Msg
+    | SetAutoState Menu.Msg
     | SelectStation String
     | SelectStationFromRecent Station
     | Wrap Bool
@@ -87,8 +84,6 @@ type Msg
     | HandleEscape
     | Switch Mode
     | Clear
-    | Nearest
-    | GetLocation (Result Geolocation.Error Location)
 
 
 howManyToShow : number
@@ -111,42 +106,43 @@ update msg model =
         SetAutoState autoMsg ->
             let
                 ( newState, maybeMsg ) =
-                    Autocomplete.update updateConfig autoMsg howManyToShow model.autoState (acceptableStations model.query model.stations)
+                    Menu.update updateConfig autoMsg howManyToShow model.autoState (acceptableStations model.query model.stations)
 
                 newModel =
                     { model | autoState = newState }
             in
-                case maybeMsg of
-                    Nothing ->
-                        ( newModel, Cmd.none )
+            case maybeMsg of
+                Nothing ->
+                    ( newModel, Cmd.none )
 
-                    Just updateMsg ->
-                        update updateMsg newModel
+                Just updateMsg ->
+                    update updateMsg newModel
 
         SelectStation name ->
             let
                 selectedStation =
                     model.stations
-                        |> List.filter (\station -> Station.name station == name)
+                        |> List.filter (\station -> Station.stationName station == name)
                         |> List.head
 
                 newRecent =
                     addStation model.latest selectedStation
             in
-                ( selectStation model newRecent selectedStation name
-                , Cmd.batch
-                    [ getDepartures selectedStation
-                    , newRecent |> List.map Station.name |> setStorage
-                    ]
-                )
+            ( selectStation model newRecent selectedStation name
+            , Cmd.batch
+                [ getDepartures selectedStation
+                , newRecent |> List.map Station.stationName |> setStorage
+                ]
+            )
 
         Reset ->
-            { model
-                | autoState = Autocomplete.reset updateConfig model.autoState
+            ( { model
+                | autoState = Menu.reset updateConfig model.autoState
                 , selectedStation = Nothing
                 , fetchStationTableFailedMessage = ""
-            }
-                ! []
+              }
+            , Cmd.none
+            )
 
         Wrap toTop ->
             case model.selectedStation of
@@ -155,24 +151,27 @@ update msg model =
 
                 Nothing ->
                     if toTop then
-                        { model
-                            | autoState = Autocomplete.resetToLastItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
+                        ( { model
+                            | autoState = Menu.resetToLastItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                             , selectedStation =
                                 List.head <|
                                     List.reverse <|
                                         List.take howManyToShow <|
-                                            (acceptableStations model.query model.stations)
-                        }
-                            ! []
+                                            acceptableStations model.query model.stations
+                          }
+                        , Cmd.none
+                        )
+
                     else
-                        { model
-                            | autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
+                        ( { model
+                            | autoState = Menu.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                             , selectedStation =
                                 List.head <|
                                     List.take howManyToShow <|
-                                        (acceptableStations model.query model.stations)
-                        }
-                            ! []
+                                        acceptableStations model.query model.stations
+                          }
+                        , Cmd.none
+                        )
 
         FetchStationTableSucceed result ->
             case result of
@@ -189,7 +188,7 @@ update msg model =
                         _ =
                             Debug.log "Error retrieving departures" err
                     in
-                        ( { model | fetchStationTableFailedMessage = toString err }, Cmd.none )
+                    ( { model | fetchStationTableFailedMessage = "Error retrieving departures" }, Cmd.none )
 
         FetchStationSucceed result ->
             case result of
@@ -197,7 +196,7 @@ update msg model =
                     ( { model
                         | stations = stations
                         , fetchStationTableFailedMessage = ""
-                        , autoState = Autocomplete.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
+                        , autoState = Menu.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                       }
                     , Cmd.none
                     )
@@ -207,7 +206,7 @@ update msg model =
                         _ =
                             Debug.log "Error retrieving stations" err
                     in
-                        ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
+                    ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
 
         HandleEscape ->
             ( { model
@@ -215,7 +214,7 @@ update msg model =
                 , selectedStation = Nothing
                 , departures = []
                 , stations = []
-                , autoState = Autocomplete.empty
+                , autoState = Menu.empty
               }
             , Cmd.none
             )
@@ -226,20 +225,6 @@ update msg model =
         SelectStationFromRecent station ->
             ( model, getDepartures (Just station) )
 
-        GetLocation (Err err) ->
-            ( model, Cmd.none )
-
-        GetLocation (Result.Ok location) ->
-            ( { model | location = Just location }, Cmd.none )
-
-        Nearest ->
-            case model.location of
-                Just location ->
-                    ( { model | mode = Nearby }, getNearbyStations location )
-
-                Nothing ->
-                    ( model, Task.attempt GetLocation Geolocation.now )
-
 
 clear : Model -> Model
 clear { latest, mode } =
@@ -247,7 +232,7 @@ clear { latest, mode } =
         initial =
             initialModel latest
     in
-        { initial | mode = mode }
+    { initial | mode = mode }
 
 
 selectStation : Model -> List Station -> Maybe Station -> String -> Model
@@ -255,11 +240,11 @@ selectStation model newRecent selectedStation id =
     { model
         | query =
             model.stations
-                |> List.filter (\station -> Station.name station == id)
+                |> List.filter (\station -> Station.stationName station == id)
                 |> List.head
-                |> Maybe.withDefault (Station.empty)
-                |> Station.name
-        , autoState = Autocomplete.empty
+                |> Maybe.withDefault Station.empty
+                |> Station.stationName
+        , autoState = Menu.empty
         , selectedStation = selectedStation
         , latest = newRecent |> List.take 5
     }
@@ -270,7 +255,7 @@ addStation stations maybeStation =
     case maybeStation of
         Just station ->
             (station :: stations)
-                |> List.Extra.uniqueBy (\station -> Station.name station)
+                |> List.Extra.uniqueBy (\s -> Station.stationName s)
 
         Nothing ->
             stations
@@ -278,22 +263,18 @@ addStation stations maybeStation =
 
 searchStations : String -> Cmd Msg
 searchStations query =
-    if (String.length query) >= 3 then
+    if String.length query >= 3 then
         query |> TransportApi.searchStation |> Http.send FetchStationSucceed
+
     else
         Cmd.none
-
-
-getNearbyStations : Location -> Cmd Msg
-getNearbyStations location =
-    location |> TransportApi.nearestStations |> Http.send FetchStationSucceed
 
 
 getDepartures : Maybe Station -> Cmd Msg
 getDepartures maybeStation =
     case maybeStation of
         Just station ->
-            TransportApi.getDepartures (Station.name station) |> Http.send FetchStationTableSucceed
+            TransportApi.getDepartures (Station.stationName station) |> Http.send FetchStationTableSucceed
 
         Nothing ->
             Cmd.none
@@ -306,7 +287,7 @@ acceptableStations query stations =
 
 matches : String -> Station -> Bool
 matches query station =
-    String.contains (String.toLower query) (String.toLower (Station.name station))
+    String.contains (String.toLower query) (String.toLower (Station.stationName station))
 
 
 
@@ -315,19 +296,24 @@ matches query station =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map SetAutoState Autocomplete.subscription
+    Sub.map SetAutoState Menu.subscription
 
 
 
 -- VIEW
 
 
+document : Model -> Browser.Document Msg
+document model =
+    Browser.Document "Swiss Departures" [ view model ]
+
+
 view : Model -> Html.Html Msg
 view model =
-    toUnstyled (viewStyled model)
+    Element.layout [] (viewStyled model)
 
 
-viewStyled : Model -> Html Msg
+viewStyled : Model -> Element Msg
 viewStyled model =
     let
         options =
@@ -335,62 +321,63 @@ viewStyled model =
 
         dec =
             -- TODO: naming?
-            (Json.map
+            Json.map
                 (\code ->
                     if code == 38 || code == 40 then
                         Ok NoOp
+
                     else if code == 27 then
                         Ok HandleEscape
+
                     else
                         Err "not handling that key"
                 )
-            )
     in
-        div []
-            [ globalStyles
-            , viewTitle
-            , viewErrors model.fetchStationTableFailedMessage
-            , viewButtons model.mode
-            , case model.mode of
-                Search ->
-                    viewSearchBar model
+    Element.column [ Element.centerX ]
+        [ viewTitle
+        , Element.html (viewErrors model.fetchStationTableFailedMessage)
+        , Element.html (viewButtons model.mode)
+        , case model.mode of
+            Search ->
+                Element.html (viewSearchBar model)
 
-                Recent ->
-                    viewRecentlySelected model.latest
+            Recent ->
+                Element.html (viewRecentlySelected model.latest)
 
-                Nearby ->
-                    viewRecentlySelected model.stations
-            , viewDepartures model.departures
-            ]
-
-
-viewTitle : Html msg
-viewTitle =
-    div []
-        [ Styles.title [] [ text "Next departures from..." ]
+            Nearby ->
+                Element.html (viewRecentlySelected model.stations)
+        , Element.html (viewDepartures model.departures)
         ]
+
+
+viewTitle : Element msg
+viewTitle =
+    Element.row
+        [ Element.padding 20
+        , Font.size 48
+        ]
+        [ Element.text "Station Board" ]
 
 
 viewButtons : a -> Html Msg
 viewButtons model =
-    div [ css [ textAlign center ] ]
-        [ actionButton [ onClick (Switch Search) ] [ text "Search... " ]
-        , actionButton [ onClick (Switch Recent) ] [ text "Show recent searches" ]
-        , actionButton [ onClick Nearest ] [ text "Nearby stations" ]
+    div []
+        [ button [ onClick (Switch Search) ] [ text "Search... " ]
+        , button [ onClick (Switch Recent) ] [ text "Show recent searches" ]
         ]
 
 
 viewSearchBar : Model -> Html Msg
 viewSearchBar model =
     div []
-        [ searchField
+        [ input
             [ onInput SearchStation
             , value model.query
             , autocomplete False
             , placeholder "search  station..."
             ]
             []
-        , clearButton [ onClick Clear ] [ text "x" ]
+        , button [ onClick Clear ] [ text "x" ]
         , viewAutocomplete model
         ]
 
@@ -401,25 +388,25 @@ viewRecentlySelected recents =
         recentSearches =
             recents
                 |> List.map viewRecent
-                |> recentStationList []
+                |> li []
     in
-        div [ css [ textAlign center ] ]
-            [ recentSearches ]
+    div []
+        [ recentSearches ]
 
 
 viewRecent : Station -> Html Msg
 viewRecent station =
-    recentStationListItem
-        [ onClick (SelectStationFromRecent station) ]
-        [ station |> Station.name |> text ]
+    li [ onClick (SelectStationFromRecent station) ]
+        [ station |> Station.stationName |> text ]
 
 
 viewErrors : String -> Html Msg
 viewErrors fetchStationTableFailedMessage =
     if String.isEmpty fetchStationTableFailedMessage then
         div [] []
+
     else
-        errorBox []
+        div []
             [ text fetchStationTableFailedMessage ]
 
 
@@ -427,19 +414,20 @@ viewAutocomplete : Model -> Html Msg
 viewAutocomplete model =
     let
         autocompleteView =
-            Autocomplete.view viewConfig howManyToShow model.autoState (acceptableStations model.query model.stations)
+            Menu.view viewConfig howManyToShow model.autoState (acceptableStations model.query model.stations)
 
         showStationsMenu =
             not (List.isEmpty model.stations)
     in
-        if showStationsMenu then
-            div [ class "AutocompleteMenu" ]
-                [ Html.Styled.map SetAutoState (fromUnstyled autocompleteView) ]
-        else
-            div [] []
+    if showStationsMenu then
+        div [ class "AutocompleteMenu" ]
+            [ Html.map SetAutoState autocompleteView ]
+
+    else
+        div [] []
 
 
-viewConfig : Autocomplete.ViewConfig Station
+viewConfig : Menu.ViewConfig Station
 viewConfig =
     let
         stationListItem keySelected mouseSelected station =
@@ -449,26 +437,27 @@ viewConfig =
                     , ( "KeySelected", keySelected )
                     , ( "MouseSelected", mouseSelected )
                     ]
-                , station |> Station.name |> Html.Attributes.id
+                , station |> Station.stationName |> Html.Attributes.id
                 ]
-            , children = [ station |> Station.name |> Html.text ]
+            , children = [ station |> Station.stationName |> Html.text ]
             }
     in
-        Autocomplete.viewConfig
-            { toId = Station.name
-            , ul = [ Html.Attributes.class "AutocompleteList" ]
-            , li = stationListItem
-            }
+    Menu.viewConfig
+        { toId = Station.stationName
+        , ul = [ Html.Attributes.class "AutocompleteList" ]
+        , li = stationListItem
+        }
 
 
-updateConfig : Autocomplete.UpdateConfig Msg Station
+updateConfig : Menu.UpdateConfig Msg Station
 updateConfig =
-    Autocomplete.updateConfig
-        { toId = Station.name
+    Menu.updateConfig
+        { toId = Station.stationName
         , onKeyDown =
             \code maybeId ->
                 if code == 13 then
                     Maybe.map SelectStation maybeId
+
                 else
                     Nothing
         , onTooLow = Just <| Wrap False
@@ -480,34 +469,34 @@ updateConfig =
         }
 
 
-viewDepartures : List Departure -> Html.Styled.Html msg
+viewDepartures : List Departure -> Html msg
 viewDepartures departures =
     if not (List.isEmpty departures) then
-        departuresTable []
+        table []
             [ thead []
                 [ tr
-                    [ rowStyle
-                    ]
-                    [ th [ cellStyle, align "left" ]
+                    []
+                    [ th [ align "left" ]
                         [ text "Zeit" ]
-                    , th [ cellStyle ]
+                    , th []
                         [ text "" ]
-                    , th [ cellStyle, align "left" ]
+                    , th [ align "left" ]
                         [ text "Nach" ]
                     ]
                 ]
             , tbody [] (List.map viewSingleDeparture departures)
             ]
+
     else
         text ""
 
 
-viewSingleDeparture : Departure -> Html.Styled.Html msg
+viewSingleDeparture : Departure -> Html msg
 viewSingleDeparture departure =
     tr []
-        [ td [ cellStyle ] [ Departure.time departure |> text ]
-        , td [ cellStyle ] [ Departure.name departure |> text ]
-        , td [ cellStyle ] [ Departure.destination departure |> text ]
+        [ td [] [ Departure.time departure |> text ]
+        , td [] [ Departure.departureName departure |> text ]
+        , td [] [ Departure.destination departure |> text ]
         ]
 
 
@@ -525,7 +514,7 @@ toErrorMessage error =
 
         Http.BadStatus stringResponseHttp ->
             "HttpStatus "
-                ++ toString (stringResponseHttp.status.code)
+                ++ String.fromInt stringResponseHttp.status.code
                 ++ ", the message was: "
                 ++ stringResponseHttp.status.message
 
