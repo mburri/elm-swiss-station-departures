@@ -1,6 +1,8 @@
 port module StationBoard exposing (Model, Msg, document, init, subscriptions, update)
 
 import Browser
+import Element exposing (Element)
+import Element.Font as Font
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -308,10 +310,10 @@ document model =
 
 view : Model -> Html.Html Msg
 view model =
-    viewStyled model
+    Element.layout [] (viewStyled model)
 
 
-viewStyled : Model -> Html Msg
+viewStyled : Model -> Element Msg
 viewStyled model =
     let
         options =
@@ -331,28 +333,30 @@ viewStyled model =
                         Err "not handling that key"
                 )
     in
-    div []
+    Element.column [ Element.centerX ]
         [ viewTitle
-        , viewErrors model.fetchStationTableFailedMessage
-        , viewButtons model.mode
+        , Element.html (viewErrors model.fetchStationTableFailedMessage)
+        , Element.html (viewButtons model.mode)
         , case model.mode of
             Search ->
-                viewSearchBar model
+                Element.html (viewSearchBar model)
 
             Recent ->
-                viewRecentlySelected model.latest
+                Element.html (viewRecentlySelected model.latest)
 
             Nearby ->
-                viewRecentlySelected model.stations
-        , viewDepartures model.departures
+                Element.html (viewRecentlySelected model.stations)
+        , Element.html (viewDepartures model.departures)
         ]
 
 
-viewTitle : Html msg
+viewTitle : Element msg
 viewTitle =
-    div []
-        [ h1 [] [ text "Next departures from..." ]
+    Element.row
+        [ Element.padding 20
+        , Font.size 48
         ]
+        [ Element.text "Station Board" ]
 
 
 viewButtons : a -> Html Msg
