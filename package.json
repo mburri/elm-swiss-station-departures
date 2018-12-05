@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "a starting point for elm projects",
   "scripts": {
-    "start": "elm-live src/Main.elm --open --path-to-elm-make=node_modules/.bin/elm make -- --output app.js",
+    "start": "elm-live src/Main.elm --open --path-to-elm-make='node_modules/.bin/elm make' -- --output app.js",
     "dev": "npm start --debug",
     "build": "copy index.html ./dist  && node_modules/.bin/elm make src/Main.elm --output=dist/app.js",
     "deploy": "npm run build && gh-pages -d dist/"
