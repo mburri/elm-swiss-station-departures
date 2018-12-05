@@ -2,7 +2,9 @@ port module StationBoard exposing (Model, Msg, document, init, subscriptions, up
 
 import Browser
 import Element exposing (Element)
+import Element.Events as Events
 import Element.Font as Font
+import Element.Input as Input
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -333,13 +335,17 @@ viewStyled model =
                         Err "not handling that key"
                 )
     in
-    Element.column [ Element.centerX ]
+    Element.column
+        [ Element.centerX
+        , Element.padding 50
+        , Element.width Element.fill
+        ]
         [ viewTitle
         , Element.html (viewErrors model.fetchStationTableFailedMessage)
-        , Element.html (viewButtons model.mode)
+        , viewButtons model.mode
         , case model.mode of
             Search ->
-                Element.html (viewSearchBar model)
+                viewSearchBar model
 
             Recent ->
                 Element.html (viewRecentlySelected model.latest)
@@ -353,32 +359,35 @@ viewStyled model =
 viewTitle : Element msg
 viewTitle =
     Element.row
-        [ Element.padding 20
+        [ Element.centerX
+        , Element.paddingXY 0 30
         , Font.size 48
         ]
         [ Element.text "Station Board" ]
 
 
-viewButtons : a -> Html Msg
+viewButtons : a -> Element Msg
 viewButtons model =
-    div []
-        [ button [ onClick (Switch Search) ] [ text "Search... " ]
-        , button [ onClick (Switch Recent) ] [ text "Show recent searches" ]
+    Element.row
+        [ Element.centerX
+        , Element.width Element.fill
+        , Element.spacing 50
+        ]
+        [ Input.button [] { onPress = Just (Switch Search), label = Element.text "Search" }
+        , Input.button [] { onPress = Just (Switch Recent), label = Element.text "Recent" }
         ]
 
 
-viewSearchBar : Model -> Html Msg
+viewSearchBar : Model -> Element Msg
 viewSearchBar model =
-    div []
-        [ input
-            [ onInput SearchStation
-            , value model.query
-            , autocomplete False
-            , placeholder "search  station..."
-            ]
-            []
-        , button [ onClick Clear ] [ text "x" ]
-        , viewAutocomplete model
+    Element.column [ Element.width Element.fill ]
+        [ Input.search []
+            { onChange = SearchStation
+            , text = model.query
+            , placeholder = Nothing
+            , label = Input.labelHidden "Search"
+            }
+        , Element.html (viewAutocomplete model)
         ]
 
 
