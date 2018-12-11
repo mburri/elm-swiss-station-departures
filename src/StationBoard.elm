@@ -348,11 +348,11 @@ viewStyled model =
                 viewSearchBar model
 
             Recent ->
-                Element.html (viewRecentlySelected model.latest)
+                viewRecentlySelected model.latest
 
             Nearby ->
-                Element.html (viewRecentlySelected model.stations)
-        , Element.html (viewDepartures model.departures)
+                viewRecentlySelected model.stations
+        , viewDepartures model.departures
         ]
 
 
@@ -391,22 +391,19 @@ viewSearchBar model =
         ]
 
 
-viewRecentlySelected : List Station -> Html Msg
+viewRecentlySelected : List Station -> Element Msg
 viewRecentlySelected recents =
     let
         recentSearches =
             recents
                 |> List.map viewRecent
-                |> li []
     in
-    div []
-        [ recentSearches ]
+    Element.column [] recentSearches
 
 
-viewRecent : Station -> Html Msg
+viewRecent : Station -> Element Msg
 viewRecent station =
-    li [ onClick (SelectStationFromRecent station) ]
-        [ station |> Station.stationName |> text ]
+    Element.row [ Events.onClick (SelectStationFromRecent station) ] [ station |> Station.stationName |> Element.text ]
 
 
 viewErrors : String -> Html Msg
@@ -478,35 +475,29 @@ updateConfig =
         }
 
 
-viewDepartures : List Departure -> Html msg
+viewDepartures : List Departure -> Element msg
 viewDepartures departures =
-    if not (List.isEmpty departures) then
-        table []
-            [ thead []
-                [ tr
-                    []
-                    [ th [ align "left" ]
-                        [ text "Zeit" ]
-                    , th []
-                        [ text "" ]
-                    , th [ align "left" ]
-                        [ text "Nach" ]
-                    ]
-                ]
-            , tbody [] (List.map viewSingleDeparture departures)
-            ]
+    if List.isEmpty departures then
+        Element.none
 
     else
-        text ""
-
-
-viewSingleDeparture : Departure -> Html msg
-viewSingleDeparture departure =
-    tr []
-        [ td [] [ Departure.time departure |> text ]
-        , td [] [ Departure.departureName departure |> text ]
-        , td [] [ Departure.destination departure |> text ]
-        ]
+        Element.table []
+            { data = departures
+            , columns =
+                [ { header = Element.text "Zeit"
+                  , width = Element.fill
+                  , view = \departure -> Element.text (Departure.time departure)
+                  }
+                , { header = Element.none
+                  , width = Element.fill
+                  , view = \departure -> Element.text (Departure.departureName departure)
+                  }
+                , { header = Element.text "Nach"
+                  , width = Element.fill
+                  , view = \departure -> Element.text (Departure.destination departure)
+                  }
+                ]
+            }
 
 
 toErrorMessage : Http.Error -> String
