@@ -10674,95 +10674,270 @@ var author$project$OpenTransport$Departure$time = function (_n0) {
 	var departure = _n0.a.departure;
 	return departure;
 };
-var elm$html$Html$td = _VirtualDom_node('td');
-var elm$html$Html$tr = _VirtualDom_node('tr');
-var author$project$StationBoard$viewSingleDeparture = function (departure) {
-	return A2(
-		elm$html$Html$tr,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						author$project$OpenTransport$Departure$time(departure))
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						author$project$OpenTransport$Departure$departureName(departure))
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						author$project$OpenTransport$Departure$destination(departure))
-					]))
-			]));
+var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
+var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
+var mdgriffith$elm_ui$Element$InternalColumn = function (a) {
+	return {$: 'InternalColumn', a: a};
 };
-var elm$html$Html$table = _VirtualDom_node('table');
-var elm$html$Html$tbody = _VirtualDom_node('tbody');
-var elm$html$Html$th = _VirtualDom_node('th');
-var elm$html$Html$thead = _VirtualDom_node('thead');
-var elm$html$Html$Attributes$align = elm$html$Html$Attributes$stringProperty('align');
-var author$project$StationBoard$viewDepartures = function (departures) {
-	return (!elm$core$List$isEmpty(departures)) ? A2(
-		elm$html$Html$table,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$thead,
-				_List_Nil,
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$tr,
-						_List_Nil,
+var elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			elm$core$List$any,
+			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
+			list);
+	});
+var elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2(elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
+var mdgriffith$elm_ui$Internal$Model$Px = function (a) {
+	return {$: 'Px', a: a};
+};
+var mdgriffith$elm_ui$Element$px = mdgriffith$elm_ui$Internal$Model$Px;
+var mdgriffith$elm_ui$Internal$Flag$gridPosition = mdgriffith$elm_ui$Internal$Flag$flag(35);
+var mdgriffith$elm_ui$Internal$Flag$gridTemplate = mdgriffith$elm_ui$Internal$Flag$flag(34);
+var mdgriffith$elm_ui$Internal$Model$GridPosition = function (a) {
+	return {$: 'GridPosition', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$GridTemplateStyle = function (a) {
+	return {$: 'GridTemplateStyle', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$AsGrid = {$: 'AsGrid'};
+var mdgriffith$elm_ui$Internal$Model$asGrid = mdgriffith$elm_ui$Internal$Model$AsGrid;
+var mdgriffith$elm_ui$Internal$Model$getSpacing = F2(
+	function (attrs, _default) {
+		return A2(
+			elm$core$Maybe$withDefault,
+			_default,
+			A3(
+				elm$core$List$foldr,
+				F2(
+					function (attr, acc) {
+						if (acc.$ === 'Just') {
+							var x = acc.a;
+							return elm$core$Maybe$Just(x);
+						} else {
+							if ((attr.$ === 'StyleClass') && (attr.b.$ === 'SpacingStyle')) {
+								var _n2 = attr.b;
+								var x = _n2.b;
+								var y = _n2.c;
+								return elm$core$Maybe$Just(
+									_Utils_Tuple2(x, y));
+							} else {
+								return elm$core$Maybe$Nothing;
+							}
+						}
+					}),
+				elm$core$Maybe$Nothing,
+				attrs));
+	});
+var mdgriffith$elm_ui$Element$tableHelper = F2(
+	function (attrs, config) {
+		var onGrid = F3(
+			function (rowLevel, columnLevel, elem) {
+				return A4(
+					mdgriffith$elm_ui$Internal$Model$element,
+					mdgriffith$elm_ui$Internal$Model$asEl,
+					mdgriffith$elm_ui$Internal$Model$div,
+					_List_fromArray(
+						[
+							A2(
+							mdgriffith$elm_ui$Internal$Model$StyleClass,
+							mdgriffith$elm_ui$Internal$Flag$gridPosition,
+							mdgriffith$elm_ui$Internal$Model$GridPosition(
+								{col: columnLevel, height: 1, row: rowLevel, width: 1}))
+						]),
+					mdgriffith$elm_ui$Internal$Model$Unkeyed(
 						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$th,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$align('left')
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('Zeit')
-									])),
-								A2(
-								elm$html$Html$th,
-								_List_Nil,
-								_List_fromArray(
-									[
-										elm$html$Html$text('')
-									])),
-								A2(
-								elm$html$Html$th,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$align('left')
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('Nach')
-									]))
-							]))
-					])),
+							[elem])));
+			});
+		var columnWidth = function (col) {
+			if (col.$ === 'InternalIndexedColumn') {
+				var colConfig = col.a;
+				return colConfig.width;
+			} else {
+				var colConfig = col.a;
+				return colConfig.width;
+			}
+		};
+		var columnHeader = function (col) {
+			if (col.$ === 'InternalIndexedColumn') {
+				var colConfig = col.a;
+				return colConfig.header;
+			} else {
+				var colConfig = col.a;
+				return colConfig.header;
+			}
+		};
+		var maybeHeaders = function (headers) {
+			return A2(
+				elm$core$List$all,
+				elm$core$Basics$eq(mdgriffith$elm_ui$Internal$Model$Empty),
+				headers) ? elm$core$Maybe$Nothing : elm$core$Maybe$Just(
 				A2(
-				elm$html$Html$tbody,
-				_List_Nil,
-				A2(elm$core$List$map, author$project$StationBoard$viewSingleDeparture, departures))
-			])) : elm$html$Html$text('');
+					elm$core$List$indexedMap,
+					F2(
+						function (col, header) {
+							return A3(onGrid, 1, col + 1, header);
+						}),
+					headers));
+		}(
+			A2(elm$core$List$map, columnHeader, config.columns));
+		var add = F3(
+			function (cell, columnConfig, cursor) {
+				if (columnConfig.$ === 'InternalIndexedColumn') {
+					var col = columnConfig.a;
+					return _Utils_update(
+						cursor,
+						{
+							column: cursor.column + 1,
+							elements: A2(
+								elm$core$List$cons,
+								A3(
+									onGrid,
+									cursor.row,
+									cursor.column,
+									A2(
+										col.view,
+										_Utils_eq(maybeHeaders, elm$core$Maybe$Nothing) ? (cursor.row - 1) : (cursor.row - 2),
+										cell)),
+								cursor.elements)
+						});
+				} else {
+					var col = columnConfig.a;
+					return {
+						column: cursor.column + 1,
+						elements: A2(
+							elm$core$List$cons,
+							A3(
+								onGrid,
+								cursor.row,
+								cursor.column,
+								col.view(cell)),
+							cursor.elements),
+						row: cursor.row
+					};
+				}
+			});
+		var build = F3(
+			function (columns, rowData, cursor) {
+				var newCursor = A3(
+					elm$core$List$foldl,
+					add(rowData),
+					cursor,
+					columns);
+				return {column: 1, elements: newCursor.elements, row: cursor.row + 1};
+			});
+		var children = A3(
+			elm$core$List$foldl,
+			build(config.columns),
+			{
+				column: 1,
+				elements: _List_Nil,
+				row: _Utils_eq(maybeHeaders, elm$core$Maybe$Nothing) ? 1 : 2
+			},
+			config.data);
+		var _n0 = A2(
+			mdgriffith$elm_ui$Internal$Model$getSpacing,
+			attrs,
+			_Utils_Tuple2(0, 0));
+		var sX = _n0.a;
+		var sY = _n0.b;
+		var template = A2(
+			mdgriffith$elm_ui$Internal$Model$StyleClass,
+			mdgriffith$elm_ui$Internal$Flag$gridTemplate,
+			mdgriffith$elm_ui$Internal$Model$GridTemplateStyle(
+				{
+					columns: A2(elm$core$List$map, columnWidth, config.columns),
+					rows: A2(
+						elm$core$List$repeat,
+						elm$core$List$length(config.data),
+						mdgriffith$elm_ui$Internal$Model$Content),
+					spacing: _Utils_Tuple2(
+						mdgriffith$elm_ui$Element$px(sX),
+						mdgriffith$elm_ui$Element$px(sY))
+				}));
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asGrid,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+				A2(elm$core$List$cons, template, attrs)),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				function () {
+					if (maybeHeaders.$ === 'Nothing') {
+						return children.elements;
+					} else {
+						var renderedHeaders = maybeHeaders.a;
+						return _Utils_ap(
+							renderedHeaders,
+							elm$core$List$reverse(children.elements));
+					}
+				}()));
+	});
+var mdgriffith$elm_ui$Element$table = F2(
+	function (attrs, config) {
+		return A2(
+			mdgriffith$elm_ui$Element$tableHelper,
+			attrs,
+			{
+				columns: A2(elm$core$List$map, mdgriffith$elm_ui$Element$InternalColumn, config.columns),
+				data: config.data
+			});
+	});
+var author$project$StationBoard$viewDepartures = function (departures) {
+	return elm$core$List$isEmpty(departures) ? mdgriffith$elm_ui$Element$none : A2(
+		mdgriffith$elm_ui$Element$table,
+		_List_Nil,
+		{
+			columns: _List_fromArray(
+				[
+					{
+					header: mdgriffith$elm_ui$Element$text('Zeit'),
+					view: function (departure) {
+						return mdgriffith$elm_ui$Element$text(
+							author$project$OpenTransport$Departure$time(departure));
+					},
+					width: mdgriffith$elm_ui$Element$fill
+				},
+					{
+					header: mdgriffith$elm_ui$Element$none,
+					view: function (departure) {
+						return mdgriffith$elm_ui$Element$text(
+							author$project$OpenTransport$Departure$departureName(departure));
+					},
+					width: mdgriffith$elm_ui$Element$fill
+				},
+					{
+					header: mdgriffith$elm_ui$Element$text('Nach'),
+					view: function (departure) {
+						return mdgriffith$elm_ui$Element$text(
+							author$project$OpenTransport$Departure$destination(departure));
+					},
+					width: mdgriffith$elm_ui$Element$fill
+				}
+				]),
+			data: departures
+		});
 };
 var elm$core$String$isEmpty = function (string) {
 	return string === '';
@@ -10783,31 +10958,43 @@ var author$project$OpenTransport$Station$stationName = function (_n0) {
 var author$project$StationBoard$SelectStationFromRecent = function (a) {
 	return {$: 'SelectStationFromRecent', a: a};
 };
-var elm$html$Html$li = _VirtualDom_node('li');
 var author$project$StationBoard$viewRecent = function (station) {
 	return A2(
-		elm$html$Html$li,
+		mdgriffith$elm_ui$Element$row,
 		_List_fromArray(
 			[
-				elm$html$Html$Events$onClick(
+				mdgriffith$elm_ui$Element$Events$onClick(
 				author$project$StationBoard$SelectStationFromRecent(station))
 			]),
 		_List_fromArray(
 			[
-				elm$html$Html$text(
+				mdgriffith$elm_ui$Element$text(
 				author$project$OpenTransport$Station$stationName(station))
 			]));
 };
+var mdgriffith$elm_ui$Internal$Model$AsColumn = {$: 'AsColumn'};
+var mdgriffith$elm_ui$Internal$Model$asColumn = mdgriffith$elm_ui$Internal$Model$AsColumn;
+var mdgriffith$elm_ui$Element$column = F2(
+	function (attrs, children) {
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asColumn,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Internal$Model$htmlClass(mdgriffith$elm_ui$Internal$Style$classes.contentTop + (' ' + mdgriffith$elm_ui$Internal$Style$classes.contentLeft)),
+				A2(
+					elm$core$List$cons,
+					mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
+					A2(
+						elm$core$List$cons,
+						mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
+						attrs))),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
+	});
 var author$project$StationBoard$viewRecentlySelected = function (recents) {
-	var recentSearches = A2(
-		elm$html$Html$li,
-		_List_Nil,
-		A2(elm$core$List$map, author$project$StationBoard$viewRecent, recents));
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[recentSearches]));
+	var recentSearches = A2(elm$core$List$map, author$project$StationBoard$viewRecent, recents);
+	return A2(mdgriffith$elm_ui$Element$column, _List_Nil, recentSearches);
 };
 var author$project$StationBoard$SearchStation = function (a) {
 	return {$: 'SearchStation', a: a};
@@ -10835,6 +11022,7 @@ var ContaSystemer$elm_menu$Menu$Internal$MouseEnter = function (a) {
 var ContaSystemer$elm_menu$Menu$Internal$MouseLeave = function (a) {
 	return {$: 'MouseLeave', a: a};
 };
+var elm$html$Html$li = _VirtualDom_node('li');
 var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
 var elm$html$Html$Events$onMouseEnter = function (msg) {
@@ -11147,26 +11335,6 @@ var author$project$StationBoard$viewAutocomplete = function (model) {
 				A2(elm$html$Html$map, author$project$StationBoard$SetAutoState, autocompleteView)
 			])) : A2(elm$html$Html$div, _List_Nil, _List_Nil);
 };
-var mdgriffith$elm_ui$Internal$Model$AsColumn = {$: 'AsColumn'};
-var mdgriffith$elm_ui$Internal$Model$asColumn = mdgriffith$elm_ui$Internal$Model$AsColumn;
-var mdgriffith$elm_ui$Element$column = F2(
-	function (attrs, children) {
-		return A4(
-			mdgriffith$elm_ui$Internal$Model$element,
-			mdgriffith$elm_ui$Internal$Model$asColumn,
-			mdgriffith$elm_ui$Internal$Model$div,
-			A2(
-				elm$core$List$cons,
-				mdgriffith$elm_ui$Internal$Model$htmlClass(mdgriffith$elm_ui$Internal$Style$classes.contentTop + (' ' + mdgriffith$elm_ui$Internal$Style$classes.contentLeft)),
-				A2(
-					elm$core$List$cons,
-					mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
-					A2(
-						elm$core$List$cons,
-						mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
-						attrs))),
-			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
-	});
 var elm$core$Basics$always = F2(
 	function (a, _n0) {
 		return a;
@@ -12095,15 +12263,12 @@ var author$project$StationBoard$viewStyled = function (model) {
 					case 'Search':
 						return author$project$StationBoard$viewSearchBar(model);
 					case 'Recent':
-						return mdgriffith$elm_ui$Element$html(
-							author$project$StationBoard$viewRecentlySelected(model.latest));
+						return author$project$StationBoard$viewRecentlySelected(model.latest);
 					default:
-						return mdgriffith$elm_ui$Element$html(
-							author$project$StationBoard$viewRecentlySelected(model.stations));
+						return author$project$StationBoard$viewRecentlySelected(model.stations);
 				}
 			}(),
-				mdgriffith$elm_ui$Element$html(
-				author$project$StationBoard$viewDepartures(model.departures))
+				author$project$StationBoard$viewDepartures(model.departures)
 			]));
 };
 var mdgriffith$elm_ui$Internal$Model$OnlyDynamic = F2(
