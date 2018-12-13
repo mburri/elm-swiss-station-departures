@@ -11,7 +11,6 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
-import Menu exposing (MouseSelected)
 import OpenTransport.Departure as Departure exposing (Departure, time)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
@@ -32,17 +31,15 @@ port setStorage : List String -> Cmd msg
 type Mode
     = Search
     | Recent
-    | Nearby
 
 
 type alias Model =
     { query : String
-    , autoState : Menu.State
     , stations : List Station
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
-    , latest : List Station
+    , recent : List Station
     , mode : Mode
     }
 
@@ -51,7 +48,6 @@ initialModel : List Station -> Model
 initialModel recent =
     Model
         ""
-        Menu.empty
         []
         Nothing
         []
@@ -74,13 +70,8 @@ init recentStations =
 
 
 type Msg
-    = NoOp
-    | SearchStation String
-    | SetAutoState Menu.Msg
-    | SelectStation String
-    | SelectStationFromRecent Station
-    | Wrap Bool
-    | Reset
+    = SearchStation String
+    | SelectStation Station
     | FetchStationTableSucceed (Result Http.Error (List Departure))
     | FetchStationSucceed (Result Http.Error (List Station))
     | HandleEscape
@@ -96,84 +87,14 @@ howManyToShow =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         Clear ->
             ( clear model, Cmd.none )
 
         SearchStation query ->
             ( { model | query = query }, searchStations query )
 
-        SetAutoState autoMsg ->
-            let
-                ( newState, maybeMsg ) =
-                    Menu.update updateConfig autoMsg howManyToShow model.autoState (acceptableStations model.query model.stations)
-
-                newModel =
-                    { model | autoState = newState }
-            in
-            case maybeMsg of
-                Nothing ->
-                    ( newModel, Cmd.none )
-
-                Just updateMsg ->
-                    update updateMsg newModel
-
-        SelectStation name ->
-            let
-                selectedStation =
-                    model.stations
-                        |> List.filter (\station -> Station.stationName station == name)
-                        |> List.head
-
-                newRecent =
-                    addStation model.latest selectedStation
-            in
-            ( selectStation model newRecent selectedStation name
-            , Cmd.batch
-                [ getDepartures selectedStation
-                , newRecent |> List.map Station.stationName |> setStorage
-                ]
-            )
-
-        Reset ->
-            ( { model
-                | autoState = Menu.reset updateConfig model.autoState
-                , selectedStation = Nothing
-                , fetchStationTableFailedMessage = ""
-              }
-            , Cmd.none
-            )
-
-        Wrap toTop ->
-            case model.selectedStation of
-                Just station ->
-                    update Reset model
-
-                Nothing ->
-                    if toTop then
-                        ( { model
-                            | autoState = Menu.resetToLastItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
-                            , selectedStation =
-                                List.head <|
-                                    List.reverse <|
-                                        List.take howManyToShow <|
-                                            acceptableStations model.query model.stations
-                          }
-                        , Cmd.none
-                        )
-
-                    else
-                        ( { model
-                            | autoState = Menu.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
-                            , selectedStation =
-                                List.head <|
-                                    List.take howManyToShow <|
-                                        acceptableStations model.query model.stations
-                          }
-                        , Cmd.none
-                        )
+        SelectStation station ->
+            updateSelectStation model station
 
         FetchStationTableSucceed result ->
             case result of
@@ -186,10 +107,6 @@ update msg model =
                     )
 
                 Result.Err err ->
-                    let
-                        _ =
-                            Debug.log "Error retrieving departures" err
-                    in
                     ( { model | fetchStationTableFailedMessage = "Error retrieving departures" }, Cmd.none )
 
         FetchStationSucceed result ->
@@ -198,69 +115,61 @@ update msg model =
                     ( { model
                         | stations = stations
                         , fetchStationTableFailedMessage = ""
-                        , autoState = Menu.resetToFirstItem updateConfig (acceptableStations model.query model.stations) howManyToShow model.autoState
                       }
                     , Cmd.none
                     )
 
                 Result.Err err ->
-                    let
-                        _ =
-                            Debug.log "Error retrieving stations" err
-                    in
                     ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
 
         HandleEscape ->
-            ( { model
-                | query = ""
-                , selectedStation = Nothing
-                , departures = []
-                , stations = []
-                , autoState = Menu.empty
-              }
-            , Cmd.none
-            )
+            ( clear model, Cmd.none )
 
         Switch mode ->
             ( { model | mode = mode }, Cmd.none )
 
-        SelectStationFromRecent station ->
-            ( model, getDepartures (Just station) )
-
 
 clear : Model -> Model
-clear { latest, mode } =
+clear { recent, mode } =
     let
         initial =
-            initialModel latest
+            initialModel recent
     in
     { initial | mode = mode }
 
 
-selectStation : Model -> List Station -> Maybe Station -> String -> Model
-selectStation model newRecent selectedStation id =
+updateSelectStation : Model -> Station -> ( Model, Cmd Msg )
+updateSelectStation model selected =
+    let
+        newRecent =
+            case model.mode of
+                Search ->
+                    addStation model.recent selected
+
+                Recent ->
+                    model.recent
+    in
+    ( selectStation model newRecent selected
+    , Cmd.batch
+        [ getDepartures (Just selected)
+        , newRecent |> List.map Station.stationName |> setStorage
+        ]
+    )
+
+
+selectStation : Model -> List Station -> Station -> Model
+selectStation model newRecent selected =
     { model
-        | query =
-            model.stations
-                |> List.filter (\station -> Station.stationName station == id)
-                |> List.head
-                |> Maybe.withDefault Station.empty
-                |> Station.stationName
-        , autoState = Menu.empty
-        , selectedStation = selectedStation
-        , latest = newRecent |> List.take 5
+        | query = Station.stationName selected
+        , selectedStation = Just selected
+        , recent = newRecent |> List.take 5
     }
 
 
-addStation : List Station -> Maybe Station -> List Station
-addStation stations maybeStation =
-    case maybeStation of
-        Just station ->
-            (station :: stations)
-                |> List.Extra.uniqueBy (\s -> Station.stationName s)
-
-        Nothing ->
-            stations
+addStation : List Station -> Station -> List Station
+addStation stations station =
+    (station :: stations)
+        |> List.Extra.uniqueBy (\s -> Station.stationName s)
 
 
 searchStations : String -> Cmd Msg
@@ -298,7 +207,7 @@ matches query station =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map SetAutoState Menu.subscription
+    Sub.none
 
 
 
@@ -325,10 +234,7 @@ viewStyled model =
             -- TODO: naming?
             Json.map
                 (\code ->
-                    if code == 38 || code == 40 then
-                        Ok NoOp
-
-                    else if code == 27 then
+                    if code == 27 then
                         Ok HandleEscape
 
                     else
@@ -340,20 +246,15 @@ viewStyled model =
         , Element.padding 50
         , Element.width Element.fill
         ]
-        [ viewTitle
-        , viewErrors model.fetchStationTableFailedMessage
-        , viewButtons model.mode
-        , case model.mode of
-            Search ->
-                viewSearchBar model
+        (viewHeader model ++ viewBody model ++ [ viewDepartures model.departures ])
 
-            Recent ->
-                viewRecentlySelected model.latest
 
-            Nearby ->
-                viewRecentlySelected model.stations
-        , viewDepartures model.departures
-        ]
+viewHeader : Model -> List (Element Msg)
+viewHeader model =
+    [ viewTitle
+    , viewErrors model.fetchStationTableFailedMessage
+    , viewButtons model.mode
+    ]
 
 
 viewTitle : Element msg
@@ -364,6 +265,16 @@ viewTitle =
         , Font.size 48
         ]
         [ Element.text "Station Board" ]
+
+
+viewBody : Model -> List (Element Msg)
+viewBody model =
+    case model.mode of
+        Search ->
+            [ viewSearchBar model ]
+
+        Recent ->
+            [ viewRecentlySelected model.recent ]
 
 
 viewButtons : a -> Element Msg
@@ -396,14 +307,14 @@ viewRecentlySelected recents =
     let
         recentSearches =
             recents
-                |> List.map viewRecent
+                |> List.map (viewRecent recents)
     in
     Element.column [] recentSearches
 
 
-viewRecent : Station -> Element Msg
-viewRecent station =
-    Element.row [ Events.onClick (SelectStationFromRecent station) ] [ station |> Station.stationName |> Element.text ]
+viewRecent : List Station -> Station -> Element Msg
+viewRecent recents station =
+    Element.row [ Events.onClick (SelectStation station) ] [ station |> Station.stationName |> Element.text ]
 
 
 viewErrors : String -> Element Msg
@@ -419,60 +330,14 @@ viewErrors fetchStationTableFailedMessage =
 viewAutocomplete : Model -> Element Msg
 viewAutocomplete model =
     let
-        autocompleteView =
-            Element.html (Menu.view viewConfig howManyToShow model.autoState (acceptableStations model.query model.stations))
-
         showStationsMenu =
             not (List.isEmpty model.stations)
     in
     if showStationsMenu then
-        Element.row []
-            [ Element.map SetAutoState autocompleteView ]
+        Element.row [] []
 
     else
         Element.none
-
-
-viewConfig : Menu.ViewConfig Station
-viewConfig =
-    let
-        stationListItem keySelected mouseSelected station =
-            { attributes =
-                [ Html.Attributes.classList
-                    [ ( "AutocompleteItem", True )
-                    , ( "KeySelected", keySelected )
-                    , ( "MouseSelected", mouseSelected )
-                    ]
-                , station |> Station.stationName |> Html.Attributes.id
-                ]
-            , children = [ station |> Station.stationName |> Html.text ]
-            }
-    in
-    Menu.viewConfig
-        { toId = Station.stationName
-        , ul = [ Html.Attributes.class "AutocompleteList" ]
-        , li = stationListItem
-        }
-
-
-updateConfig : Menu.UpdateConfig Msg Station
-updateConfig =
-    Menu.updateConfig
-        { toId = Station.stationName
-        , onKeyDown =
-            \code maybeId ->
-                if code == 13 then
-                    Maybe.map SelectStation maybeId
-
-                else
-                    Nothing
-        , onTooLow = Just <| Wrap False
-        , onTooHigh = Just <| Wrap True
-        , onMouseEnter = \_ -> Nothing
-        , onMouseLeave = \_ -> Nothing
-        , onMouseClick = \id -> Just <| SelectStation id
-        , separateSelections = False
-        }
 
 
 viewDepartures : List Departure -> Element msg
