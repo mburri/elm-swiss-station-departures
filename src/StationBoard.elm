@@ -2,12 +2,12 @@ port module StationBoard exposing (Model, Msg, document, init, subscriptions, up
 
 import Browser
 import Element exposing (Element)
+import Element.Background as Background
+import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html
 import Http
 import Json.Decode as Json exposing (field)
 import List.Extra
@@ -36,24 +36,24 @@ type Mode
 type alias Model =
     { query : String
     , stations : List Station
+    , recent : List Station
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
-    , recent : List Station
     , mode : Mode
     }
 
 
 initialModel : List Station -> Model
-initialModel recent =
-    Model
-        ""
-        []
-        Nothing
-        []
-        ""
-        recent
-        Search
+initialModel recentStations =
+    { query = ""
+    , stations = []
+    , recent = recentStations
+    , selectedStation = Nothing
+    , departures = []
+    , fetchStationTableFailedMessage = ""
+    , mode = Search
+    }
 
 
 init : List String -> ( Model, Cmd Msg )
@@ -72,9 +72,8 @@ init recentStations =
 type Msg
     = SearchStation String
     | SelectStation Station
-    | FetchStationTableSucceed (Result Http.Error (List Departure))
-    | FetchStationSucceed (Result Http.Error (List Station))
-    | HandleEscape
+    | FetchedDepartures (Result Http.Error (List Departure))
+    | FetchedStations (Result Http.Error (List Station))
     | Switch Mode
     | Clear
 
@@ -91,39 +90,16 @@ update msg model =
             ( clear model, Cmd.none )
 
         SearchStation query ->
-            ( { model | query = query }, searchStations query )
+            searchStations model query
 
         SelectStation station ->
             updateSelectStation model station
 
-        FetchStationTableSucceed result ->
-            case result of
-                Result.Ok departures ->
-                    ( { model
-                        | departures = departures
-                        , fetchStationTableFailedMessage = ""
-                      }
-                    , Cmd.none
-                    )
+        FetchedDepartures result ->
+            departuresFetched model result
 
-                Result.Err err ->
-                    ( { model | fetchStationTableFailedMessage = "Error retrieving departures" }, Cmd.none )
-
-        FetchStationSucceed result ->
-            case result of
-                Result.Ok stations ->
-                    ( { model
-                        | stations = stations
-                        , fetchStationTableFailedMessage = ""
-                      }
-                    , Cmd.none
-                    )
-
-                Result.Err err ->
-                    ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
-
-        HandleEscape ->
-            ( clear model, Cmd.none )
+        FetchedStations result ->
+            stationsFetched model result
 
         Switch mode ->
             ( { model | mode = mode }, Cmd.none )
@@ -136,6 +112,11 @@ clear { recent, mode } =
             initialModel recent
     in
     { initial | mode = mode }
+
+
+searchStations : Model -> String -> ( Model, Cmd Msg )
+searchStations model query =
+    ( { model | query = query }, fetchStations query )
 
 
 updateSelectStation : Model -> Station -> ( Model, Cmd Msg )
@@ -172,33 +153,59 @@ addStation stations station =
         |> List.Extra.uniqueBy (\s -> Station.stationName s)
 
 
-searchStations : String -> Cmd Msg
-searchStations query =
-    if String.length query >= 3 then
-        query |> TransportApi.searchStation |> Http.send FetchStationSucceed
-
-    else
-        Cmd.none
-
-
 getDepartures : Maybe Station -> Cmd Msg
 getDepartures maybeStation =
     case maybeStation of
         Just station ->
-            TransportApi.getDepartures (Station.stationName station) |> Http.send FetchStationTableSucceed
+            TransportApi.getDepartures (Station.stationName station) |> Http.send FetchedDepartures
 
         Nothing ->
             Cmd.none
 
 
-acceptableStations : String -> List Station -> List Station
-acceptableStations query stations =
-    List.filter (matches query) stations
+
+-- HTTP Handling
 
 
-matches : String -> Station -> Bool
-matches query station =
-    String.contains (String.toLower query) (String.toLower (Station.stationName station))
+fetchStations : String -> Cmd Msg
+fetchStations query =
+    if String.length query >= 3 then
+        query |> TransportApi.searchStation |> Http.send FetchedStations
+
+    else
+        Cmd.none
+
+
+departuresFetched : Model -> Result Http.Error (List Departure) -> ( Model, Cmd msg )
+departuresFetched model result =
+    case result of
+        Result.Ok departures ->
+            ( { model
+                | departures = departures
+                , stations = []
+                , fetchStationTableFailedMessage = ""
+              }
+            , Cmd.none
+            )
+
+        Result.Err err ->
+            ( { model | fetchStationTableFailedMessage = "Error retrieving departures" }, Cmd.none )
+
+
+stationsFetched : Model -> Result Http.Error (List Station) -> ( Model, Cmd msg )
+stationsFetched model result =
+    case result of
+        Result.Ok stations ->
+            ( { model
+                | stations = stations
+                , departures = []
+                , fetchStationTableFailedMessage = ""
+              }
+            , Cmd.none
+            )
+
+        Result.Err err ->
+            ( { model | fetchStationTableFailedMessage = toErrorMessage err }, Cmd.none )
 
 
 
@@ -230,23 +237,25 @@ viewStyled model =
         options =
             { preventDefault = True, stopPropagation = False }
 
-        dec =
-            -- TODO: naming?
-            Json.map
-                (\code ->
-                    if code == 27 then
-                        Ok HandleEscape
-
-                    else
-                        Err "not handling that key"
-                )
+        -- dec =
+        --     -- TODO: naming?
+        --     Json.map
+        --         (\code ->
+        --             if code == 27 then
+        --                 Ok HandleEscape
+        --             else
+        --                 Err "not handling that key"
+        --         )
     in
     Element.column
         [ Element.centerX
         , Element.padding 50
         , Element.width Element.fill
         ]
-        (viewHeader model ++ viewBody model ++ [ viewDepartures model.departures ])
+        (viewHeader model
+            ++ viewBody model
+            ++ [ viewDepartures model.departures ]
+        )
 
 
 viewHeader : Model -> List (Element Msg)
@@ -277,6 +286,31 @@ viewBody model =
             [ viewRecentlySelected model.recent ]
 
 
+viewStations : Model -> Element Msg
+viewStations model =
+    case model.stations of
+        [] ->
+            Element.none
+
+        _ ->
+            model.stations
+                |> List.map viewStation
+                |> Element.column
+                    [ Element.padding 5
+                    , Element.width Element.fill
+                    , Border.color (Element.rgb 0.9 0.9 0.9)
+                    , Border.width 1
+                    , Border.rounded 5
+                    ]
+
+
+viewStation station =
+    station
+        |> Station.stationName
+        |> Element.text
+        |> Element.el [ Element.padding 5 ]
+
+
 viewButtons : a -> Element Msg
 viewButtons model =
     Element.row
@@ -284,21 +318,32 @@ viewButtons model =
         , Element.width Element.fill
         , Element.spaceEvenly
         ]
-        [ Input.button [ Element.centerX, Element.padding 50 ] { onPress = Just (Switch Search), label = Element.text "Search" }
-        , Input.button [ Element.centerX, Element.padding 50 ] { onPress = Just (Switch Recent), label = Element.text "Recent" }
+        [ Input.button
+            [ Element.centerX
+            , Element.padding 50
+            ]
+            { onPress = Just (Switch Search)
+            , label = Element.text "Search"
+            }
+        , Input.button
+            [ Element.centerX
+            , Element.padding 50
+            ]
+            { onPress = Just (Switch Recent)
+            , label = Element.text "Recent"
+            }
         ]
 
 
 viewSearchBar : Model -> Element Msg
 viewSearchBar model =
     Element.column [ Element.width Element.fill ]
-        [ Input.search []
+        [ Input.search [ Element.below (viewStations model) ]
             { onChange = SearchStation
             , text = model.query
             , placeholder = Nothing
             , label = Input.labelHidden "Search"
             }
-        , viewAutocomplete model
         ]
 
 
@@ -325,19 +370,6 @@ viewErrors fetchStationTableFailedMessage =
     else
         Element.row []
             [ Element.text fetchStationTableFailedMessage ]
-
-
-viewAutocomplete : Model -> Element Msg
-viewAutocomplete model =
-    let
-        showStationsMenu =
-            not (List.isEmpty model.stations)
-    in
-    if showStationsMenu then
-        Element.row [] []
-
-    else
-        Element.none
 
 
 viewDepartures : List Departure -> Element msg
@@ -385,3 +417,11 @@ toErrorMessage error =
 
         Http.BadPayload string stringResponseHttp ->
             "Bad Payload - unable to handle response from server"
+
+
+
+-- Colors
+
+
+grey =
+    Element.rgb 0.9 0.9 0.9
