@@ -341,7 +341,7 @@ viewStyled model =
         , Element.width Element.fill
         ]
         [ viewTitle
-        , Element.html (viewErrors model.fetchStationTableFailedMessage)
+        , viewErrors model.fetchStationTableFailedMessage
         , viewButtons model.mode
         , case model.mode of
             Search ->
@@ -371,10 +371,10 @@ viewButtons model =
     Element.row
         [ Element.centerX
         , Element.width Element.fill
-        , Element.spacing 50
+        , Element.spaceEvenly
         ]
-        [ Input.button [] { onPress = Just (Switch Search), label = Element.text "Search" }
-        , Input.button [] { onPress = Just (Switch Recent), label = Element.text "Recent" }
+        [ Input.button [ Element.centerX, Element.padding 50 ] { onPress = Just (Switch Search), label = Element.text "Search" }
+        , Input.button [ Element.centerX, Element.padding 50 ] { onPress = Just (Switch Recent), label = Element.text "Recent" }
         ]
 
 
@@ -387,7 +387,7 @@ viewSearchBar model =
             , placeholder = Nothing
             , label = Input.labelHidden "Search"
             }
-        , Element.html (viewAutocomplete model)
+        , viewAutocomplete model
         ]
 
 
@@ -406,31 +406,31 @@ viewRecent station =
     Element.row [ Events.onClick (SelectStationFromRecent station) ] [ station |> Station.stationName |> Element.text ]
 
 
-viewErrors : String -> Html Msg
+viewErrors : String -> Element Msg
 viewErrors fetchStationTableFailedMessage =
     if String.isEmpty fetchStationTableFailedMessage then
-        div [] []
+        Element.none
 
     else
-        div []
-            [ text fetchStationTableFailedMessage ]
+        Element.row []
+            [ Element.text fetchStationTableFailedMessage ]
 
 
-viewAutocomplete : Model -> Html Msg
+viewAutocomplete : Model -> Element Msg
 viewAutocomplete model =
     let
         autocompleteView =
-            Menu.view viewConfig howManyToShow model.autoState (acceptableStations model.query model.stations)
+            Element.html (Menu.view viewConfig howManyToShow model.autoState (acceptableStations model.query model.stations))
 
         showStationsMenu =
             not (List.isEmpty model.stations)
     in
     if showStationsMenu then
-        div [ class "AutocompleteMenu" ]
-            [ Html.map SetAutoState autocompleteView ]
+        Element.row []
+            [ Element.map SetAutoState autocompleteView ]
 
     else
-        div [] []
+        Element.none
 
 
 viewConfig : Menu.ViewConfig Station
