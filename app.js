@@ -3897,6 +3897,188 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 
 
 
+// SEND REQUEST
+
+var _Http_toTask = F2(function(request, maybeProgress)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var xhr = new XMLHttpRequest();
+
+		_Http_configureProgress(xhr, maybeProgress);
+
+		xhr.addEventListener('error', function() {
+			callback(_Scheduler_fail(elm$http$Http$NetworkError));
+		});
+		xhr.addEventListener('timeout', function() {
+			callback(_Scheduler_fail(elm$http$Http$Timeout));
+		});
+		xhr.addEventListener('load', function() {
+			callback(_Http_handleResponse(xhr, request.expect.a));
+		});
+
+		try
+		{
+			xhr.open(request.method, request.url, true);
+		}
+		catch (e)
+		{
+			return callback(_Scheduler_fail(elm$http$Http$BadUrl(request.url)));
+		}
+
+		_Http_configureRequest(xhr, request);
+
+		var body = request.body;
+		xhr.send(elm$http$Http$Internal$isStringBody(body)
+			? (xhr.setRequestHeader('Content-Type', body.a), body.b)
+			: body.a
+		);
+
+		return function() { xhr.abort(); };
+	});
+});
+
+function _Http_configureProgress(xhr, maybeProgress)
+{
+	if (!elm$core$Maybe$isJust(maybeProgress))
+	{
+		return;
+	}
+
+	xhr.addEventListener('progress', function(event) {
+		if (!event.lengthComputable)
+		{
+			return;
+		}
+		_Scheduler_rawSpawn(maybeProgress.a({
+			bytes: event.loaded,
+			bytesExpected: event.total
+		}));
+	});
+}
+
+function _Http_configureRequest(xhr, request)
+{
+	for (var headers = request.headers; headers.b; headers = headers.b) // WHILE_CONS
+	{
+		xhr.setRequestHeader(headers.a.a, headers.a.b);
+	}
+
+	xhr.responseType = request.expect.b;
+	xhr.withCredentials = request.withCredentials;
+
+	elm$core$Maybe$isJust(request.timeout) && (xhr.timeout = request.timeout.a);
+}
+
+
+// RESPONSES
+
+function _Http_handleResponse(xhr, responseToResult)
+{
+	var response = _Http_toResponse(xhr);
+
+	if (xhr.status < 200 || 300 <= xhr.status)
+	{
+		response.body = xhr.responseText;
+		return _Scheduler_fail(elm$http$Http$BadStatus(response));
+	}
+
+	var result = responseToResult(response);
+
+	if (elm$core$Result$isOk(result))
+	{
+		return _Scheduler_succeed(result.a);
+	}
+	else
+	{
+		response.body = xhr.responseText;
+		return _Scheduler_fail(A2(elm$http$Http$BadPayload, result.a, response));
+	}
+}
+
+function _Http_toResponse(xhr)
+{
+	return {
+		url: xhr.responseURL,
+		status: { code: xhr.status, message: xhr.statusText },
+		headers: _Http_parseHeaders(xhr.getAllResponseHeaders()),
+		body: xhr.response
+	};
+}
+
+function _Http_parseHeaders(rawHeaders)
+{
+	var headers = elm$core$Dict$empty;
+
+	if (!rawHeaders)
+	{
+		return headers;
+	}
+
+	var headerPairs = rawHeaders.split('\u000d\u000a');
+	for (var i = headerPairs.length; i--; )
+	{
+		var headerPair = headerPairs[i];
+		var index = headerPair.indexOf('\u003a\u0020');
+		if (index > 0)
+		{
+			var key = headerPair.substring(0, index);
+			var value = headerPair.substring(index + 2);
+
+			headers = A3(elm$core$Dict$update, key, function(oldValue) {
+				return elm$core$Maybe$Just(elm$core$Maybe$isJust(oldValue)
+					? value + ', ' + oldValue.a
+					: value
+				);
+			}, headers);
+		}
+	}
+
+	return headers;
+}
+
+
+// EXPECTORS
+
+function _Http_expectStringResponse(responseToResult)
+{
+	return {
+		$: 0,
+		b: 'text',
+		a: responseToResult
+	};
+}
+
+var _Http_mapExpect = F2(function(func, expect)
+{
+	return {
+		$: 0,
+		b: expect.b,
+		a: function(response) {
+			var convertedResponse = expect.a(response);
+			return A2(elm$core$Result$map, func, convertedResponse);
+		}
+	};
+});
+
+
+// BODY
+
+function _Http_multipart(parts)
+{
+
+
+	for (var formData = new FormData(); parts.b; parts = parts.b) // WHILE_CONS
+	{
+		var part = parts.a;
+		formData.append(part.a, part.b);
+	}
+
+	return elm$http$Http$Internal$FormDataBody(formData);
+}
+
+
+
 
 // ELEMENT
 
@@ -4335,198 +4517,17 @@ function _Browser_load(url)
 		}
 	}));
 }
-
-
-
-// SEND REQUEST
-
-var _Http_toTask = F2(function(request, maybeProgress)
-{
-	return _Scheduler_binding(function(callback)
-	{
-		var xhr = new XMLHttpRequest();
-
-		_Http_configureProgress(xhr, maybeProgress);
-
-		xhr.addEventListener('error', function() {
-			callback(_Scheduler_fail(elm$http$Http$NetworkError));
-		});
-		xhr.addEventListener('timeout', function() {
-			callback(_Scheduler_fail(elm$http$Http$Timeout));
-		});
-		xhr.addEventListener('load', function() {
-			callback(_Http_handleResponse(xhr, request.expect.a));
-		});
-
-		try
-		{
-			xhr.open(request.method, request.url, true);
-		}
-		catch (e)
-		{
-			return callback(_Scheduler_fail(elm$http$Http$BadUrl(request.url)));
-		}
-
-		_Http_configureRequest(xhr, request);
-
-		var body = request.body;
-		xhr.send(elm$http$Http$Internal$isStringBody(body)
-			? (xhr.setRequestHeader('Content-Type', body.a), body.b)
-			: body.a
-		);
-
-		return function() { xhr.abort(); };
-	});
-});
-
-function _Http_configureProgress(xhr, maybeProgress)
-{
-	if (!elm$core$Maybe$isJust(maybeProgress))
-	{
-		return;
-	}
-
-	xhr.addEventListener('progress', function(event) {
-		if (!event.lengthComputable)
-		{
-			return;
-		}
-		_Scheduler_rawSpawn(maybeProgress.a({
-			bytes: event.loaded,
-			bytesExpected: event.total
-		}));
-	});
-}
-
-function _Http_configureRequest(xhr, request)
-{
-	for (var headers = request.headers; headers.b; headers = headers.b) // WHILE_CONS
-	{
-		xhr.setRequestHeader(headers.a.a, headers.a.b);
-	}
-
-	xhr.responseType = request.expect.b;
-	xhr.withCredentials = request.withCredentials;
-
-	elm$core$Maybe$isJust(request.timeout) && (xhr.timeout = request.timeout.a);
-}
-
-
-// RESPONSES
-
-function _Http_handleResponse(xhr, responseToResult)
-{
-	var response = _Http_toResponse(xhr);
-
-	if (xhr.status < 200 || 300 <= xhr.status)
-	{
-		response.body = xhr.responseText;
-		return _Scheduler_fail(elm$http$Http$BadStatus(response));
-	}
-
-	var result = responseToResult(response);
-
-	if (elm$core$Result$isOk(result))
-	{
-		return _Scheduler_succeed(result.a);
-	}
-	else
-	{
-		response.body = xhr.responseText;
-		return _Scheduler_fail(A2(elm$http$Http$BadPayload, result.a, response));
-	}
-}
-
-function _Http_toResponse(xhr)
-{
-	return {
-		url: xhr.responseURL,
-		status: { code: xhr.status, message: xhr.statusText },
-		headers: _Http_parseHeaders(xhr.getAllResponseHeaders()),
-		body: xhr.response
-	};
-}
-
-function _Http_parseHeaders(rawHeaders)
-{
-	var headers = elm$core$Dict$empty;
-
-	if (!rawHeaders)
-	{
-		return headers;
-	}
-
-	var headerPairs = rawHeaders.split('\u000d\u000a');
-	for (var i = headerPairs.length; i--; )
-	{
-		var headerPair = headerPairs[i];
-		var index = headerPair.indexOf('\u003a\u0020');
-		if (index > 0)
-		{
-			var key = headerPair.substring(0, index);
-			var value = headerPair.substring(index + 2);
-
-			headers = A3(elm$core$Dict$update, key, function(oldValue) {
-				return elm$core$Maybe$Just(elm$core$Maybe$isJust(oldValue)
-					? value + ', ' + oldValue.a
-					: value
-				);
-			}, headers);
-		}
-	}
-
-	return headers;
-}
-
-
-// EXPECTORS
-
-function _Http_expectStringResponse(responseToResult)
-{
-	return {
-		$: 0,
-		b: 'text',
-		a: responseToResult
-	};
-}
-
-var _Http_mapExpect = F2(function(func, expect)
-{
-	return {
-		$: 0,
-		b: expect.b,
-		a: function(response) {
-			var convertedResponse = expect.a(response);
-			return A2(elm$core$Result$map, func, convertedResponse);
-		}
-	};
-});
-
-
-// BODY
-
-function _Http_multipart(parts)
-{
-
-
-	for (var formData = new FormData(); parts.b; parts = parts.b) // WHILE_CONS
-	{
-		var part = parts.a;
-		formData.append(part.a, part.b);
-	}
-
-	return elm$http$Http$Internal$FormDataBody(formData);
-}
-var author$project$StationBoard$HandleEscape = {$: 'HandleEscape'};
-var author$project$StationBoard$NoOp = {$: 'NoOp'};
-var author$project$StationBoard$Recent = {$: 'Recent'};
-var author$project$StationBoard$Search = {$: 'Search'};
-var author$project$StationBoard$Switch = function (a) {
-	return {$: 'Switch', a: a};
+var author$project$OpenTransport$Station$stationName = function (_n0) {
+	var name = _n0.a.name;
+	return name;
 };
-var elm$core$Maybe$Just = function (a) {
-	return {$: 'Just', a: a};
+var author$project$StationBoard$SelectStation = function (a) {
+	return {$: 'SelectStation', a: a};
 };
+var elm$core$Basics$apR = F2(
+	function (x, f) {
+		return f(x);
+	});
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -4607,15 +4608,6 @@ var elm$core$Set$toList = function (_n0) {
 	var dict = _n0.a;
 	return elm$core$Dict$keys(dict);
 };
-var mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
-	return {$: 'AlignX', a: a};
-};
-var mdgriffith$elm_ui$Internal$Model$CenterX = {$: 'CenterX'};
-var mdgriffith$elm_ui$Element$centerX = mdgriffith$elm_ui$Internal$Model$AlignX(mdgriffith$elm_ui$Internal$Model$CenterX);
-var mdgriffith$elm_ui$Internal$Model$Fill = function (a) {
-	return {$: 'Fill', a: a};
-};
-var mdgriffith$elm_ui$Element$fill = mdgriffith$elm_ui$Internal$Model$Fill(1);
 var elm$core$Basics$append = _Utils_append;
 var mdgriffith$elm_ui$Internal$Model$Height = function (a) {
 	return {$: 'Height', a: a};
@@ -4634,10 +4626,6 @@ var mdgriffith$elm_ui$Internal$Model$AsRow = {$: 'AsRow'};
 var mdgriffith$elm_ui$Internal$Model$asRow = mdgriffith$elm_ui$Internal$Model$AsRow;
 var mdgriffith$elm_ui$Internal$Model$Generic = {$: 'Generic'};
 var mdgriffith$elm_ui$Internal$Model$div = mdgriffith$elm_ui$Internal$Model$Generic;
-var elm$core$Basics$apR = F2(
-	function (x, f) {
-		return f(x);
-	});
 var elm$core$List$foldl = F3(
 	function (func, acc, list) {
 		foldl:
@@ -4850,6 +4838,9 @@ var mdgriffith$elm_ui$Internal$Model$AsParagraph = {$: 'AsParagraph'};
 var mdgriffith$elm_ui$Internal$Model$asParagraph = mdgriffith$elm_ui$Internal$Model$AsParagraph;
 var elm$core$Basics$and = _Basics_and;
 var elm$core$Basics$not = _Basics_not;
+var elm$core$Maybe$Just = function (a) {
+	return {$: 'Just', a: a};
+};
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$String$join = F2(
 	function (sep, chunks) {
@@ -10453,56 +10444,12 @@ var mdgriffith$elm_ui$Element$row = F2(
 						attrs))),
 			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
 	});
-var mdgriffith$elm_ui$Internal$Flag$spacing = mdgriffith$elm_ui$Internal$Flag$flag(3);
-var mdgriffith$elm_ui$Internal$Model$SpacingStyle = F3(
-	function (a, b, c) {
-		return {$: 'SpacingStyle', a: a, b: b, c: c};
-	});
-var mdgriffith$elm_ui$Internal$Model$StyleClass = F2(
-	function (a, b) {
-		return {$: 'StyleClass', a: a, b: b};
-	});
-var mdgriffith$elm_ui$Internal$Model$spacingName = F2(
-	function (x, y) {
-		return 'spacing-' + (elm$core$String$fromInt(x) + ('-' + elm$core$String$fromInt(y)));
-	});
-var mdgriffith$elm_ui$Element$spacing = function (x) {
-	return A2(
-		mdgriffith$elm_ui$Internal$Model$StyleClass,
-		mdgriffith$elm_ui$Internal$Flag$spacing,
-		A3(
-			mdgriffith$elm_ui$Internal$Model$SpacingStyle,
-			A2(mdgriffith$elm_ui$Internal$Model$spacingName, x, x),
-			x,
-			x));
-};
 var mdgriffith$elm_ui$Internal$Model$Text = function (a) {
 	return {$: 'Text', a: a};
 };
 var mdgriffith$elm_ui$Element$text = function (content) {
 	return mdgriffith$elm_ui$Internal$Model$Text(content);
 };
-var elm$json$Json$Encode$bool = _Json_wrap;
-var elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$bool(bool));
-	});
-var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
-var elm$html$Html$Attributes$tabindex = function (n) {
-	return A2(
-		_VirtualDom_attribute,
-		'tabIndex',
-		elm$core$String$fromInt(n));
-};
-var mdgriffith$elm_ui$Internal$Flag$cursor = mdgriffith$elm_ui$Internal$Flag$flag(21);
-var mdgriffith$elm_ui$Internal$Model$Class = F2(
-	function (a, b) {
-		return {$: 'Class', a: a, b: b};
-	});
-var mdgriffith$elm_ui$Element$pointer = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$cursor, mdgriffith$elm_ui$Internal$Style$classes.cursorPointer);
 var elm$core$Basics$composeL = F3(
 	function (g, f, x) {
 		return g(
@@ -10526,452 +10473,21 @@ var elm$html$Html$Events$onClick = function (msg) {
 		elm$json$Json$Decode$succeed(msg));
 };
 var mdgriffith$elm_ui$Element$Events$onClick = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Attr, elm$html$Html$Events$onClick);
-var mdgriffith$elm_ui$Element$Input$hasFocusStyle = function (attr) {
-	if (((attr.$ === 'StyleClass') && (attr.b.$ === 'PseudoSelector')) && (attr.b.a.$ === 'Focus')) {
-		var _n1 = attr.b;
-		var _n2 = _n1.a;
-		return true;
-	} else {
-		return false;
-	}
-};
-var mdgriffith$elm_ui$Internal$Model$NoAttribute = {$: 'NoAttribute'};
-var mdgriffith$elm_ui$Element$Input$focusDefault = function (attrs) {
-	return A2(elm$core$List$any, mdgriffith$elm_ui$Element$Input$hasFocusStyle, attrs) ? mdgriffith$elm_ui$Internal$Model$NoAttribute : mdgriffith$elm_ui$Internal$Model$htmlClass('focusable');
-};
-var mdgriffith$elm_ui$Element$Input$enter = 'Enter';
-var elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
-	return {$: 'MayPreventDefault', a: a};
-};
-var elm$html$Html$Events$preventDefaultOn = F2(
-	function (event, decoder) {
+var author$project$StationBoard$viewRecent = F2(
+	function (recents, station) {
 		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
-	});
-var elm$json$Json$Decode$andThen = _Json_andThen;
-var elm$json$Json$Decode$fail = _Json_fail;
-var elm$json$Json$Decode$field = _Json_decodeField;
-var elm$json$Json$Decode$string = _Json_decodeString;
-var mdgriffith$elm_ui$Element$Input$onKey = F2(
-	function (desiredCode, msg) {
-		var decode = function (code) {
-			return _Utils_eq(code, desiredCode) ? elm$json$Json$Decode$succeed(msg) : elm$json$Json$Decode$fail('Not the enter key');
-		};
-		var isKey = A2(
-			elm$json$Json$Decode$andThen,
-			decode,
-			A2(elm$json$Json$Decode$field, 'key', elm$json$Json$Decode$string));
-		return mdgriffith$elm_ui$Internal$Model$Attr(
-			A2(
-				elm$html$Html$Events$preventDefaultOn,
-				'keyup',
-				A2(
-					elm$json$Json$Decode$map,
-					function (fired) {
-						return _Utils_Tuple2(fired, true);
-					},
-					isKey)));
-	});
-var mdgriffith$elm_ui$Element$Input$onEnter = function (msg) {
-	return A2(mdgriffith$elm_ui$Element$Input$onKey, mdgriffith$elm_ui$Element$Input$enter, msg);
-};
-var mdgriffith$elm_ui$Internal$Model$Button = {$: 'Button'};
-var mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
-	return {$: 'Describe', a: a};
-};
-var mdgriffith$elm_ui$Element$Input$button = F2(
-	function (attrs, _n0) {
-		var onPress = _n0.onPress;
-		var label = _n0.label;
-		return A4(
-			mdgriffith$elm_ui$Internal$Model$element,
-			mdgriffith$elm_ui$Internal$Model$asEl,
-			mdgriffith$elm_ui$Internal$Model$div,
-			A2(
-				elm$core$List$cons,
-				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
-				A2(
-					elm$core$List$cons,
-					mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
-					A2(
-						elm$core$List$cons,
-						mdgriffith$elm_ui$Internal$Model$htmlClass(mdgriffith$elm_ui$Internal$Style$classes.contentCenterX + (' ' + (mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + (mdgriffith$elm_ui$Internal$Style$classes.seButton + (' ' + mdgriffith$elm_ui$Internal$Style$classes.noTextSelection)))))),
-						A2(
-							elm$core$List$cons,
-							mdgriffith$elm_ui$Element$pointer,
-							A2(
-								elm$core$List$cons,
-								mdgriffith$elm_ui$Element$Input$focusDefault(attrs),
-								A2(
-									elm$core$List$cons,
-									mdgriffith$elm_ui$Internal$Model$Describe(mdgriffith$elm_ui$Internal$Model$Button),
-									A2(
-										elm$core$List$cons,
-										mdgriffith$elm_ui$Internal$Model$Attr(
-											elm$html$Html$Attributes$tabindex(0)),
-										function () {
-											if (onPress.$ === 'Nothing') {
-												return A2(
-													elm$core$List$cons,
-													mdgriffith$elm_ui$Internal$Model$Attr(
-														elm$html$Html$Attributes$disabled(true)),
-													attrs);
-											} else {
-												var msg = onPress.a;
-												return A2(
-													elm$core$List$cons,
-													mdgriffith$elm_ui$Element$Events$onClick(msg),
-													A2(
-														elm$core$List$cons,
-														mdgriffith$elm_ui$Element$Input$onEnter(msg),
-														attrs));
-											}
-										}()))))))),
-			mdgriffith$elm_ui$Internal$Model$Unkeyed(
-				_List_fromArray(
-					[label])));
-	});
-var author$project$StationBoard$viewButtons = function (model) {
-	return A2(
-		mdgriffith$elm_ui$Element$row,
-		_List_fromArray(
-			[
-				mdgriffith$elm_ui$Element$centerX,
-				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
-				mdgriffith$elm_ui$Element$spacing(50)
-			]),
-		_List_fromArray(
-			[
-				A2(
-				mdgriffith$elm_ui$Element$Input$button,
-				_List_Nil,
-				{
-					label: mdgriffith$elm_ui$Element$text('Search'),
-					onPress: elm$core$Maybe$Just(
-						author$project$StationBoard$Switch(author$project$StationBoard$Search))
-				}),
-				A2(
-				mdgriffith$elm_ui$Element$Input$button,
-				_List_Nil,
-				{
-					label: mdgriffith$elm_ui$Element$text('Recent'),
-					onPress: elm$core$Maybe$Just(
-						author$project$StationBoard$Switch(author$project$StationBoard$Recent))
-				})
-			]));
-};
-var author$project$OpenTransport$Departure$departureName = function (_n0) {
-	var name = _n0.a.name;
-	return name;
-};
-var author$project$OpenTransport$Departure$destination = function (_n0) {
-	var to = _n0.a.to;
-	return to;
-};
-var author$project$OpenTransport$Departure$time = function (_n0) {
-	var departure = _n0.a.departure;
-	return departure;
-};
-var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
-var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
-var mdgriffith$elm_ui$Element$InternalColumn = function (a) {
-	return {$: 'InternalColumn', a: a};
-};
-var elm$core$List$all = F2(
-	function (isOkay, list) {
-		return !A2(
-			elm$core$List$any,
-			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
-			list);
-	});
-var elm$core$List$repeatHelp = F3(
-	function (result, n, value) {
-		repeatHelp:
-		while (true) {
-			if (n <= 0) {
-				return result;
-			} else {
-				var $temp$result = A2(elm$core$List$cons, value, result),
-					$temp$n = n - 1,
-					$temp$value = value;
-				result = $temp$result;
-				n = $temp$n;
-				value = $temp$value;
-				continue repeatHelp;
-			}
-		}
-	});
-var elm$core$List$repeat = F2(
-	function (n, value) {
-		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
-	});
-var mdgriffith$elm_ui$Internal$Model$Px = function (a) {
-	return {$: 'Px', a: a};
-};
-var mdgriffith$elm_ui$Element$px = mdgriffith$elm_ui$Internal$Model$Px;
-var mdgriffith$elm_ui$Internal$Flag$gridPosition = mdgriffith$elm_ui$Internal$Flag$flag(35);
-var mdgriffith$elm_ui$Internal$Flag$gridTemplate = mdgriffith$elm_ui$Internal$Flag$flag(34);
-var mdgriffith$elm_ui$Internal$Model$GridPosition = function (a) {
-	return {$: 'GridPosition', a: a};
-};
-var mdgriffith$elm_ui$Internal$Model$GridTemplateStyle = function (a) {
-	return {$: 'GridTemplateStyle', a: a};
-};
-var mdgriffith$elm_ui$Internal$Model$AsGrid = {$: 'AsGrid'};
-var mdgriffith$elm_ui$Internal$Model$asGrid = mdgriffith$elm_ui$Internal$Model$AsGrid;
-var mdgriffith$elm_ui$Internal$Model$getSpacing = F2(
-	function (attrs, _default) {
-		return A2(
-			elm$core$Maybe$withDefault,
-			_default,
-			A3(
-				elm$core$List$foldr,
-				F2(
-					function (attr, acc) {
-						if (acc.$ === 'Just') {
-							var x = acc.a;
-							return elm$core$Maybe$Just(x);
-						} else {
-							if ((attr.$ === 'StyleClass') && (attr.b.$ === 'SpacingStyle')) {
-								var _n2 = attr.b;
-								var x = _n2.b;
-								var y = _n2.c;
-								return elm$core$Maybe$Just(
-									_Utils_Tuple2(x, y));
-							} else {
-								return elm$core$Maybe$Nothing;
-							}
-						}
-					}),
-				elm$core$Maybe$Nothing,
-				attrs));
-	});
-var mdgriffith$elm_ui$Element$tableHelper = F2(
-	function (attrs, config) {
-		var onGrid = F3(
-			function (rowLevel, columnLevel, elem) {
-				return A4(
-					mdgriffith$elm_ui$Internal$Model$element,
-					mdgriffith$elm_ui$Internal$Model$asEl,
-					mdgriffith$elm_ui$Internal$Model$div,
-					_List_fromArray(
-						[
-							A2(
-							mdgriffith$elm_ui$Internal$Model$StyleClass,
-							mdgriffith$elm_ui$Internal$Flag$gridPosition,
-							mdgriffith$elm_ui$Internal$Model$GridPosition(
-								{col: columnLevel, height: 1, row: rowLevel, width: 1}))
-						]),
-					mdgriffith$elm_ui$Internal$Model$Unkeyed(
-						_List_fromArray(
-							[elem])));
-			});
-		var columnWidth = function (col) {
-			if (col.$ === 'InternalIndexedColumn') {
-				var colConfig = col.a;
-				return colConfig.width;
-			} else {
-				var colConfig = col.a;
-				return colConfig.width;
-			}
-		};
-		var columnHeader = function (col) {
-			if (col.$ === 'InternalIndexedColumn') {
-				var colConfig = col.a;
-				return colConfig.header;
-			} else {
-				var colConfig = col.a;
-				return colConfig.header;
-			}
-		};
-		var maybeHeaders = function (headers) {
-			return A2(
-				elm$core$List$all,
-				elm$core$Basics$eq(mdgriffith$elm_ui$Internal$Model$Empty),
-				headers) ? elm$core$Maybe$Nothing : elm$core$Maybe$Just(
-				A2(
-					elm$core$List$indexedMap,
-					F2(
-						function (col, header) {
-							return A3(onGrid, 1, col + 1, header);
-						}),
-					headers));
-		}(
-			A2(elm$core$List$map, columnHeader, config.columns));
-		var add = F3(
-			function (cell, columnConfig, cursor) {
-				if (columnConfig.$ === 'InternalIndexedColumn') {
-					var col = columnConfig.a;
-					return _Utils_update(
-						cursor,
-						{
-							column: cursor.column + 1,
-							elements: A2(
-								elm$core$List$cons,
-								A3(
-									onGrid,
-									cursor.row,
-									cursor.column,
-									A2(
-										col.view,
-										_Utils_eq(maybeHeaders, elm$core$Maybe$Nothing) ? (cursor.row - 1) : (cursor.row - 2),
-										cell)),
-								cursor.elements)
-						});
-				} else {
-					var col = columnConfig.a;
-					return {
-						column: cursor.column + 1,
-						elements: A2(
-							elm$core$List$cons,
-							A3(
-								onGrid,
-								cursor.row,
-								cursor.column,
-								col.view(cell)),
-							cursor.elements),
-						row: cursor.row
-					};
-				}
-			});
-		var build = F3(
-			function (columns, rowData, cursor) {
-				var newCursor = A3(
-					elm$core$List$foldl,
-					add(rowData),
-					cursor,
-					columns);
-				return {column: 1, elements: newCursor.elements, row: cursor.row + 1};
-			});
-		var children = A3(
-			elm$core$List$foldl,
-			build(config.columns),
-			{
-				column: 1,
-				elements: _List_Nil,
-				row: _Utils_eq(maybeHeaders, elm$core$Maybe$Nothing) ? 1 : 2
-			},
-			config.data);
-		var _n0 = A2(
-			mdgriffith$elm_ui$Internal$Model$getSpacing,
-			attrs,
-			_Utils_Tuple2(0, 0));
-		var sX = _n0.a;
-		var sY = _n0.b;
-		var template = A2(
-			mdgriffith$elm_ui$Internal$Model$StyleClass,
-			mdgriffith$elm_ui$Internal$Flag$gridTemplate,
-			mdgriffith$elm_ui$Internal$Model$GridTemplateStyle(
-				{
-					columns: A2(elm$core$List$map, columnWidth, config.columns),
-					rows: A2(
-						elm$core$List$repeat,
-						elm$core$List$length(config.data),
-						mdgriffith$elm_ui$Internal$Model$Content),
-					spacing: _Utils_Tuple2(
-						mdgriffith$elm_ui$Element$px(sX),
-						mdgriffith$elm_ui$Element$px(sY))
-				}));
-		return A4(
-			mdgriffith$elm_ui$Internal$Model$element,
-			mdgriffith$elm_ui$Internal$Model$asGrid,
-			mdgriffith$elm_ui$Internal$Model$div,
-			A2(
-				elm$core$List$cons,
-				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
-				A2(elm$core$List$cons, template, attrs)),
-			mdgriffith$elm_ui$Internal$Model$Unkeyed(
-				function () {
-					if (maybeHeaders.$ === 'Nothing') {
-						return children.elements;
-					} else {
-						var renderedHeaders = maybeHeaders.a;
-						return _Utils_ap(
-							renderedHeaders,
-							elm$core$List$reverse(children.elements));
-					}
-				}()));
-	});
-var mdgriffith$elm_ui$Element$table = F2(
-	function (attrs, config) {
-		return A2(
-			mdgriffith$elm_ui$Element$tableHelper,
-			attrs,
-			{
-				columns: A2(elm$core$List$map, mdgriffith$elm_ui$Element$InternalColumn, config.columns),
-				data: config.data
-			});
-	});
-var author$project$StationBoard$viewDepartures = function (departures) {
-	return elm$core$List$isEmpty(departures) ? mdgriffith$elm_ui$Element$none : A2(
-		mdgriffith$elm_ui$Element$table,
-		_List_Nil,
-		{
-			columns: _List_fromArray(
+			mdgriffith$elm_ui$Element$row,
+			_List_fromArray(
 				[
-					{
-					header: mdgriffith$elm_ui$Element$text('Zeit'),
-					view: function (departure) {
-						return mdgriffith$elm_ui$Element$text(
-							author$project$OpenTransport$Departure$time(departure));
-					},
-					width: mdgriffith$elm_ui$Element$fill
-				},
-					{
-					header: mdgriffith$elm_ui$Element$none,
-					view: function (departure) {
-						return mdgriffith$elm_ui$Element$text(
-							author$project$OpenTransport$Departure$departureName(departure));
-					},
-					width: mdgriffith$elm_ui$Element$fill
-				},
-					{
-					header: mdgriffith$elm_ui$Element$text('Nach'),
-					view: function (departure) {
-						return mdgriffith$elm_ui$Element$text(
-							author$project$OpenTransport$Departure$destination(departure));
-					},
-					width: mdgriffith$elm_ui$Element$fill
-				}
+					mdgriffith$elm_ui$Element$Events$onClick(
+					author$project$StationBoard$SelectStation(station))
 				]),
-			data: departures
-		});
-};
-var elm$core$String$isEmpty = function (string) {
-	return string === '';
-};
-var author$project$StationBoard$viewErrors = function (fetchStationTableFailedMessage) {
-	return elm$core$String$isEmpty(fetchStationTableFailedMessage) ? A2(elm$html$Html$div, _List_Nil, _List_Nil) : A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
-				elm$html$Html$text(fetchStationTableFailedMessage)
-			]));
-};
-var author$project$OpenTransport$Station$stationName = function (_n0) {
-	var name = _n0.a.name;
-	return name;
-};
-var author$project$StationBoard$SelectStationFromRecent = function (a) {
-	return {$: 'SelectStationFromRecent', a: a};
-};
-var author$project$StationBoard$viewRecent = function (station) {
-	return A2(
-		mdgriffith$elm_ui$Element$row,
-		_List_fromArray(
-			[
-				mdgriffith$elm_ui$Element$Events$onClick(
-				author$project$StationBoard$SelectStationFromRecent(station))
-			]),
-		_List_fromArray(
-			[
-				mdgriffith$elm_ui$Element$text(
-				author$project$OpenTransport$Station$stationName(station))
-			]));
-};
+			_List_fromArray(
+				[
+					mdgriffith$elm_ui$Element$text(
+					author$project$OpenTransport$Station$stationName(station))
+				]));
+	});
 var mdgriffith$elm_ui$Internal$Model$AsColumn = {$: 'AsColumn'};
 var mdgriffith$elm_ui$Internal$Model$asColumn = mdgriffith$elm_ui$Internal$Model$AsColumn;
 var mdgriffith$elm_ui$Element$column = F2(
@@ -10993,354 +10509,153 @@ var mdgriffith$elm_ui$Element$column = F2(
 			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
 	});
 var author$project$StationBoard$viewRecentlySelected = function (recents) {
-	var recentSearches = A2(elm$core$List$map, author$project$StationBoard$viewRecent, recents);
+	var recentSearches = A2(
+		elm$core$List$map,
+		author$project$StationBoard$viewRecent(recents),
+		recents);
 	return A2(mdgriffith$elm_ui$Element$column, _List_Nil, recentSearches);
 };
 var author$project$StationBoard$SearchStation = function (a) {
 	return {$: 'SearchStation', a: a};
 };
-var ContaSystemer$elm_menu$Menu$Msg = function (a) {
-	return {$: 'Msg', a: a};
-};
-var ContaSystemer$elm_menu$Menu$Internal$NoOp = {$: 'NoOp'};
-var elm$virtual_dom$VirtualDom$mapAttribute = _VirtualDom_mapAttribute;
-var elm$html$Html$Attributes$map = elm$virtual_dom$VirtualDom$mapAttribute;
-var ContaSystemer$elm_menu$Menu$Internal$mapNeverToMsg = function (msg) {
+var mdgriffith$elm_ui$Element$el = F2(
+	function (attrs, child) {
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asEl,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
+				A2(
+					elm$core$List$cons,
+					mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
+					attrs)),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[child])));
+	});
+var mdgriffith$elm_ui$Internal$Flag$padding = mdgriffith$elm_ui$Internal$Flag$flag(2);
+var mdgriffith$elm_ui$Internal$Model$PaddingStyle = F5(
+	function (a, b, c, d, e) {
+		return {$: 'PaddingStyle', a: a, b: b, c: c, d: d, e: e};
+	});
+var mdgriffith$elm_ui$Internal$Model$StyleClass = F2(
+	function (a, b) {
+		return {$: 'StyleClass', a: a, b: b};
+	});
+var mdgriffith$elm_ui$Element$padding = function (x) {
 	return A2(
-		elm$html$Html$Attributes$map,
-		function (_n0) {
-			return ContaSystemer$elm_menu$Menu$Internal$NoOp;
-		},
-		msg);
+		mdgriffith$elm_ui$Internal$Model$StyleClass,
+		mdgriffith$elm_ui$Internal$Flag$padding,
+		A5(
+			mdgriffith$elm_ui$Internal$Model$PaddingStyle,
+			'p-' + elm$core$String$fromInt(x),
+			x,
+			x,
+			x,
+			x));
 };
-var ContaSystemer$elm_menu$Menu$Internal$MouseClick = function (a) {
-	return {$: 'MouseClick', a: a};
-};
-var ContaSystemer$elm_menu$Menu$Internal$MouseEnter = function (a) {
-	return {$: 'MouseEnter', a: a};
-};
-var ContaSystemer$elm_menu$Menu$Internal$MouseLeave = function (a) {
-	return {$: 'MouseLeave', a: a};
-};
-var elm$html$Html$li = _VirtualDom_node('li');
-var elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
-var elm$html$Html$map = elm$virtual_dom$VirtualDom$map;
-var elm$html$Html$Events$onMouseEnter = function (msg) {
+var author$project$StationBoard$viewStation = function (station) {
 	return A2(
-		elm$html$Html$Events$on,
-		'mouseenter',
-		elm$json$Json$Decode$succeed(msg));
+		mdgriffith$elm_ui$Element$el,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$padding(5)
+			]),
+		mdgriffith$elm_ui$Element$text(
+			author$project$OpenTransport$Station$stationName(station)));
 };
-var elm$html$Html$Events$onMouseLeave = function (msg) {
+var mdgriffith$elm_ui$Internal$Model$Fill = function (a) {
+	return {$: 'Fill', a: a};
+};
+var mdgriffith$elm_ui$Element$fill = mdgriffith$elm_ui$Internal$Model$Fill(1);
+var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
+var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
+var mdgriffith$elm_ui$Internal$Model$Rgba = F4(
+	function (a, b, c, d) {
+		return {$: 'Rgba', a: a, b: b, c: c, d: d};
+	});
+var mdgriffith$elm_ui$Element$rgb = F3(
+	function (r, g, b) {
+		return A4(mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
+	});
+var mdgriffith$elm_ui$Internal$Flag$borderColor = mdgriffith$elm_ui$Internal$Flag$flag(28);
+var mdgriffith$elm_ui$Internal$Model$Colored = F3(
+	function (a, b, c) {
+		return {$: 'Colored', a: a, b: b, c: c};
+	});
+var mdgriffith$elm_ui$Internal$Model$formatColorClass = function (_n0) {
+	var red = _n0.a;
+	var green = _n0.b;
+	var blue = _n0.c;
+	var alpha = _n0.d;
+	return mdgriffith$elm_ui$Internal$Model$floatClass(red) + ('-' + (mdgriffith$elm_ui$Internal$Model$floatClass(green) + ('-' + (mdgriffith$elm_ui$Internal$Model$floatClass(blue) + ('-' + mdgriffith$elm_ui$Internal$Model$floatClass(alpha))))));
+};
+var mdgriffith$elm_ui$Element$Border$color = function (clr) {
 	return A2(
-		elm$html$Html$Events$on,
-		'mouseleave',
-		elm$json$Json$Decode$succeed(msg));
+		mdgriffith$elm_ui$Internal$Model$StyleClass,
+		mdgriffith$elm_ui$Internal$Flag$borderColor,
+		A3(
+			mdgriffith$elm_ui$Internal$Model$Colored,
+			'bc-' + mdgriffith$elm_ui$Internal$Model$formatColorClass(clr),
+			'border-color',
+			clr));
 };
-var ContaSystemer$elm_menu$Menu$Internal$viewItem = F3(
-	function (_n0, _n1, data) {
-		var toId = _n0.toId;
-		var li = _n0.li;
-		var key = _n1.key;
-		var mouse = _n1.mouse;
-		var id = toId(data);
-		var isSelected = function (maybeId) {
-			if (maybeId.$ === 'Just') {
-				var someId = maybeId.a;
-				return _Utils_eq(someId, id);
-			} else {
-				return false;
-			}
-		};
-		var listItemData = A3(
-			li,
-			isSelected(key),
-			isSelected(mouse),
-			data);
-		var customAttributes = A2(elm$core$List$map, ContaSystemer$elm_menu$Menu$Internal$mapNeverToMsg, listItemData.attributes);
-		var customLiAttr = A2(
-			elm$core$List$append,
-			customAttributes,
+var mdgriffith$elm_ui$Internal$Flag$borderRound = mdgriffith$elm_ui$Internal$Flag$flag(17);
+var mdgriffith$elm_ui$Element$Border$rounded = function (radius) {
+	return A2(
+		mdgriffith$elm_ui$Internal$Model$StyleClass,
+		mdgriffith$elm_ui$Internal$Flag$borderRound,
+		A3(
+			mdgriffith$elm_ui$Internal$Model$Single,
+			'br-' + elm$core$String$fromInt(radius),
+			'border-radius',
+			elm$core$String$fromInt(radius) + 'px'));
+};
+var mdgriffith$elm_ui$Internal$Model$BorderWidth = F5(
+	function (a, b, c, d, e) {
+		return {$: 'BorderWidth', a: a, b: b, c: c, d: d, e: e};
+	});
+var mdgriffith$elm_ui$Element$Border$width = function (v) {
+	return A2(
+		mdgriffith$elm_ui$Internal$Model$StyleClass,
+		mdgriffith$elm_ui$Internal$Flag$borderWidth,
+		A5(
+			mdgriffith$elm_ui$Internal$Model$BorderWidth,
+			'b-' + elm$core$String$fromInt(v),
+			v,
+			v,
+			v,
+			v));
+};
+var author$project$StationBoard$viewStations = function (model) {
+	var _n0 = model.stations;
+	if (!_n0.b) {
+		return mdgriffith$elm_ui$Element$none;
+	} else {
+		return A2(
+			mdgriffith$elm_ui$Element$column,
 			_List_fromArray(
 				[
-					elm$html$Html$Events$onMouseEnter(
-					ContaSystemer$elm_menu$Menu$Internal$MouseEnter(id)),
-					elm$html$Html$Events$onMouseLeave(
-					ContaSystemer$elm_menu$Menu$Internal$MouseLeave(id)),
-					elm$html$Html$Events$onClick(
-					ContaSystemer$elm_menu$Menu$Internal$MouseClick(id))
-				]));
-		return A2(
-			elm$html$Html$li,
-			customLiAttr,
-			A2(
-				elm$core$List$map,
-				elm$html$Html$map(
-					function (html) {
-						return ContaSystemer$elm_menu$Menu$Internal$NoOp;
-					}),
-				listItemData.children));
-	});
-var elm$core$List$takeReverse = F3(
-	function (n, list, kept) {
-		takeReverse:
-		while (true) {
-			if (n <= 0) {
-				return kept;
-			} else {
-				if (!list.b) {
-					return kept;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs,
-						$temp$kept = A2(elm$core$List$cons, x, kept);
-					n = $temp$n;
-					list = $temp$list;
-					kept = $temp$kept;
-					continue takeReverse;
-				}
-			}
-		}
-	});
-var elm$core$List$takeTailRec = F2(
-	function (n, list) {
-		return elm$core$List$reverse(
-			A3(elm$core$List$takeReverse, n, list, _List_Nil));
-	});
-var elm$core$List$takeFast = F3(
-	function (ctr, n, list) {
-		if (n <= 0) {
-			return _List_Nil;
-		} else {
-			var _n0 = _Utils_Tuple2(n, list);
-			_n0$1:
-			while (true) {
-				_n0$5:
-				while (true) {
-					if (!_n0.b.b) {
-						return list;
-					} else {
-						if (_n0.b.b.b) {
-							switch (_n0.a) {
-								case 1:
-									break _n0$1;
-								case 2:
-									var _n2 = _n0.b;
-									var x = _n2.a;
-									var _n3 = _n2.b;
-									var y = _n3.a;
-									return _List_fromArray(
-										[x, y]);
-								case 3:
-									if (_n0.b.b.b.b) {
-										var _n4 = _n0.b;
-										var x = _n4.a;
-										var _n5 = _n4.b;
-										var y = _n5.a;
-										var _n6 = _n5.b;
-										var z = _n6.a;
-										return _List_fromArray(
-											[x, y, z]);
-									} else {
-										break _n0$5;
-									}
-								default:
-									if (_n0.b.b.b.b && _n0.b.b.b.b.b) {
-										var _n7 = _n0.b;
-										var x = _n7.a;
-										var _n8 = _n7.b;
-										var y = _n8.a;
-										var _n9 = _n8.b;
-										var z = _n9.a;
-										var _n10 = _n9.b;
-										var w = _n10.a;
-										var tl = _n10.b;
-										return (ctr > 1000) ? A2(
-											elm$core$List$cons,
-											x,
-											A2(
-												elm$core$List$cons,
-												y,
-												A2(
-													elm$core$List$cons,
-													z,
-													A2(
-														elm$core$List$cons,
-														w,
-														A2(elm$core$List$takeTailRec, n - 4, tl))))) : A2(
-											elm$core$List$cons,
-											x,
-											A2(
-												elm$core$List$cons,
-												y,
-												A2(
-													elm$core$List$cons,
-													z,
-													A2(
-														elm$core$List$cons,
-														w,
-														A3(elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
-									} else {
-										break _n0$5;
-									}
-							}
-						} else {
-							if (_n0.a === 1) {
-								break _n0$1;
-							} else {
-								break _n0$5;
-							}
-						}
-					}
-				}
-				return list;
-			}
-			var _n1 = _n0.b;
-			var x = _n1.a;
-			return _List_fromArray(
-				[x]);
-		}
-	});
-var elm$core$List$take = F2(
-	function (n, list) {
-		return A3(elm$core$List$takeFast, 0, n, list);
-	});
-var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
-var elm$html$Html$Keyed$ul = elm$html$Html$Keyed$node('ul');
-var ContaSystemer$elm_menu$Menu$Internal$viewList = F4(
-	function (config, howManyToShow, state, data) {
-		var getKeyedItems = function (datum) {
-			return _Utils_Tuple2(
-				config.toId(datum),
-				A3(ContaSystemer$elm_menu$Menu$Internal$viewItem, config, state, datum));
-		};
-		var customUlAttr = A2(elm$core$List$map, ContaSystemer$elm_menu$Menu$Internal$mapNeverToMsg, config.ul);
-		return A2(
-			elm$html$Html$Keyed$ul,
-			customUlAttr,
-			A2(
-				elm$core$List$map,
-				getKeyedItems,
-				A2(elm$core$List$take, howManyToShow, data)));
-	});
-var ContaSystemer$elm_menu$Menu$Internal$view = F4(
-	function (config, howManyToShow, state, data) {
-		return A4(ContaSystemer$elm_menu$Menu$Internal$viewList, config, howManyToShow, state, data);
-	});
-var ContaSystemer$elm_menu$Menu$view = F4(
-	function (_n0, howManyToShow, _n1, data) {
-		var config = _n0.a;
-		var state = _n1.a;
-		return A2(
-			elm$html$Html$map,
-			ContaSystemer$elm_menu$Menu$Msg,
-			A4(ContaSystemer$elm_menu$Menu$Internal$view, config, howManyToShow, state, data));
-	});
-var author$project$StationBoard$SetAutoState = function (a) {
-	return {$: 'SetAutoState', a: a};
+					mdgriffith$elm_ui$Element$padding(5),
+					mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+					mdgriffith$elm_ui$Element$Border$color(
+					A3(mdgriffith$elm_ui$Element$rgb, 0.9, 0.9, 0.9)),
+					mdgriffith$elm_ui$Element$Border$width(1),
+					mdgriffith$elm_ui$Element$Border$rounded(5)
+				]),
+			A2(elm$core$List$map, author$project$StationBoard$viewStation, model.stations));
+	}
 };
-var elm$core$String$contains = _String_contains;
-var elm$core$String$toLower = _String_toLower;
-var author$project$StationBoard$matches = F2(
-	function (query, station) {
-		return A2(
-			elm$core$String$contains,
-			elm$core$String$toLower(query),
-			elm$core$String$toLower(
-				author$project$OpenTransport$Station$stationName(station)));
+var mdgriffith$elm_ui$Internal$Model$Below = {$: 'Below'};
+var mdgriffith$elm_ui$Internal$Model$Nearby = F2(
+	function (a, b) {
+		return {$: 'Nearby', a: a, b: b};
 	});
-var author$project$StationBoard$acceptableStations = F2(
-	function (query, stations) {
-		return A2(
-			elm$core$List$filter,
-			author$project$StationBoard$matches(query),
-			stations);
-	});
-var author$project$StationBoard$howManyToShow = 5;
-var ContaSystemer$elm_menu$Menu$ViewConfig = function (a) {
-	return {$: 'ViewConfig', a: a};
+var mdgriffith$elm_ui$Element$below = function (element) {
+	return A2(mdgriffith$elm_ui$Internal$Model$Nearby, mdgriffith$elm_ui$Internal$Model$Below, element);
 };
-var ContaSystemer$elm_menu$Menu$Internal$viewConfig = function (_n0) {
-	var toId = _n0.toId;
-	var ul = _n0.ul;
-	var li = _n0.li;
-	return {li: li, toId: toId, ul: ul};
-};
-var ContaSystemer$elm_menu$Menu$viewConfig = function (config) {
-	return ContaSystemer$elm_menu$Menu$ViewConfig(
-		ContaSystemer$elm_menu$Menu$Internal$viewConfig(config));
-};
-var elm$html$Html$Attributes$classList = function (classes) {
-	return elm$html$Html$Attributes$class(
-		A2(
-			elm$core$String$join,
-			' ',
-			A2(
-				elm$core$List$map,
-				elm$core$Tuple$first,
-				A2(elm$core$List$filter, elm$core$Tuple$second, classes))));
-};
-var elm$html$Html$Attributes$id = elm$html$Html$Attributes$stringProperty('id');
-var author$project$StationBoard$viewConfig = function () {
-	var stationListItem = F3(
-		function (keySelected, mouseSelected, station) {
-			return {
-				attributes: _List_fromArray(
-					[
-						elm$html$Html$Attributes$classList(
-						_List_fromArray(
-							[
-								_Utils_Tuple2('AutocompleteItem', true),
-								_Utils_Tuple2('KeySelected', keySelected),
-								_Utils_Tuple2('MouseSelected', mouseSelected)
-							])),
-						elm$html$Html$Attributes$id(
-						author$project$OpenTransport$Station$stationName(station))
-					]),
-				children: _List_fromArray(
-					[
-						elm$html$Html$text(
-						author$project$OpenTransport$Station$stationName(station))
-					])
-			};
-		});
-	return ContaSystemer$elm_menu$Menu$viewConfig(
-		{
-			li: stationListItem,
-			toId: author$project$OpenTransport$Station$stationName,
-			ul: _List_fromArray(
-				[
-					elm$html$Html$Attributes$class('AutocompleteList')
-				])
-		});
-}();
-var author$project$StationBoard$viewAutocomplete = function (model) {
-	var showStationsMenu = !elm$core$List$isEmpty(model.stations);
-	var autocompleteView = A4(
-		ContaSystemer$elm_menu$Menu$view,
-		author$project$StationBoard$viewConfig,
-		author$project$StationBoard$howManyToShow,
-		model.autoState,
-		A2(author$project$StationBoard$acceptableStations, model.query, model.stations));
-	return showStationsMenu ? A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('AutocompleteMenu')
-			]),
-		_List_fromArray(
-			[
-				A2(elm$html$Html$map, author$project$StationBoard$SetAutoState, autocompleteView)
-			])) : A2(elm$html$Html$div, _List_Nil, _List_Nil);
-};
-var elm$core$Basics$always = F2(
-	function (a, _n0) {
-		return a;
-	});
-var mdgriffith$elm_ui$Internal$Model$unstyled = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Unstyled, elm$core$Basics$always);
-var mdgriffith$elm_ui$Element$html = mdgriffith$elm_ui$Internal$Model$unstyled;
 var mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
 	return {$: 'HiddenLabel', a: a};
 };
@@ -11362,10 +10677,12 @@ var elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
+var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
 		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
 	});
+var elm$json$Json$Decode$string = _Json_decodeString;
 var elm$html$Html$Events$targetValue = A2(
 	elm$json$Json$Decode$at,
 	_List_fromArray(
@@ -11401,36 +10718,10 @@ var mdgriffith$elm_ui$Element$alpha = function (o) {
 			'transparency-' + mdgriffith$elm_ui$Internal$Model$floatClass(transparency),
 			transparency));
 };
-var mdgriffith$elm_ui$Element$el = F2(
-	function (attrs, child) {
-		return A4(
-			mdgriffith$elm_ui$Internal$Model$element,
-			mdgriffith$elm_ui$Internal$Model$asEl,
-			mdgriffith$elm_ui$Internal$Model$div,
-			A2(
-				elm$core$List$cons,
-				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
-				A2(
-					elm$core$List$cons,
-					mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
-					attrs)),
-			mdgriffith$elm_ui$Internal$Model$Unkeyed(
-				_List_fromArray(
-					[child])));
-	});
 var mdgriffith$elm_ui$Internal$Model$InFront = {$: 'InFront'};
-var mdgriffith$elm_ui$Internal$Model$Nearby = F2(
-	function (a, b) {
-		return {$: 'Nearby', a: a, b: b};
-	});
 var mdgriffith$elm_ui$Element$inFront = function (element) {
 	return A2(mdgriffith$elm_ui$Internal$Model$Nearby, mdgriffith$elm_ui$Internal$Model$InFront, element);
 };
-var mdgriffith$elm_ui$Internal$Flag$padding = mdgriffith$elm_ui$Internal$Flag$flag(2);
-var mdgriffith$elm_ui$Internal$Model$PaddingStyle = F5(
-	function (a, b, c, d, e) {
-		return {$: 'PaddingStyle', a: a, b: b, c: c, d: d, e: e};
-	});
 var mdgriffith$elm_ui$Internal$Model$paddingName = F4(
 	function (top, right, bottom, left) {
 		return 'pad-' + (elm$core$String$fromInt(top) + ('-' + (elm$core$String$fromInt(right) + ('-' + (elm$core$String$fromInt(bottom) + ('-' + elm$core$String$fromInt(left)))))));
@@ -11460,23 +10751,27 @@ var mdgriffith$elm_ui$Element$paddingEach = function (_n0) {
 			bottom,
 			left));
 };
-var mdgriffith$elm_ui$Internal$Model$Rgba = F4(
-	function (a, b, c, d) {
-		return {$: 'Rgba', a: a, b: b, c: c, d: d};
-	});
 var mdgriffith$elm_ui$Element$rgba = mdgriffith$elm_ui$Internal$Model$Rgba;
-var mdgriffith$elm_ui$Internal$Flag$bgColor = mdgriffith$elm_ui$Internal$Flag$flag(8);
-var mdgriffith$elm_ui$Internal$Model$Colored = F3(
+var mdgriffith$elm_ui$Internal$Flag$spacing = mdgriffith$elm_ui$Internal$Flag$flag(3);
+var mdgriffith$elm_ui$Internal$Model$SpacingStyle = F3(
 	function (a, b, c) {
-		return {$: 'Colored', a: a, b: b, c: c};
+		return {$: 'SpacingStyle', a: a, b: b, c: c};
 	});
-var mdgriffith$elm_ui$Internal$Model$formatColorClass = function (_n0) {
-	var red = _n0.a;
-	var green = _n0.b;
-	var blue = _n0.c;
-	var alpha = _n0.d;
-	return mdgriffith$elm_ui$Internal$Model$floatClass(red) + ('-' + (mdgriffith$elm_ui$Internal$Model$floatClass(green) + ('-' + (mdgriffith$elm_ui$Internal$Model$floatClass(blue) + ('-' + mdgriffith$elm_ui$Internal$Model$floatClass(alpha))))));
+var mdgriffith$elm_ui$Internal$Model$spacingName = F2(
+	function (x, y) {
+		return 'spacing-' + (elm$core$String$fromInt(x) + ('-' + elm$core$String$fromInt(y)));
+	});
+var mdgriffith$elm_ui$Element$spacing = function (x) {
+	return A2(
+		mdgriffith$elm_ui$Internal$Model$StyleClass,
+		mdgriffith$elm_ui$Internal$Flag$spacing,
+		A3(
+			mdgriffith$elm_ui$Internal$Model$SpacingStyle,
+			A2(mdgriffith$elm_ui$Internal$Model$spacingName, x, x),
+			x,
+			x));
 };
+var mdgriffith$elm_ui$Internal$Flag$bgColor = mdgriffith$elm_ui$Internal$Flag$flag(8);
 var mdgriffith$elm_ui$Element$Background$color = function (clr) {
 	return A2(
 		mdgriffith$elm_ui$Internal$Model$StyleClass,
@@ -11485,17 +10780,6 @@ var mdgriffith$elm_ui$Element$Background$color = function (clr) {
 			mdgriffith$elm_ui$Internal$Model$Colored,
 			'bg-' + mdgriffith$elm_ui$Internal$Model$formatColorClass(clr),
 			'background-color',
-			clr));
-};
-var mdgriffith$elm_ui$Internal$Flag$borderColor = mdgriffith$elm_ui$Internal$Flag$flag(28);
-var mdgriffith$elm_ui$Element$Border$color = function (clr) {
-	return A2(
-		mdgriffith$elm_ui$Internal$Model$StyleClass,
-		mdgriffith$elm_ui$Internal$Flag$borderColor,
-		A3(
-			mdgriffith$elm_ui$Internal$Model$Colored,
-			'bc-' + mdgriffith$elm_ui$Internal$Model$formatColorClass(clr),
-			'border-color',
 			clr));
 };
 var mdgriffith$elm_ui$Internal$Flag$fontColor = mdgriffith$elm_ui$Internal$Flag$flag(14);
@@ -11582,38 +10866,7 @@ var mdgriffith$elm_ui$Element$Input$autofill = A2(
 	elm$core$Basics$composeL,
 	mdgriffith$elm_ui$Internal$Model$Attr,
 	elm$html$Html$Attributes$attribute('autocomplete'));
-var mdgriffith$elm_ui$Element$rgb = F3(
-	function (r, g, b) {
-		return A4(mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
-	});
 var mdgriffith$elm_ui$Element$Input$charcoal = A3(mdgriffith$elm_ui$Element$rgb, 136 / 255, 138 / 255, 133 / 255);
-var mdgriffith$elm_ui$Internal$Flag$borderRound = mdgriffith$elm_ui$Internal$Flag$flag(17);
-var mdgriffith$elm_ui$Element$Border$rounded = function (radius) {
-	return A2(
-		mdgriffith$elm_ui$Internal$Model$StyleClass,
-		mdgriffith$elm_ui$Internal$Flag$borderRound,
-		A3(
-			mdgriffith$elm_ui$Internal$Model$Single,
-			'br-' + elm$core$String$fromInt(radius),
-			'border-radius',
-			elm$core$String$fromInt(radius) + 'px'));
-};
-var mdgriffith$elm_ui$Internal$Model$BorderWidth = F5(
-	function (a, b, c, d, e) {
-		return {$: 'BorderWidth', a: a, b: b, c: c, d: d, e: e};
-	});
-var mdgriffith$elm_ui$Element$Border$width = function (v) {
-	return A2(
-		mdgriffith$elm_ui$Internal$Model$StyleClass,
-		mdgriffith$elm_ui$Internal$Flag$borderWidth,
-		A5(
-			mdgriffith$elm_ui$Internal$Model$BorderWidth,
-			'b-' + elm$core$String$fromInt(v),
-			v,
-			v,
-			v,
-			v));
-};
 var mdgriffith$elm_ui$Element$Input$darkGrey = A3(mdgriffith$elm_ui$Element$rgb, 186 / 255, 189 / 255, 182 / 255);
 var mdgriffith$elm_ui$Element$paddingXY = F2(
 	function (x, y) {
@@ -11649,6 +10902,22 @@ var mdgriffith$elm_ui$Element$Input$defaultTextBoxStyle = _List_fromArray(
 		mdgriffith$elm_ui$Element$spacing(3),
 		mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill)
 	]);
+var mdgriffith$elm_ui$Element$Input$hasFocusStyle = function (attr) {
+	if (((attr.$ === 'StyleClass') && (attr.b.$ === 'PseudoSelector')) && (attr.b.a.$ === 'Focus')) {
+		var _n1 = attr.b;
+		var _n2 = _n1.a;
+		return true;
+	} else {
+		return false;
+	}
+};
+var mdgriffith$elm_ui$Internal$Model$NoAttribute = {$: 'NoAttribute'};
+var mdgriffith$elm_ui$Element$Input$focusDefault = function (attrs) {
+	return A2(elm$core$List$any, mdgriffith$elm_ui$Element$Input$hasFocusStyle, attrs) ? mdgriffith$elm_ui$Internal$Model$NoAttribute : mdgriffith$elm_ui$Internal$Model$htmlClass('focusable');
+};
+var mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
+	return {$: 'Describe', a: a};
+};
 var mdgriffith$elm_ui$Internal$Model$Label = function (a) {
 	return {$: 'Label', a: a};
 };
@@ -11690,6 +10959,14 @@ var mdgriffith$elm_ui$Element$Input$isHiddenLabel = function (label) {
 		return false;
 	}
 };
+var elm$json$Json$Encode$bool = _Json_wrap;
+var elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$bool(bool));
+	});
 var elm$html$Html$Attributes$spellcheck = elm$html$Html$Attributes$boolProperty('spellcheck');
 var mdgriffith$elm_ui$Element$Input$spellcheck = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Attr, elm$html$Html$Attributes$spellcheck);
 var elm$core$String$lines = _String_lines;
@@ -11729,6 +11006,11 @@ var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('va
 var mdgriffith$elm_ui$Element$Input$value = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Attr, elm$html$Html$Attributes$value);
 var mdgriffith$elm_ui$Internal$Model$LivePolite = {$: 'LivePolite'};
 var mdgriffith$elm_ui$Element$Region$announce = mdgriffith$elm_ui$Internal$Model$Describe(mdgriffith$elm_ui$Internal$Model$LivePolite);
+var mdgriffith$elm_ui$Internal$Flag$cursor = mdgriffith$elm_ui$Internal$Flag$flag(21);
+var mdgriffith$elm_ui$Internal$Model$Class = F2(
+	function (a, b) {
+		return {$: 'Class', a: a, b: b};
+	});
 var mdgriffith$elm_ui$Internal$Model$filter = function (attrs) {
 	return A3(
 		elm$core$List$foldr,
@@ -11824,6 +11106,11 @@ var mdgriffith$elm_ui$Internal$Model$isContent = function (len) {
 		}
 	}
 };
+var elm$core$Basics$always = F2(
+	function (a, _n0) {
+		return a;
+	});
+var mdgriffith$elm_ui$Internal$Model$unstyled = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Unstyled, elm$core$Basics$always);
 var mdgriffith$elm_ui$Element$Input$textHelper = F3(
 	function (textInput, attrs, textOptions) {
 		var forNearby = function (attr) {
@@ -12192,15 +11479,463 @@ var author$project$StationBoard$viewSearchBar = function (model) {
 			[
 				A2(
 				mdgriffith$elm_ui$Element$Input$search,
-				_List_Nil,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$below(
+						author$project$StationBoard$viewStations(model))
+					]),
 				{
 					label: mdgriffith$elm_ui$Element$Input$labelHidden('Search'),
 					onChange: author$project$StationBoard$SearchStation,
 					placeholder: elm$core$Maybe$Nothing,
 					text: model.query
+				})
+			]));
+};
+var author$project$StationBoard$viewBody = function (model) {
+	var _n0 = model.mode;
+	if (_n0.$ === 'Search') {
+		return _List_fromArray(
+			[
+				author$project$StationBoard$viewSearchBar(model)
+			]);
+	} else {
+		return _List_fromArray(
+			[
+				author$project$StationBoard$viewRecentlySelected(model.recent)
+			]);
+	}
+};
+var author$project$OpenTransport$Departure$departureName = function (_n0) {
+	var name = _n0.a.name;
+	return name;
+};
+var author$project$OpenTransport$Departure$destination = function (_n0) {
+	var to = _n0.a.to;
+	return to;
+};
+var author$project$OpenTransport$Departure$time = function (_n0) {
+	var departure = _n0.a.departure;
+	return departure;
+};
+var mdgriffith$elm_ui$Element$InternalColumn = function (a) {
+	return {$: 'InternalColumn', a: a};
+};
+var elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			elm$core$List$any,
+			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
+			list);
+	});
+var elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2(elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
+var mdgriffith$elm_ui$Internal$Model$Px = function (a) {
+	return {$: 'Px', a: a};
+};
+var mdgriffith$elm_ui$Element$px = mdgriffith$elm_ui$Internal$Model$Px;
+var mdgriffith$elm_ui$Internal$Flag$gridPosition = mdgriffith$elm_ui$Internal$Flag$flag(35);
+var mdgriffith$elm_ui$Internal$Flag$gridTemplate = mdgriffith$elm_ui$Internal$Flag$flag(34);
+var mdgriffith$elm_ui$Internal$Model$GridPosition = function (a) {
+	return {$: 'GridPosition', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$GridTemplateStyle = function (a) {
+	return {$: 'GridTemplateStyle', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$AsGrid = {$: 'AsGrid'};
+var mdgriffith$elm_ui$Internal$Model$asGrid = mdgriffith$elm_ui$Internal$Model$AsGrid;
+var mdgriffith$elm_ui$Internal$Model$getSpacing = F2(
+	function (attrs, _default) {
+		return A2(
+			elm$core$Maybe$withDefault,
+			_default,
+			A3(
+				elm$core$List$foldr,
+				F2(
+					function (attr, acc) {
+						if (acc.$ === 'Just') {
+							var x = acc.a;
+							return elm$core$Maybe$Just(x);
+						} else {
+							if ((attr.$ === 'StyleClass') && (attr.b.$ === 'SpacingStyle')) {
+								var _n2 = attr.b;
+								var x = _n2.b;
+								var y = _n2.c;
+								return elm$core$Maybe$Just(
+									_Utils_Tuple2(x, y));
+							} else {
+								return elm$core$Maybe$Nothing;
+							}
+						}
+					}),
+				elm$core$Maybe$Nothing,
+				attrs));
+	});
+var mdgriffith$elm_ui$Element$tableHelper = F2(
+	function (attrs, config) {
+		var onGrid = F3(
+			function (rowLevel, columnLevel, elem) {
+				return A4(
+					mdgriffith$elm_ui$Internal$Model$element,
+					mdgriffith$elm_ui$Internal$Model$asEl,
+					mdgriffith$elm_ui$Internal$Model$div,
+					_List_fromArray(
+						[
+							A2(
+							mdgriffith$elm_ui$Internal$Model$StyleClass,
+							mdgriffith$elm_ui$Internal$Flag$gridPosition,
+							mdgriffith$elm_ui$Internal$Model$GridPosition(
+								{col: columnLevel, height: 1, row: rowLevel, width: 1}))
+						]),
+					mdgriffith$elm_ui$Internal$Model$Unkeyed(
+						_List_fromArray(
+							[elem])));
+			});
+		var columnWidth = function (col) {
+			if (col.$ === 'InternalIndexedColumn') {
+				var colConfig = col.a;
+				return colConfig.width;
+			} else {
+				var colConfig = col.a;
+				return colConfig.width;
+			}
+		};
+		var columnHeader = function (col) {
+			if (col.$ === 'InternalIndexedColumn') {
+				var colConfig = col.a;
+				return colConfig.header;
+			} else {
+				var colConfig = col.a;
+				return colConfig.header;
+			}
+		};
+		var maybeHeaders = function (headers) {
+			return A2(
+				elm$core$List$all,
+				elm$core$Basics$eq(mdgriffith$elm_ui$Internal$Model$Empty),
+				headers) ? elm$core$Maybe$Nothing : elm$core$Maybe$Just(
+				A2(
+					elm$core$List$indexedMap,
+					F2(
+						function (col, header) {
+							return A3(onGrid, 1, col + 1, header);
+						}),
+					headers));
+		}(
+			A2(elm$core$List$map, columnHeader, config.columns));
+		var add = F3(
+			function (cell, columnConfig, cursor) {
+				if (columnConfig.$ === 'InternalIndexedColumn') {
+					var col = columnConfig.a;
+					return _Utils_update(
+						cursor,
+						{
+							column: cursor.column + 1,
+							elements: A2(
+								elm$core$List$cons,
+								A3(
+									onGrid,
+									cursor.row,
+									cursor.column,
+									A2(
+										col.view,
+										_Utils_eq(maybeHeaders, elm$core$Maybe$Nothing) ? (cursor.row - 1) : (cursor.row - 2),
+										cell)),
+								cursor.elements)
+						});
+				} else {
+					var col = columnConfig.a;
+					return {
+						column: cursor.column + 1,
+						elements: A2(
+							elm$core$List$cons,
+							A3(
+								onGrid,
+								cursor.row,
+								cursor.column,
+								col.view(cell)),
+							cursor.elements),
+						row: cursor.row
+					};
+				}
+			});
+		var build = F3(
+			function (columns, rowData, cursor) {
+				var newCursor = A3(
+					elm$core$List$foldl,
+					add(rowData),
+					cursor,
+					columns);
+				return {column: 1, elements: newCursor.elements, row: cursor.row + 1};
+			});
+		var children = A3(
+			elm$core$List$foldl,
+			build(config.columns),
+			{
+				column: 1,
+				elements: _List_Nil,
+				row: _Utils_eq(maybeHeaders, elm$core$Maybe$Nothing) ? 1 : 2
+			},
+			config.data);
+		var _n0 = A2(
+			mdgriffith$elm_ui$Internal$Model$getSpacing,
+			attrs,
+			_Utils_Tuple2(0, 0));
+		var sX = _n0.a;
+		var sY = _n0.b;
+		var template = A2(
+			mdgriffith$elm_ui$Internal$Model$StyleClass,
+			mdgriffith$elm_ui$Internal$Flag$gridTemplate,
+			mdgriffith$elm_ui$Internal$Model$GridTemplateStyle(
+				{
+					columns: A2(elm$core$List$map, columnWidth, config.columns),
+					rows: A2(
+						elm$core$List$repeat,
+						elm$core$List$length(config.data),
+						mdgriffith$elm_ui$Internal$Model$Content),
+					spacing: _Utils_Tuple2(
+						mdgriffith$elm_ui$Element$px(sX),
+						mdgriffith$elm_ui$Element$px(sY))
+				}));
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asGrid,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+				A2(elm$core$List$cons, template, attrs)),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				function () {
+					if (maybeHeaders.$ === 'Nothing') {
+						return children.elements;
+					} else {
+						var renderedHeaders = maybeHeaders.a;
+						return _Utils_ap(
+							renderedHeaders,
+							elm$core$List$reverse(children.elements));
+					}
+				}()));
+	});
+var mdgriffith$elm_ui$Element$table = F2(
+	function (attrs, config) {
+		return A2(
+			mdgriffith$elm_ui$Element$tableHelper,
+			attrs,
+			{
+				columns: A2(elm$core$List$map, mdgriffith$elm_ui$Element$InternalColumn, config.columns),
+				data: config.data
+			});
+	});
+var author$project$StationBoard$viewDepartures = function (departures) {
+	return elm$core$List$isEmpty(departures) ? mdgriffith$elm_ui$Element$none : A2(
+		mdgriffith$elm_ui$Element$table,
+		_List_Nil,
+		{
+			columns: _List_fromArray(
+				[
+					{
+					header: mdgriffith$elm_ui$Element$text('Zeit'),
+					view: function (departure) {
+						return mdgriffith$elm_ui$Element$text(
+							author$project$OpenTransport$Departure$time(departure));
+					},
+					width: mdgriffith$elm_ui$Element$fill
+				},
+					{
+					header: mdgriffith$elm_ui$Element$none,
+					view: function (departure) {
+						return mdgriffith$elm_ui$Element$text(
+							author$project$OpenTransport$Departure$departureName(departure));
+					},
+					width: mdgriffith$elm_ui$Element$fill
+				},
+					{
+					header: mdgriffith$elm_ui$Element$text('Nach'),
+					view: function (departure) {
+						return mdgriffith$elm_ui$Element$text(
+							author$project$OpenTransport$Departure$destination(departure));
+					},
+					width: mdgriffith$elm_ui$Element$fill
+				}
+				]),
+			data: departures
+		});
+};
+var author$project$StationBoard$Recent = {$: 'Recent'};
+var author$project$StationBoard$Search = {$: 'Search'};
+var author$project$StationBoard$Switch = function (a) {
+	return {$: 'Switch', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
+	return {$: 'AlignX', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$CenterX = {$: 'CenterX'};
+var mdgriffith$elm_ui$Element$centerX = mdgriffith$elm_ui$Internal$Model$AlignX(mdgriffith$elm_ui$Internal$Model$CenterX);
+var mdgriffith$elm_ui$Element$spaceEvenly = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$spacing, mdgriffith$elm_ui$Internal$Style$classes.spaceEvenly);
+var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
+var elm$html$Html$Attributes$tabindex = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'tabIndex',
+		elm$core$String$fromInt(n));
+};
+var mdgriffith$elm_ui$Element$pointer = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$cursor, mdgriffith$elm_ui$Internal$Style$classes.cursorPointer);
+var mdgriffith$elm_ui$Element$Input$enter = 'Enter';
+var elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
+	return {$: 'MayPreventDefault', a: a};
+};
+var elm$html$Html$Events$preventDefaultOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
+	});
+var elm$json$Json$Decode$andThen = _Json_andThen;
+var elm$json$Json$Decode$fail = _Json_fail;
+var mdgriffith$elm_ui$Element$Input$onKey = F2(
+	function (desiredCode, msg) {
+		var decode = function (code) {
+			return _Utils_eq(code, desiredCode) ? elm$json$Json$Decode$succeed(msg) : elm$json$Json$Decode$fail('Not the enter key');
+		};
+		var isKey = A2(
+			elm$json$Json$Decode$andThen,
+			decode,
+			A2(elm$json$Json$Decode$field, 'key', elm$json$Json$Decode$string));
+		return mdgriffith$elm_ui$Internal$Model$Attr(
+			A2(
+				elm$html$Html$Events$preventDefaultOn,
+				'keyup',
+				A2(
+					elm$json$Json$Decode$map,
+					function (fired) {
+						return _Utils_Tuple2(fired, true);
+					},
+					isKey)));
+	});
+var mdgriffith$elm_ui$Element$Input$onEnter = function (msg) {
+	return A2(mdgriffith$elm_ui$Element$Input$onKey, mdgriffith$elm_ui$Element$Input$enter, msg);
+};
+var mdgriffith$elm_ui$Internal$Model$Button = {$: 'Button'};
+var mdgriffith$elm_ui$Element$Input$button = F2(
+	function (attrs, _n0) {
+		var onPress = _n0.onPress;
+		var label = _n0.label;
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asEl,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
+				A2(
+					elm$core$List$cons,
+					mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
+					A2(
+						elm$core$List$cons,
+						mdgriffith$elm_ui$Internal$Model$htmlClass(mdgriffith$elm_ui$Internal$Style$classes.contentCenterX + (' ' + (mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + (mdgriffith$elm_ui$Internal$Style$classes.seButton + (' ' + mdgriffith$elm_ui$Internal$Style$classes.noTextSelection)))))),
+						A2(
+							elm$core$List$cons,
+							mdgriffith$elm_ui$Element$pointer,
+							A2(
+								elm$core$List$cons,
+								mdgriffith$elm_ui$Element$Input$focusDefault(attrs),
+								A2(
+									elm$core$List$cons,
+									mdgriffith$elm_ui$Internal$Model$Describe(mdgriffith$elm_ui$Internal$Model$Button),
+									A2(
+										elm$core$List$cons,
+										mdgriffith$elm_ui$Internal$Model$Attr(
+											elm$html$Html$Attributes$tabindex(0)),
+										function () {
+											if (onPress.$ === 'Nothing') {
+												return A2(
+													elm$core$List$cons,
+													mdgriffith$elm_ui$Internal$Model$Attr(
+														elm$html$Html$Attributes$disabled(true)),
+													attrs);
+											} else {
+												var msg = onPress.a;
+												return A2(
+													elm$core$List$cons,
+													mdgriffith$elm_ui$Element$Events$onClick(msg),
+													A2(
+														elm$core$List$cons,
+														mdgriffith$elm_ui$Element$Input$onEnter(msg),
+														attrs));
+											}
+										}()))))))),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[label])));
+	});
+var author$project$StationBoard$viewButtons = function (model) {
+	return A2(
+		mdgriffith$elm_ui$Element$row,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$centerX,
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+				mdgriffith$elm_ui$Element$spaceEvenly
+			]),
+		_List_fromArray(
+			[
+				A2(
+				mdgriffith$elm_ui$Element$Input$button,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$padding(50)
+					]),
+				{
+					label: mdgriffith$elm_ui$Element$text('Search'),
+					onPress: elm$core$Maybe$Just(
+						author$project$StationBoard$Switch(author$project$StationBoard$Search))
 				}),
-				mdgriffith$elm_ui$Element$html(
-				author$project$StationBoard$viewAutocomplete(model))
+				A2(
+				mdgriffith$elm_ui$Element$Input$button,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$padding(50)
+					]),
+				{
+					label: mdgriffith$elm_ui$Element$text('Recent'),
+					onPress: elm$core$Maybe$Just(
+						author$project$StationBoard$Switch(author$project$StationBoard$Recent))
+				})
+			]));
+};
+var elm$core$String$isEmpty = function (string) {
+	return string === '';
+};
+var author$project$StationBoard$viewErrors = function (fetchStationTableFailedMessage) {
+	return elm$core$String$isEmpty(fetchStationTableFailedMessage) ? mdgriffith$elm_ui$Element$none : A2(
+		mdgriffith$elm_ui$Element$row,
+		_List_Nil,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$text(fetchStationTableFailedMessage)
 			]));
 };
 var mdgriffith$elm_ui$Internal$Flag$fontSize = mdgriffith$elm_ui$Internal$Flag$flag(4);
@@ -12225,24 +11960,16 @@ var author$project$StationBoard$viewTitle = A2(
 		[
 			mdgriffith$elm_ui$Element$text('Station Board')
 		]));
-var mdgriffith$elm_ui$Element$padding = function (x) {
-	return A2(
-		mdgriffith$elm_ui$Internal$Model$StyleClass,
-		mdgriffith$elm_ui$Internal$Flag$padding,
-		A5(
-			mdgriffith$elm_ui$Internal$Model$PaddingStyle,
-			'p-' + elm$core$String$fromInt(x),
-			x,
-			x,
-			x,
-			x));
+var author$project$StationBoard$viewHeader = function (model) {
+	return _List_fromArray(
+		[
+			author$project$StationBoard$viewTitle,
+			author$project$StationBoard$viewErrors(model.fetchStationTableFailedMessage),
+			author$project$StationBoard$viewButtons(model.mode)
+		]);
 };
 var author$project$StationBoard$viewStyled = function (model) {
 	var options = {preventDefault: true, stopPropagation: false};
-	var dec = elm$json$Json$Decode$map(
-		function (code) {
-			return ((code === 38) || (code === 40)) ? elm$core$Result$Ok(author$project$StationBoard$NoOp) : ((code === 27) ? elm$core$Result$Ok(author$project$StationBoard$HandleEscape) : elm$core$Result$Err('not handling that key'));
-		});
 	return A2(
 		mdgriffith$elm_ui$Element$column,
 		_List_fromArray(
@@ -12251,25 +11978,14 @@ var author$project$StationBoard$viewStyled = function (model) {
 				mdgriffith$elm_ui$Element$padding(50),
 				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill)
 			]),
-		_List_fromArray(
-			[
-				author$project$StationBoard$viewTitle,
-				mdgriffith$elm_ui$Element$html(
-				author$project$StationBoard$viewErrors(model.fetchStationTableFailedMessage)),
-				author$project$StationBoard$viewButtons(model.mode),
-				function () {
-				var _n0 = model.mode;
-				switch (_n0.$) {
-					case 'Search':
-						return author$project$StationBoard$viewSearchBar(model);
-					case 'Recent':
-						return author$project$StationBoard$viewRecentlySelected(model.latest);
-					default:
-						return author$project$StationBoard$viewRecentlySelected(model.stations);
-				}
-			}(),
-				author$project$StationBoard$viewDepartures(model.departures)
-			]));
+		_Utils_ap(
+			author$project$StationBoard$viewHeader(model),
+			_Utils_ap(
+				author$project$StationBoard$viewBody(model),
+				_List_fromArray(
+					[
+						author$project$StationBoard$viewDepartures(model.departures)
+					]))));
 };
 var mdgriffith$elm_ui$Internal$Model$OnlyDynamic = F2(
 	function (a, b) {
@@ -12424,6 +12140,7 @@ var mdgriffith$elm_ui$Internal$Model$SansSerif = {$: 'SansSerif'};
 var mdgriffith$elm_ui$Internal$Model$Typeface = function (a) {
 	return {$: 'Typeface', a: a};
 };
+var elm$core$String$toLower = _String_toLower;
 var elm$core$String$words = _String_words;
 var mdgriffith$elm_ui$Internal$Model$renderFontClassName = F2(
 	function (font, current) {
@@ -12548,17 +12265,8 @@ var author$project$OpenTransport$Station$create = function (name) {
 	return author$project$OpenTransport$Station$Station(
 		{name: name});
 };
-var ContaSystemer$elm_menu$Menu$State = function (a) {
-	return {$: 'State', a: a};
-};
-var ContaSystemer$elm_menu$Menu$Internal$empty = {key: elm$core$Maybe$Nothing, mouse: elm$core$Maybe$Nothing};
-var ContaSystemer$elm_menu$Menu$empty = ContaSystemer$elm_menu$Menu$State(ContaSystemer$elm_menu$Menu$Internal$empty);
-var author$project$StationBoard$Model = F8(
-	function (query, autoState, stations, selectedStation, departures, fetchStationTableFailedMessage, latest, mode) {
-		return {autoState: autoState, departures: departures, fetchStationTableFailedMessage: fetchStationTableFailedMessage, latest: latest, mode: mode, query: query, selectedStation: selectedStation, stations: stations};
-	});
-var author$project$StationBoard$initialModel = function (recent) {
-	return A8(author$project$StationBoard$Model, '', ContaSystemer$elm_menu$Menu$empty, _List_Nil, elm$core$Maybe$Nothing, _List_Nil, '', recent, author$project$StationBoard$Search);
+var author$project$StationBoard$initialModel = function (recentStations) {
+	return {departures: _List_Nil, fetchStationTableFailedMessage: '', mode: author$project$StationBoard$Search, query: '', recent: recentStations, selectedStation: elm$core$Maybe$Nothing, stations: _List_Nil};
 };
 var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
@@ -12568,821 +12276,50 @@ var author$project$StationBoard$init = function (recentStations) {
 		author$project$StationBoard$initialModel(recent),
 		elm$core$Platform$Cmd$none);
 };
-var ContaSystemer$elm_menu$Menu$Internal$KeyDown = function (a) {
-	return {$: 'KeyDown', a: a};
-};
-var elm$browser$Browser$Events$Document = {$: 'Document'};
-var elm$browser$Browser$Events$MySub = F3(
-	function (a, b, c) {
-		return {$: 'MySub', a: a, b: b, c: c};
-	});
-var elm$browser$Browser$Events$State = F2(
-	function (subs, pids) {
-		return {pids: pids, subs: subs};
-	});
-var elm$core$Task$succeed = _Scheduler_succeed;
-var elm$browser$Browser$Events$init = elm$core$Task$succeed(
-	A2(elm$browser$Browser$Events$State, _List_Nil, elm$core$Dict$empty));
-var elm$browser$Browser$Events$nodeToKey = function (node) {
-	if (node.$ === 'Document') {
-		return 'd_';
-	} else {
-		return 'w_';
-	}
-};
-var elm$browser$Browser$Events$addKey = function (sub) {
-	var node = sub.a;
-	var name = sub.b;
-	return _Utils_Tuple2(
-		_Utils_ap(
-			elm$browser$Browser$Events$nodeToKey(node),
-			name),
-		sub);
-};
-var elm$browser$Browser$Events$Event = F2(
-	function (key, event) {
-		return {event: event, key: key};
-	});
-var elm$core$Platform$sendToSelf = _Platform_sendToSelf;
-var elm$core$Task$andThen = _Scheduler_andThen;
-var elm$core$Task$map = F2(
-	function (func, taskA) {
-		return A2(
-			elm$core$Task$andThen,
-			function (a) {
-				return elm$core$Task$succeed(
-					func(a));
-			},
-			taskA);
-	});
-var elm$browser$Browser$External = function (a) {
-	return {$: 'External', a: a};
-};
-var elm$browser$Browser$Internal = function (a) {
-	return {$: 'Internal', a: a};
-};
-var elm$browser$Browser$Dom$NotFound = function (a) {
-	return {$: 'NotFound', a: a};
-};
-var elm$core$Basics$never = function (_n0) {
-	never:
-	while (true) {
-		var nvr = _n0.a;
-		var $temp$_n0 = nvr;
-		_n0 = $temp$_n0;
-		continue never;
-	}
-};
-var elm$core$Task$Perform = function (a) {
-	return {$: 'Perform', a: a};
-};
-var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
-var elm$core$Task$map2 = F3(
-	function (func, taskA, taskB) {
-		return A2(
-			elm$core$Task$andThen,
-			function (a) {
-				return A2(
-					elm$core$Task$andThen,
-					function (b) {
-						return elm$core$Task$succeed(
-							A2(func, a, b));
-					},
-					taskB);
-			},
-			taskA);
-	});
-var elm$core$Task$sequence = function (tasks) {
-	return A3(
-		elm$core$List$foldr,
-		elm$core$Task$map2(elm$core$List$cons),
-		elm$core$Task$succeed(_List_Nil),
-		tasks);
-};
-var elm$core$Platform$sendToApp = _Platform_sendToApp;
-var elm$core$Task$spawnCmd = F2(
-	function (router, _n0) {
-		var task = _n0.a;
-		return _Scheduler_spawn(
-			A2(
-				elm$core$Task$andThen,
-				elm$core$Platform$sendToApp(router),
-				task));
-	});
-var elm$core$Task$onEffects = F3(
-	function (router, commands, state) {
-		return A2(
-			elm$core$Task$map,
-			function (_n0) {
-				return _Utils_Tuple0;
-			},
-			elm$core$Task$sequence(
-				A2(
-					elm$core$List$map,
-					elm$core$Task$spawnCmd(router),
-					commands)));
-	});
-var elm$core$Task$onSelfMsg = F3(
-	function (_n0, _n1, _n2) {
-		return elm$core$Task$succeed(_Utils_Tuple0);
-	});
-var elm$core$Task$cmdMap = F2(
-	function (tagger, _n0) {
-		var task = _n0.a;
-		return elm$core$Task$Perform(
-			A2(elm$core$Task$map, tagger, task));
-	});
-_Platform_effectManagers['Task'] = _Platform_createManager(elm$core$Task$init, elm$core$Task$onEffects, elm$core$Task$onSelfMsg, elm$core$Task$cmdMap);
-var elm$core$Task$command = _Platform_leaf('Task');
-var elm$core$Task$perform = F2(
-	function (toMessage, task) {
-		return elm$core$Task$command(
-			elm$core$Task$Perform(
-				A2(elm$core$Task$map, toMessage, task)));
-	});
-var elm$core$String$length = _String_length;
-var elm$core$String$slice = _String_slice;
-var elm$core$String$dropLeft = F2(
-	function (n, string) {
-		return (n < 1) ? string : A3(
-			elm$core$String$slice,
-			n,
-			elm$core$String$length(string),
-			string);
-	});
-var elm$core$String$startsWith = _String_startsWith;
-var elm$url$Url$Http = {$: 'Http'};
-var elm$url$Url$Https = {$: 'Https'};
-var elm$core$String$indexes = _String_indexes;
-var elm$core$String$left = F2(
-	function (n, string) {
-		return (n < 1) ? '' : A3(elm$core$String$slice, 0, n, string);
-	});
-var elm$core$String$toInt = _String_toInt;
-var elm$url$Url$Url = F6(
-	function (protocol, host, port_, path, query, fragment) {
-		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
-	});
-var elm$url$Url$chompBeforePath = F5(
-	function (protocol, path, params, frag, str) {
-		if (elm$core$String$isEmpty(str) || A2(elm$core$String$contains, '@', str)) {
-			return elm$core$Maybe$Nothing;
-		} else {
-			var _n0 = A2(elm$core$String$indexes, ':', str);
-			if (!_n0.b) {
-				return elm$core$Maybe$Just(
-					A6(elm$url$Url$Url, protocol, str, elm$core$Maybe$Nothing, path, params, frag));
-			} else {
-				if (!_n0.b.b) {
-					var i = _n0.a;
-					var _n1 = elm$core$String$toInt(
-						A2(elm$core$String$dropLeft, i + 1, str));
-					if (_n1.$ === 'Nothing') {
-						return elm$core$Maybe$Nothing;
-					} else {
-						var port_ = _n1;
-						return elm$core$Maybe$Just(
-							A6(
-								elm$url$Url$Url,
-								protocol,
-								A2(elm$core$String$left, i, str),
-								port_,
-								path,
-								params,
-								frag));
-					}
-				} else {
-					return elm$core$Maybe$Nothing;
-				}
-			}
-		}
-	});
-var elm$url$Url$chompBeforeQuery = F4(
-	function (protocol, params, frag, str) {
-		if (elm$core$String$isEmpty(str)) {
-			return elm$core$Maybe$Nothing;
-		} else {
-			var _n0 = A2(elm$core$String$indexes, '/', str);
-			if (!_n0.b) {
-				return A5(elm$url$Url$chompBeforePath, protocol, '/', params, frag, str);
-			} else {
-				var i = _n0.a;
-				return A5(
-					elm$url$Url$chompBeforePath,
-					protocol,
-					A2(elm$core$String$dropLeft, i, str),
-					params,
-					frag,
-					A2(elm$core$String$left, i, str));
-			}
-		}
-	});
-var elm$url$Url$chompBeforeFragment = F3(
-	function (protocol, frag, str) {
-		if (elm$core$String$isEmpty(str)) {
-			return elm$core$Maybe$Nothing;
-		} else {
-			var _n0 = A2(elm$core$String$indexes, '?', str);
-			if (!_n0.b) {
-				return A4(elm$url$Url$chompBeforeQuery, protocol, elm$core$Maybe$Nothing, frag, str);
-			} else {
-				var i = _n0.a;
-				return A4(
-					elm$url$Url$chompBeforeQuery,
-					protocol,
-					elm$core$Maybe$Just(
-						A2(elm$core$String$dropLeft, i + 1, str)),
-					frag,
-					A2(elm$core$String$left, i, str));
-			}
-		}
-	});
-var elm$url$Url$chompAfterProtocol = F2(
-	function (protocol, str) {
-		if (elm$core$String$isEmpty(str)) {
-			return elm$core$Maybe$Nothing;
-		} else {
-			var _n0 = A2(elm$core$String$indexes, '#', str);
-			if (!_n0.b) {
-				return A3(elm$url$Url$chompBeforeFragment, protocol, elm$core$Maybe$Nothing, str);
-			} else {
-				var i = _n0.a;
-				return A3(
-					elm$url$Url$chompBeforeFragment,
-					protocol,
-					elm$core$Maybe$Just(
-						A2(elm$core$String$dropLeft, i + 1, str)),
-					A2(elm$core$String$left, i, str));
-			}
-		}
-	});
-var elm$url$Url$fromString = function (str) {
-	return A2(elm$core$String$startsWith, 'http://', str) ? A2(
-		elm$url$Url$chompAfterProtocol,
-		elm$url$Url$Http,
-		A2(elm$core$String$dropLeft, 7, str)) : (A2(elm$core$String$startsWith, 'https://', str) ? A2(
-		elm$url$Url$chompAfterProtocol,
-		elm$url$Url$Https,
-		A2(elm$core$String$dropLeft, 8, str)) : elm$core$Maybe$Nothing);
-};
-var elm$browser$Browser$Events$spawn = F3(
-	function (router, key, _n0) {
-		var node = _n0.a;
-		var name = _n0.b;
-		var actualNode = function () {
-			if (node.$ === 'Document') {
-				return _Browser_doc;
-			} else {
-				return _Browser_window;
-			}
-		}();
-		return A2(
-			elm$core$Task$map,
-			function (value) {
-				return _Utils_Tuple2(key, value);
-			},
-			A3(
-				_Browser_on,
-				actualNode,
-				name,
-				function (event) {
-					return A2(
-						elm$core$Platform$sendToSelf,
-						router,
-						A2(elm$browser$Browser$Events$Event, key, event));
-				}));
-	});
-var elm$core$Dict$fromList = function (assocs) {
-	return A3(
-		elm$core$List$foldl,
-		F2(
-			function (_n0, dict) {
-				var key = _n0.a;
-				var value = _n0.b;
-				return A3(elm$core$Dict$insert, key, value, dict);
-			}),
-		elm$core$Dict$empty,
-		assocs);
-};
-var elm$core$Dict$foldl = F3(
-	function (func, acc, dict) {
-		foldl:
-		while (true) {
-			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return acc;
-			} else {
-				var key = dict.b;
-				var value = dict.c;
-				var left = dict.d;
-				var right = dict.e;
-				var $temp$func = func,
-					$temp$acc = A3(
-					func,
-					key,
-					value,
-					A3(elm$core$Dict$foldl, func, acc, left)),
-					$temp$dict = right;
-				func = $temp$func;
-				acc = $temp$acc;
-				dict = $temp$dict;
-				continue foldl;
-			}
-		}
-	});
-var elm$core$Dict$merge = F6(
-	function (leftStep, bothStep, rightStep, leftDict, rightDict, initialResult) {
-		var stepState = F3(
-			function (rKey, rValue, _n0) {
-				stepState:
-				while (true) {
-					var list = _n0.a;
-					var result = _n0.b;
-					if (!list.b) {
-						return _Utils_Tuple2(
-							list,
-							A3(rightStep, rKey, rValue, result));
-					} else {
-						var _n2 = list.a;
-						var lKey = _n2.a;
-						var lValue = _n2.b;
-						var rest = list.b;
-						if (_Utils_cmp(lKey, rKey) < 0) {
-							var $temp$rKey = rKey,
-								$temp$rValue = rValue,
-								$temp$_n0 = _Utils_Tuple2(
-								rest,
-								A3(leftStep, lKey, lValue, result));
-							rKey = $temp$rKey;
-							rValue = $temp$rValue;
-							_n0 = $temp$_n0;
-							continue stepState;
-						} else {
-							if (_Utils_cmp(lKey, rKey) > 0) {
-								return _Utils_Tuple2(
-									list,
-									A3(rightStep, rKey, rValue, result));
-							} else {
-								return _Utils_Tuple2(
-									rest,
-									A4(bothStep, lKey, lValue, rValue, result));
-							}
-						}
-					}
-				}
-			});
-		var _n3 = A3(
-			elm$core$Dict$foldl,
-			stepState,
-			_Utils_Tuple2(
-				elm$core$Dict$toList(leftDict),
-				initialResult),
-			rightDict);
-		var leftovers = _n3.a;
-		var intermediateResult = _n3.b;
-		return A3(
-			elm$core$List$foldl,
-			F2(
-				function (_n4, result) {
-					var k = _n4.a;
-					var v = _n4.b;
-					return A3(leftStep, k, v, result);
-				}),
-			intermediateResult,
-			leftovers);
-	});
-var elm$core$Dict$union = F2(
-	function (t1, t2) {
-		return A3(elm$core$Dict$foldl, elm$core$Dict$insert, t2, t1);
-	});
-var elm$core$Process$kill = _Scheduler_kill;
-var elm$browser$Browser$Events$onEffects = F3(
-	function (router, subs, state) {
-		var stepRight = F3(
-			function (key, sub, _n6) {
-				var deads = _n6.a;
-				var lives = _n6.b;
-				var news = _n6.c;
-				return _Utils_Tuple3(
-					deads,
-					lives,
-					A2(
-						elm$core$List$cons,
-						A3(elm$browser$Browser$Events$spawn, router, key, sub),
-						news));
-			});
-		var stepLeft = F3(
-			function (_n4, pid, _n5) {
-				var deads = _n5.a;
-				var lives = _n5.b;
-				var news = _n5.c;
-				return _Utils_Tuple3(
-					A2(elm$core$List$cons, pid, deads),
-					lives,
-					news);
-			});
-		var stepBoth = F4(
-			function (key, pid, _n2, _n3) {
-				var deads = _n3.a;
-				var lives = _n3.b;
-				var news = _n3.c;
-				return _Utils_Tuple3(
-					deads,
-					A3(elm$core$Dict$insert, key, pid, lives),
-					news);
-			});
-		var newSubs = A2(elm$core$List$map, elm$browser$Browser$Events$addKey, subs);
-		var _n0 = A6(
-			elm$core$Dict$merge,
-			stepLeft,
-			stepBoth,
-			stepRight,
-			state.pids,
-			elm$core$Dict$fromList(newSubs),
-			_Utils_Tuple3(_List_Nil, elm$core$Dict$empty, _List_Nil));
-		var deadPids = _n0.a;
-		var livePids = _n0.b;
-		var makeNewPids = _n0.c;
-		return A2(
-			elm$core$Task$andThen,
-			function (pids) {
-				return elm$core$Task$succeed(
-					A2(
-						elm$browser$Browser$Events$State,
-						newSubs,
-						A2(
-							elm$core$Dict$union,
-							livePids,
-							elm$core$Dict$fromList(pids))));
-			},
-			A2(
-				elm$core$Task$andThen,
-				function (_n1) {
-					return elm$core$Task$sequence(makeNewPids);
-				},
-				elm$core$Task$sequence(
-					A2(elm$core$List$map, elm$core$Process$kill, deadPids))));
-	});
-var elm$browser$Browser$Events$onSelfMsg = F3(
-	function (router, _n0, state) {
-		var key = _n0.key;
-		var event = _n0.event;
-		var toMessage = function (_n2) {
-			var subKey = _n2.a;
-			var _n3 = _n2.b;
-			var node = _n3.a;
-			var name = _n3.b;
-			var decoder = _n3.c;
-			return _Utils_eq(subKey, key) ? A2(_Browser_decodeEvent, decoder, event) : elm$core$Maybe$Nothing;
-		};
-		var messages = A2(elm$core$List$filterMap, toMessage, state.subs);
-		return A2(
-			elm$core$Task$andThen,
-			function (_n1) {
-				return elm$core$Task$succeed(state);
-			},
-			elm$core$Task$sequence(
-				A2(
-					elm$core$List$map,
-					elm$core$Platform$sendToApp(router),
-					messages)));
-	});
-var elm$browser$Browser$Events$subMap = F2(
-	function (func, _n0) {
-		var node = _n0.a;
-		var name = _n0.b;
-		var decoder = _n0.c;
-		return A3(
-			elm$browser$Browser$Events$MySub,
-			node,
-			name,
-			A2(elm$json$Json$Decode$map, func, decoder));
-	});
-_Platform_effectManagers['Browser.Events'] = _Platform_createManager(elm$browser$Browser$Events$init, elm$browser$Browser$Events$onEffects, elm$browser$Browser$Events$onSelfMsg, 0, elm$browser$Browser$Events$subMap);
-var elm$browser$Browser$Events$subscription = _Platform_leaf('Browser.Events');
-var elm$browser$Browser$Events$on = F3(
-	function (node, name, decoder) {
-		return elm$browser$Browser$Events$subscription(
-			A3(elm$browser$Browser$Events$MySub, node, name, decoder));
-	});
-var elm$browser$Browser$Events$onKeyDown = A2(elm$browser$Browser$Events$on, elm$browser$Browser$Events$Document, 'keydown');
-var elm$json$Json$Decode$int = _Json_decodeInt;
-var elm$html$Html$Events$keyCode = A2(elm$json$Json$Decode$field, 'keyCode', elm$json$Json$Decode$int);
-var ContaSystemer$elm_menu$Menu$Internal$subscription = elm$browser$Browser$Events$onKeyDown(
-	A2(elm$json$Json$Decode$map, ContaSystemer$elm_menu$Menu$Internal$KeyDown, elm$html$Html$Events$keyCode));
-var elm$core$Platform$Sub$map = _Platform_map;
-var ContaSystemer$elm_menu$Menu$subscription = A2(elm$core$Platform$Sub$map, ContaSystemer$elm_menu$Menu$Msg, ContaSystemer$elm_menu$Menu$Internal$subscription);
+var elm$core$Platform$Sub$batch = _Platform_batch;
+var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$StationBoard$subscriptions = function (model) {
-	return A2(elm$core$Platform$Sub$map, author$project$StationBoard$SetAutoState, ContaSystemer$elm_menu$Menu$subscription);
+	return elm$core$Platform$Sub$none;
 };
-var ContaSystemer$elm_menu$Menu$Internal$reset = F2(
-	function (_n0, _n1) {
-		var separateSelections = _n0.separateSelections;
-		var key = _n1.key;
-		var mouse = _n1.mouse;
-		return separateSelections ? {key: elm$core$Maybe$Nothing, mouse: mouse} : ContaSystemer$elm_menu$Menu$Internal$empty;
-	});
-var ContaSystemer$elm_menu$Menu$reset = F2(
-	function (_n0, _n1) {
-		var config = _n0.a;
-		var state = _n1.a;
-		return ContaSystemer$elm_menu$Menu$State(
-			A2(ContaSystemer$elm_menu$Menu$Internal$reset, config, state));
-	});
-var elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return elm$core$Maybe$Just(x);
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
-};
-var ContaSystemer$elm_menu$Menu$Internal$resetToFirst = F3(
-	function (config, data, state) {
-		var _n0 = config;
-		var toId = _n0.toId;
-		var separateSelections = _n0.separateSelections;
-		var setFirstItem = F2(
-			function (datum, newState) {
-				return _Utils_update(
-					newState,
-					{
-						key: elm$core$Maybe$Just(
-							toId(datum))
-					});
-			});
-		var _n1 = elm$core$List$head(data);
-		if (_n1.$ === 'Nothing') {
-			return ContaSystemer$elm_menu$Menu$Internal$empty;
-		} else {
-			var datum = _n1.a;
-			return separateSelections ? A2(
-				setFirstItem,
-				datum,
-				A2(ContaSystemer$elm_menu$Menu$Internal$reset, config, state)) : A2(setFirstItem, datum, ContaSystemer$elm_menu$Menu$Internal$empty);
-		}
-	});
-var ContaSystemer$elm_menu$Menu$Internal$resetToFirstItem = F4(
-	function (config, data, howManyToShow, state) {
-		return A3(
-			ContaSystemer$elm_menu$Menu$Internal$resetToFirst,
-			config,
-			A2(elm$core$List$take, howManyToShow, data),
-			state);
-	});
-var ContaSystemer$elm_menu$Menu$resetToFirstItem = F4(
-	function (_n0, data, howManyToShow, _n1) {
-		var config = _n0.a;
-		var state = _n1.a;
-		return ContaSystemer$elm_menu$Menu$State(
-			A4(ContaSystemer$elm_menu$Menu$Internal$resetToFirstItem, config, data, howManyToShow, state));
-	});
-var ContaSystemer$elm_menu$Menu$Internal$resetToLastItem = F4(
-	function (config, data, howManyToShow, state) {
-		var reversedData = elm$core$List$reverse(
-			A2(elm$core$List$take, howManyToShow, data));
-		return A3(ContaSystemer$elm_menu$Menu$Internal$resetToFirst, config, reversedData, state);
-	});
-var ContaSystemer$elm_menu$Menu$resetToLastItem = F4(
-	function (_n0, data, howManyToShow, _n1) {
-		var config = _n0.a;
-		var state = _n1.a;
-		return ContaSystemer$elm_menu$Menu$State(
-			A4(ContaSystemer$elm_menu$Menu$Internal$resetToLastItem, config, data, howManyToShow, state));
-	});
-var ContaSystemer$elm_menu$Menu$Internal$WentTooHigh = {$: 'WentTooHigh'};
-var ContaSystemer$elm_menu$Menu$Internal$WentTooLow = {$: 'WentTooLow'};
-var ContaSystemer$elm_menu$Menu$Internal$getPrevious = F3(
-	function (id, selectedId, resultId) {
-		return _Utils_eq(selectedId, id) ? elm$core$Maybe$Just(id) : (_Utils_eq(
-			A2(elm$core$Maybe$withDefault, '', resultId),
-			id) ? elm$core$Maybe$Just(selectedId) : resultId);
-	});
-var ContaSystemer$elm_menu$Menu$Internal$getNextItemId = F2(
-	function (ids, selectedId) {
-		return A2(
-			elm$core$Maybe$withDefault,
-			selectedId,
-			A3(
-				elm$core$List$foldl,
-				ContaSystemer$elm_menu$Menu$Internal$getPrevious(selectedId),
-				elm$core$Maybe$Nothing,
-				ids));
-	});
-var ContaSystemer$elm_menu$Menu$Internal$getPreviousItemId = F2(
-	function (ids, selectedId) {
-		return A2(
-			elm$core$Maybe$withDefault,
-			selectedId,
-			A3(
-				elm$core$List$foldr,
-				ContaSystemer$elm_menu$Menu$Internal$getPrevious(selectedId),
-				elm$core$Maybe$Nothing,
-				ids));
-	});
-var ContaSystemer$elm_menu$Menu$Internal$navigateWithKey = F3(
-	function (code, ids, maybeId) {
-		switch (code) {
-			case 38:
-				return A2(
-					elm$core$Maybe$map,
-					ContaSystemer$elm_menu$Menu$Internal$getPreviousItemId(ids),
-					maybeId);
-			case 40:
-				return A2(
-					elm$core$Maybe$map,
-					ContaSystemer$elm_menu$Menu$Internal$getNextItemId(ids),
-					maybeId);
-			default:
-				return maybeId;
-		}
-	});
-var ContaSystemer$elm_menu$Menu$Internal$resetMouseStateWithId = F3(
-	function (separateSelections, id, state) {
-		return separateSelections ? {
-			key: state.key,
-			mouse: elm$core$Maybe$Just(id)
-		} : {
-			key: elm$core$Maybe$Just(id),
-			mouse: elm$core$Maybe$Just(id)
-		};
-	});
-var ContaSystemer$elm_menu$Menu$Internal$update = F5(
-	function (config, msg, howManyToShow, state, data) {
-		update:
-		while (true) {
-			switch (msg.$) {
-				case 'KeyDown':
-					var keyCode = msg.a;
-					var boundedList = A2(
-						elm$core$List$take,
-						howManyToShow,
-						A2(elm$core$List$map, config.toId, data));
-					var newKey = A3(ContaSystemer$elm_menu$Menu$Internal$navigateWithKey, keyCode, boundedList, state.key);
-					if (_Utils_eq(newKey, state.key) && (keyCode === 38)) {
-						var $temp$config = config,
-							$temp$msg = ContaSystemer$elm_menu$Menu$Internal$WentTooHigh,
-							$temp$howManyToShow = howManyToShow,
-							$temp$state = state,
-							$temp$data = data;
-						config = $temp$config;
-						msg = $temp$msg;
-						howManyToShow = $temp$howManyToShow;
-						state = $temp$state;
-						data = $temp$data;
-						continue update;
-					} else {
-						if (_Utils_eq(newKey, state.key) && (keyCode === 40)) {
-							var $temp$config = config,
-								$temp$msg = ContaSystemer$elm_menu$Menu$Internal$WentTooLow,
-								$temp$howManyToShow = howManyToShow,
-								$temp$state = state,
-								$temp$data = data;
-							config = $temp$config;
-							msg = $temp$msg;
-							howManyToShow = $temp$howManyToShow;
-							state = $temp$state;
-							data = $temp$data;
-							continue update;
-						} else {
-							if (config.separateSelections) {
-								return _Utils_Tuple2(
-									_Utils_update(
-										state,
-										{key: newKey}),
-									A2(config.onKeyDown, keyCode, newKey));
-							} else {
-								return _Utils_Tuple2(
-									{key: newKey, mouse: newKey},
-									A2(config.onKeyDown, keyCode, newKey));
-							}
-						}
-					}
-				case 'WentTooLow':
-					return _Utils_Tuple2(state, config.onTooLow);
-				case 'WentTooHigh':
-					return _Utils_Tuple2(state, config.onTooHigh);
-				case 'MouseEnter':
-					var id = msg.a;
-					return _Utils_Tuple2(
-						A3(ContaSystemer$elm_menu$Menu$Internal$resetMouseStateWithId, config.separateSelections, id, state),
-						config.onMouseEnter(id));
-				case 'MouseLeave':
-					var id = msg.a;
-					return _Utils_Tuple2(
-						A3(ContaSystemer$elm_menu$Menu$Internal$resetMouseStateWithId, config.separateSelections, id, state),
-						config.onMouseLeave(id));
-				case 'MouseClick':
-					var id = msg.a;
-					return _Utils_Tuple2(
-						A3(ContaSystemer$elm_menu$Menu$Internal$resetMouseStateWithId, config.separateSelections, id, state),
-						config.onMouseClick(id));
-				default:
-					return _Utils_Tuple2(state, elm$core$Maybe$Nothing);
-			}
-		}
-	});
-var ContaSystemer$elm_menu$Menu$update = F5(
-	function (_n0, _n1, howManyToShow, _n2, data) {
-		var config = _n0.a;
-		var msg = _n1.a;
-		var state = _n2.a;
-		var _n3 = A5(ContaSystemer$elm_menu$Menu$Internal$update, config, msg, howManyToShow, state, data);
-		var newState = _n3.a;
-		var maybeMsg = _n3.b;
-		return _Utils_Tuple2(
-			ContaSystemer$elm_menu$Menu$State(newState),
-			maybeMsg);
-	});
-var author$project$StationBoard$Reset = {$: 'Reset'};
-var elm_community$list_extra$List$Extra$uniqueHelp = F4(
-	function (f, existing, remaining, accumulator) {
-		uniqueHelp:
-		while (true) {
-			if (!remaining.b) {
-				return elm$core$List$reverse(accumulator);
-			} else {
-				var first = remaining.a;
-				var rest = remaining.b;
-				var computedFirst = f(first);
-				if (A2(elm$core$Set$member, computedFirst, existing)) {
-					var $temp$f = f,
-						$temp$existing = existing,
-						$temp$remaining = rest,
-						$temp$accumulator = accumulator;
-					f = $temp$f;
-					existing = $temp$existing;
-					remaining = $temp$remaining;
-					accumulator = $temp$accumulator;
-					continue uniqueHelp;
-				} else {
-					var $temp$f = f,
-						$temp$existing = A2(elm$core$Set$insert, computedFirst, existing),
-						$temp$remaining = rest,
-						$temp$accumulator = A2(elm$core$List$cons, first, accumulator);
-					f = $temp$f;
-					existing = $temp$existing;
-					remaining = $temp$remaining;
-					accumulator = $temp$accumulator;
-					continue uniqueHelp;
-				}
-			}
-		}
-	});
-var elm_community$list_extra$List$Extra$uniqueBy = F2(
-	function (f, list) {
-		return A4(elm_community$list_extra$List$Extra$uniqueHelp, f, elm$core$Set$empty, list, _List_Nil);
-	});
-var author$project$StationBoard$addStation = F2(
-	function (stations, maybeStation) {
-		if (maybeStation.$ === 'Just') {
-			var station = maybeStation.a;
-			return A2(
-				elm_community$list_extra$List$Extra$uniqueBy,
-				function (s) {
-					return author$project$OpenTransport$Station$stationName(s);
-				},
-				A2(elm$core$List$cons, station, stations));
-		} else {
-			return stations;
-		}
-	});
 var author$project$StationBoard$clear = function (_n0) {
-	var latest = _n0.latest;
+	var recent = _n0.recent;
 	var mode = _n0.mode;
-	var initial = author$project$StationBoard$initialModel(latest);
+	var initial = author$project$StationBoard$initialModel(recent);
 	return _Utils_update(
 		initial,
 		{mode: mode});
 };
-var author$project$OpenTransport$TransportApi$baseUrl = 'https://transport.opendata.ch/v1';
-var author$project$OpenTransport$Departure$Departure = function (a) {
-	return {$: 'Departure', a: a};
-};
-var author$project$OpenTransport$Departure$create = F3(
-	function (to, departure, stationName) {
-		return author$project$OpenTransport$Departure$Departure(
-			{departure: departure, name: stationName, to: to});
+var author$project$StationBoard$departuresFetched = F2(
+	function (model, result) {
+		if (result.$ === 'Ok') {
+			var departures = result.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{departures: departures, fetchStationTableFailedMessage: '', stations: _List_Nil}),
+				elm$core$Platform$Cmd$none);
+		} else {
+			var err = result.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{fetchStationTableFailedMessage: 'Error retrieving departures'}),
+				elm$core$Platform$Cmd$none);
+		}
 	});
-var elm$json$Json$Decode$map3 = _Json_map3;
-var author$project$OpenTransport$TransportApi$decodeDeparture = A4(
-	elm$json$Json$Decode$map3,
-	author$project$OpenTransport$Departure$create,
-	A2(elm$json$Json$Decode$field, 'to', elm$json$Json$Decode$string),
-	A2(
-		elm$json$Json$Decode$at,
-		_List_fromArray(
-			['stop', 'departure']),
-		elm$json$Json$Decode$string),
+var author$project$OpenTransport$TransportApi$baseUrl = 'https://transport.opendata.ch/v1';
+var author$project$OpenTransport$TransportApi$decodeStation = A2(
+	elm$json$Json$Decode$map,
+	author$project$OpenTransport$Station$create,
 	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string));
 var elm$json$Json$Decode$list = _Json_decodeList;
-var author$project$OpenTransport$TransportApi$decode = A2(
+var author$project$OpenTransport$TransportApi$decodeStations = A2(
 	elm$json$Json$Decode$map,
 	elm$core$Basics$identity,
 	A2(
 		elm$json$Json$Decode$field,
-		'stationboard',
-		elm$json$Json$Decode$list(author$project$OpenTransport$TransportApi$decodeDeparture)));
+		'stations',
+		elm$json$Json$Decode$list(author$project$OpenTransport$TransportApi$decodeStation)));
 var elm$http$Http$Internal$EmptyBody = {$: 'EmptyBody'};
 var elm$http$Http$emptyBody = elm$http$Http$Internal$EmptyBody;
 var elm$core$Dict$getMin = function (dict) {
@@ -13831,13 +12768,87 @@ var elm$http$Http$get = F2(
 				withCredentials: false
 			});
 	});
-var author$project$OpenTransport$TransportApi$getDepartures = function (stationName) {
-	var url = author$project$OpenTransport$TransportApi$baseUrl + ('/stationboard?station=' + (stationName + '&limit=20'));
-	return A2(elm$http$Http$get, url, author$project$OpenTransport$TransportApi$decode);
+var author$project$OpenTransport$TransportApi$searchStation = function (query) {
+	var url = author$project$OpenTransport$TransportApi$baseUrl + ('/locations?query=' + query);
+	return A2(elm$http$Http$get, url, author$project$OpenTransport$TransportApi$decodeStations);
 };
-var author$project$StationBoard$FetchStationTableSucceed = function (a) {
-	return {$: 'FetchStationTableSucceed', a: a};
+var author$project$StationBoard$FetchedStations = function (a) {
+	return {$: 'FetchedStations', a: a};
 };
+var elm$core$String$length = _String_length;
+var elm$core$Task$Perform = function (a) {
+	return {$: 'Perform', a: a};
+};
+var elm$core$Task$andThen = _Scheduler_andThen;
+var elm$core$Task$succeed = _Scheduler_succeed;
+var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
+var elm$core$Task$map = F2(
+	function (func, taskA) {
+		return A2(
+			elm$core$Task$andThen,
+			function (a) {
+				return elm$core$Task$succeed(
+					func(a));
+			},
+			taskA);
+	});
+var elm$core$Task$map2 = F3(
+	function (func, taskA, taskB) {
+		return A2(
+			elm$core$Task$andThen,
+			function (a) {
+				return A2(
+					elm$core$Task$andThen,
+					function (b) {
+						return elm$core$Task$succeed(
+							A2(func, a, b));
+					},
+					taskB);
+			},
+			taskA);
+	});
+var elm$core$Task$sequence = function (tasks) {
+	return A3(
+		elm$core$List$foldr,
+		elm$core$Task$map2(elm$core$List$cons),
+		elm$core$Task$succeed(_List_Nil),
+		tasks);
+};
+var elm$core$Platform$sendToApp = _Platform_sendToApp;
+var elm$core$Task$spawnCmd = F2(
+	function (router, _n0) {
+		var task = _n0.a;
+		return _Scheduler_spawn(
+			A2(
+				elm$core$Task$andThen,
+				elm$core$Platform$sendToApp(router),
+				task));
+	});
+var elm$core$Task$onEffects = F3(
+	function (router, commands, state) {
+		return A2(
+			elm$core$Task$map,
+			function (_n0) {
+				return _Utils_Tuple0;
+			},
+			elm$core$Task$sequence(
+				A2(
+					elm$core$List$map,
+					elm$core$Task$spawnCmd(router),
+					commands)));
+	});
+var elm$core$Task$onSelfMsg = F3(
+	function (_n0, _n1, _n2) {
+		return elm$core$Task$succeed(_Utils_Tuple0);
+	});
+var elm$core$Task$cmdMap = F2(
+	function (tagger, _n0) {
+		var task = _n0.a;
+		return elm$core$Task$Perform(
+			A2(elm$core$Task$map, tagger, task));
+	});
+_Platform_effectManagers['Task'] = _Platform_createManager(elm$core$Task$init, elm$core$Task$onEffects, elm$core$Task$onSelfMsg, elm$core$Task$cmdMap);
+var elm$core$Task$command = _Platform_leaf('Task');
 var elm$core$Task$onError = _Scheduler_onError;
 var elm$core$Task$attempt = F2(
 	function (resultToMessage, task) {
@@ -13868,79 +12879,20 @@ var elm$http$Http$send = F2(
 			resultToMessage,
 			elm$http$Http$toTask(request_));
 	});
-var author$project$StationBoard$getDepartures = function (maybeStation) {
-	if (maybeStation.$ === 'Just') {
-		var station = maybeStation.a;
-		return A2(
-			elm$http$Http$send,
-			author$project$StationBoard$FetchStationTableSucceed,
-			author$project$OpenTransport$TransportApi$getDepartures(
-				author$project$OpenTransport$Station$stationName(station)));
-	} else {
-		return elm$core$Platform$Cmd$none;
-	}
-};
-var author$project$OpenTransport$TransportApi$decodeStation = A2(
-	elm$json$Json$Decode$map,
-	author$project$OpenTransport$Station$create,
-	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string));
-var author$project$OpenTransport$TransportApi$decodeStations = A2(
-	elm$json$Json$Decode$map,
-	elm$core$Basics$identity,
-	A2(
-		elm$json$Json$Decode$field,
-		'stations',
-		elm$json$Json$Decode$list(author$project$OpenTransport$TransportApi$decodeStation)));
-var author$project$OpenTransport$TransportApi$searchStation = function (query) {
-	var url = author$project$OpenTransport$TransportApi$baseUrl + ('/locations?query=' + query);
-	return A2(elm$http$Http$get, url, author$project$OpenTransport$TransportApi$decodeStations);
-};
-var author$project$StationBoard$FetchStationSucceed = function (a) {
-	return {$: 'FetchStationSucceed', a: a};
-};
-var author$project$StationBoard$searchStations = function (query) {
+var author$project$StationBoard$fetchStations = function (query) {
 	return (elm$core$String$length(query) >= 3) ? A2(
 		elm$http$Http$send,
-		author$project$StationBoard$FetchStationSucceed,
+		author$project$StationBoard$FetchedStations,
 		author$project$OpenTransport$TransportApi$searchStation(query)) : elm$core$Platform$Cmd$none;
 };
-var author$project$OpenTransport$Station$empty = author$project$OpenTransport$Station$Station(
-	{name: ''});
-var author$project$StationBoard$selectStation = F4(
-	function (model, newRecent, selectedStation, id) {
-		return _Utils_update(
-			model,
-			{
-				autoState: ContaSystemer$elm_menu$Menu$empty,
-				latest: A2(elm$core$List$take, 5, newRecent),
-				query: author$project$OpenTransport$Station$stationName(
-					A2(
-						elm$core$Maybe$withDefault,
-						author$project$OpenTransport$Station$empty,
-						elm$core$List$head(
-							A2(
-								elm$core$List$filter,
-								function (station) {
-									return _Utils_eq(
-										author$project$OpenTransport$Station$stationName(station),
-										id);
-								},
-								model.stations)))),
-				selectedStation: selectedStation
-			});
+var author$project$StationBoard$searchStations = F2(
+	function (model, query) {
+		return _Utils_Tuple2(
+			_Utils_update(
+				model,
+				{query: query}),
+			author$project$StationBoard$fetchStations(query));
 	});
-var elm$json$Json$Encode$list = F2(
-	function (func, entries) {
-		return _Json_wrap(
-			A3(
-				elm$core$List$foldl,
-				_Json_addEntry(func),
-				_Json_emptyArray(_Utils_Tuple0),
-				entries));
-	});
-var author$project$StationBoard$setStorage = _Platform_outgoingPort(
-	'setStorage',
-	elm$json$Json$Encode$list(elm$json$Json$Encode$string));
 var author$project$StationBoard$toErrorMessage = function (error) {
 	switch (error.$) {
 		case 'BadUrl':
@@ -13959,242 +12911,464 @@ var author$project$StationBoard$toErrorMessage = function (error) {
 			return 'Bad Payload - unable to handle response from server';
 	}
 };
-var ContaSystemer$elm_menu$Menu$UpdateConfig = function (a) {
-	return {$: 'UpdateConfig', a: a};
-};
-var ContaSystemer$elm_menu$Menu$Internal$updateConfig = function (_n0) {
-	var toId = _n0.toId;
-	var onKeyDown = _n0.onKeyDown;
-	var onTooLow = _n0.onTooLow;
-	var onTooHigh = _n0.onTooHigh;
-	var onMouseEnter = _n0.onMouseEnter;
-	var onMouseLeave = _n0.onMouseLeave;
-	var onMouseClick = _n0.onMouseClick;
-	var separateSelections = _n0.separateSelections;
-	return {onKeyDown: onKeyDown, onMouseClick: onMouseClick, onMouseEnter: onMouseEnter, onMouseLeave: onMouseLeave, onTooHigh: onTooHigh, onTooLow: onTooLow, separateSelections: separateSelections, toId: toId};
-};
-var ContaSystemer$elm_menu$Menu$updateConfig = function (config) {
-	return ContaSystemer$elm_menu$Menu$UpdateConfig(
-		ContaSystemer$elm_menu$Menu$Internal$updateConfig(config));
-};
-var author$project$StationBoard$SelectStation = function (a) {
-	return {$: 'SelectStation', a: a};
-};
-var author$project$StationBoard$Wrap = function (a) {
-	return {$: 'Wrap', a: a};
-};
-var author$project$StationBoard$updateConfig = ContaSystemer$elm_menu$Menu$updateConfig(
-	{
-		onKeyDown: F2(
-			function (code, maybeId) {
-				return (code === 13) ? A2(elm$core$Maybe$map, author$project$StationBoard$SelectStation, maybeId) : elm$core$Maybe$Nothing;
-			}),
-		onMouseClick: function (id) {
-			return elm$core$Maybe$Just(
-				author$project$StationBoard$SelectStation(id));
-		},
-		onMouseEnter: function (_n0) {
-			return elm$core$Maybe$Nothing;
-		},
-		onMouseLeave: function (_n1) {
-			return elm$core$Maybe$Nothing;
-		},
-		onTooHigh: elm$core$Maybe$Just(
-			author$project$StationBoard$Wrap(true)),
-		onTooLow: elm$core$Maybe$Just(
-			author$project$StationBoard$Wrap(false)),
-		separateSelections: false,
-		toId: author$project$OpenTransport$Station$stationName
+var author$project$StationBoard$stationsFetched = F2(
+	function (model, result) {
+		if (result.$ === 'Ok') {
+			var stations = result.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{departures: _List_Nil, fetchStationTableFailedMessage: '', stations: stations}),
+				elm$core$Platform$Cmd$none);
+		} else {
+			var err = result.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{
+						fetchStationTableFailedMessage: author$project$StationBoard$toErrorMessage(err)
+					}),
+				elm$core$Platform$Cmd$none);
+		}
 	});
-var elm$core$Debug$log = _Debug_log;
-var author$project$StationBoard$update = F2(
-	function (msg, model) {
-		update:
+var elm_community$list_extra$List$Extra$uniqueHelp = F4(
+	function (f, existing, remaining, accumulator) {
+		uniqueHelp:
 		while (true) {
-			switch (msg.$) {
-				case 'NoOp':
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				case 'Clear':
-					return _Utils_Tuple2(
-						author$project$StationBoard$clear(model),
-						elm$core$Platform$Cmd$none);
-				case 'SearchStation':
-					var query = msg.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{query: query}),
-						author$project$StationBoard$searchStations(query));
-				case 'SetAutoState':
-					var autoMsg = msg.a;
-					var _n1 = A5(
-						ContaSystemer$elm_menu$Menu$update,
-						author$project$StationBoard$updateConfig,
-						autoMsg,
-						author$project$StationBoard$howManyToShow,
-						model.autoState,
-						A2(author$project$StationBoard$acceptableStations, model.query, model.stations));
-					var newState = _n1.a;
-					var maybeMsg = _n1.b;
-					var newModel = _Utils_update(
-						model,
-						{autoState: newState});
-					if (maybeMsg.$ === 'Nothing') {
-						return _Utils_Tuple2(newModel, elm$core$Platform$Cmd$none);
-					} else {
-						var updateMsg = maybeMsg.a;
-						var $temp$msg = updateMsg,
-							$temp$model = newModel;
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
-					}
-				case 'SelectStation':
-					var name = msg.a;
-					var selectedStation = elm$core$List$head(
-						A2(
-							elm$core$List$filter,
-							function (station) {
-								return _Utils_eq(
-									author$project$OpenTransport$Station$stationName(station),
-									name);
-							},
-							model.stations));
-					var newRecent = A2(author$project$StationBoard$addStation, model.latest, selectedStation);
-					return _Utils_Tuple2(
-						A4(author$project$StationBoard$selectStation, model, newRecent, selectedStation, name),
-						elm$core$Platform$Cmd$batch(
-							_List_fromArray(
-								[
-									author$project$StationBoard$getDepartures(selectedStation),
-									author$project$StationBoard$setStorage(
-									A2(elm$core$List$map, author$project$OpenTransport$Station$stationName, newRecent))
-								])));
-				case 'Reset':
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								autoState: A2(ContaSystemer$elm_menu$Menu$reset, author$project$StationBoard$updateConfig, model.autoState),
-								fetchStationTableFailedMessage: '',
-								selectedStation: elm$core$Maybe$Nothing
-							}),
-						elm$core$Platform$Cmd$none);
-				case 'Wrap':
-					var toTop = msg.a;
-					var _n3 = model.selectedStation;
-					if (_n3.$ === 'Just') {
-						var station = _n3.a;
-						var $temp$msg = author$project$StationBoard$Reset,
-							$temp$model = model;
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
-					} else {
-						return toTop ? _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									autoState: A4(
-										ContaSystemer$elm_menu$Menu$resetToLastItem,
-										author$project$StationBoard$updateConfig,
-										A2(author$project$StationBoard$acceptableStations, model.query, model.stations),
-										author$project$StationBoard$howManyToShow,
-										model.autoState),
-									selectedStation: elm$core$List$head(
-										elm$core$List$reverse(
-											A2(
-												elm$core$List$take,
-												author$project$StationBoard$howManyToShow,
-												A2(author$project$StationBoard$acceptableStations, model.query, model.stations))))
-								}),
-							elm$core$Platform$Cmd$none) : _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									autoState: A4(
-										ContaSystemer$elm_menu$Menu$resetToFirstItem,
-										author$project$StationBoard$updateConfig,
-										A2(author$project$StationBoard$acceptableStations, model.query, model.stations),
-										author$project$StationBoard$howManyToShow,
-										model.autoState),
-									selectedStation: elm$core$List$head(
-										A2(
-											elm$core$List$take,
-											author$project$StationBoard$howManyToShow,
-											A2(author$project$StationBoard$acceptableStations, model.query, model.stations)))
-								}),
-							elm$core$Platform$Cmd$none);
-					}
-				case 'FetchStationTableSucceed':
-					var result = msg.a;
-					if (result.$ === 'Ok') {
-						var departures = result.a;
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{departures: departures, fetchStationTableFailedMessage: ''}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						var err = result.a;
-						var _n5 = A2(elm$core$Debug$log, 'Error retrieving departures', err);
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{fetchStationTableFailedMessage: 'Error retrieving departures'}),
-							elm$core$Platform$Cmd$none);
-					}
-				case 'FetchStationSucceed':
-					var result = msg.a;
-					if (result.$ === 'Ok') {
-						var stations = result.a;
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									autoState: A4(
-										ContaSystemer$elm_menu$Menu$resetToFirstItem,
-										author$project$StationBoard$updateConfig,
-										A2(author$project$StationBoard$acceptableStations, model.query, model.stations),
-										author$project$StationBoard$howManyToShow,
-										model.autoState),
-									fetchStationTableFailedMessage: '',
-									stations: stations
-								}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						var err = result.a;
-						var _n7 = A2(elm$core$Debug$log, 'Error retrieving stations', err);
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									fetchStationTableFailedMessage: author$project$StationBoard$toErrorMessage(err)
-								}),
-							elm$core$Platform$Cmd$none);
-					}
-				case 'HandleEscape':
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{autoState: ContaSystemer$elm_menu$Menu$empty, departures: _List_Nil, query: '', selectedStation: elm$core$Maybe$Nothing, stations: _List_Nil}),
-						elm$core$Platform$Cmd$none);
-				case 'Switch':
-					var mode = msg.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{mode: mode}),
-						elm$core$Platform$Cmd$none);
-				default:
-					var station = msg.a;
-					return _Utils_Tuple2(
-						model,
-						author$project$StationBoard$getDepartures(
-							elm$core$Maybe$Just(station)));
+			if (!remaining.b) {
+				return elm$core$List$reverse(accumulator);
+			} else {
+				var first = remaining.a;
+				var rest = remaining.b;
+				var computedFirst = f(first);
+				if (A2(elm$core$Set$member, computedFirst, existing)) {
+					var $temp$f = f,
+						$temp$existing = existing,
+						$temp$remaining = rest,
+						$temp$accumulator = accumulator;
+					f = $temp$f;
+					existing = $temp$existing;
+					remaining = $temp$remaining;
+					accumulator = $temp$accumulator;
+					continue uniqueHelp;
+				} else {
+					var $temp$f = f,
+						$temp$existing = A2(elm$core$Set$insert, computedFirst, existing),
+						$temp$remaining = rest,
+						$temp$accumulator = A2(elm$core$List$cons, first, accumulator);
+					f = $temp$f;
+					existing = $temp$existing;
+					remaining = $temp$remaining;
+					accumulator = $temp$accumulator;
+					continue uniqueHelp;
+				}
 			}
 		}
 	});
+var elm_community$list_extra$List$Extra$uniqueBy = F2(
+	function (f, list) {
+		return A4(elm_community$list_extra$List$Extra$uniqueHelp, f, elm$core$Set$empty, list, _List_Nil);
+	});
+var author$project$StationBoard$addStation = F2(
+	function (stations, station) {
+		return A2(
+			elm_community$list_extra$List$Extra$uniqueBy,
+			function (s) {
+				return author$project$OpenTransport$Station$stationName(s);
+			},
+			A2(elm$core$List$cons, station, stations));
+	});
+var author$project$OpenTransport$Departure$Departure = function (a) {
+	return {$: 'Departure', a: a};
+};
+var author$project$OpenTransport$Departure$create = F3(
+	function (to, departure, stationName) {
+		return author$project$OpenTransport$Departure$Departure(
+			{departure: departure, name: stationName, to: to});
+	});
+var elm$json$Json$Decode$map3 = _Json_map3;
+var author$project$OpenTransport$TransportApi$decodeDeparture = A4(
+	elm$json$Json$Decode$map3,
+	author$project$OpenTransport$Departure$create,
+	A2(elm$json$Json$Decode$field, 'to', elm$json$Json$Decode$string),
+	A2(
+		elm$json$Json$Decode$at,
+		_List_fromArray(
+			['stop', 'departure']),
+		elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string));
+var author$project$OpenTransport$TransportApi$decode = A2(
+	elm$json$Json$Decode$map,
+	elm$core$Basics$identity,
+	A2(
+		elm$json$Json$Decode$field,
+		'stationboard',
+		elm$json$Json$Decode$list(author$project$OpenTransport$TransportApi$decodeDeparture)));
+var author$project$OpenTransport$TransportApi$getDepartures = function (stationName) {
+	var url = author$project$OpenTransport$TransportApi$baseUrl + ('/stationboard?station=' + (stationName + '&limit=20'));
+	return A2(elm$http$Http$get, url, author$project$OpenTransport$TransportApi$decode);
+};
+var author$project$StationBoard$FetchedDepartures = function (a) {
+	return {$: 'FetchedDepartures', a: a};
+};
+var author$project$StationBoard$getDepartures = function (maybeStation) {
+	if (maybeStation.$ === 'Just') {
+		var station = maybeStation.a;
+		return A2(
+			elm$http$Http$send,
+			author$project$StationBoard$FetchedDepartures,
+			author$project$OpenTransport$TransportApi$getDepartures(
+				author$project$OpenTransport$Station$stationName(station)));
+	} else {
+		return elm$core$Platform$Cmd$none;
+	}
+};
+var elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
+			} else {
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2(elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
+			}
+		}
+	});
+var elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return elm$core$List$reverse(
+			A3(elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _n0 = _Utils_Tuple2(n, list);
+			_n0$1:
+			while (true) {
+				_n0$5:
+				while (true) {
+					if (!_n0.b.b) {
+						return list;
+					} else {
+						if (_n0.b.b.b) {
+							switch (_n0.a) {
+								case 1:
+									break _n0$1;
+								case 2:
+									var _n2 = _n0.b;
+									var x = _n2.a;
+									var _n3 = _n2.b;
+									var y = _n3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_n0.b.b.b.b) {
+										var _n4 = _n0.b;
+										var x = _n4.a;
+										var _n5 = _n4.b;
+										var y = _n5.a;
+										var _n6 = _n5.b;
+										var z = _n6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _n0$5;
+									}
+								default:
+									if (_n0.b.b.b.b && _n0.b.b.b.b.b) {
+										var _n7 = _n0.b;
+										var x = _n7.a;
+										var _n8 = _n7.b;
+										var y = _n8.a;
+										var _n9 = _n8.b;
+										var z = _n9.a;
+										var _n10 = _n9.b;
+										var w = _n10.a;
+										var tl = _n10.b;
+										return (ctr > 1000) ? A2(
+											elm$core$List$cons,
+											x,
+											A2(
+												elm$core$List$cons,
+												y,
+												A2(
+													elm$core$List$cons,
+													z,
+													A2(
+														elm$core$List$cons,
+														w,
+														A2(elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											elm$core$List$cons,
+											x,
+											A2(
+												elm$core$List$cons,
+												y,
+												A2(
+													elm$core$List$cons,
+													z,
+													A2(
+														elm$core$List$cons,
+														w,
+														A3(elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _n0$5;
+									}
+							}
+						} else {
+							if (_n0.a === 1) {
+								break _n0$1;
+							} else {
+								break _n0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _n1 = _n0.b;
+			var x = _n1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var elm$core$List$take = F2(
+	function (n, list) {
+		return A3(elm$core$List$takeFast, 0, n, list);
+	});
+var author$project$StationBoard$selectStation = F3(
+	function (model, newRecent, selected) {
+		return _Utils_update(
+			model,
+			{
+				query: author$project$OpenTransport$Station$stationName(selected),
+				recent: A2(elm$core$List$take, 5, newRecent),
+				selectedStation: elm$core$Maybe$Just(selected)
+			});
+	});
+var elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
+var author$project$StationBoard$setStorage = _Platform_outgoingPort(
+	'setStorage',
+	elm$json$Json$Encode$list(elm$json$Json$Encode$string));
+var author$project$StationBoard$updateSelectStation = F2(
+	function (model, selected) {
+		var newRecent = function () {
+			var _n0 = model.mode;
+			if (_n0.$ === 'Search') {
+				return A2(author$project$StationBoard$addStation, model.recent, selected);
+			} else {
+				return model.recent;
+			}
+		}();
+		return _Utils_Tuple2(
+			A3(author$project$StationBoard$selectStation, model, newRecent, selected),
+			elm$core$Platform$Cmd$batch(
+				_List_fromArray(
+					[
+						author$project$StationBoard$getDepartures(
+						elm$core$Maybe$Just(selected)),
+						author$project$StationBoard$setStorage(
+						A2(elm$core$List$map, author$project$OpenTransport$Station$stationName, newRecent))
+					])));
+	});
+var author$project$StationBoard$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'Clear':
+				return _Utils_Tuple2(
+					author$project$StationBoard$clear(model),
+					elm$core$Platform$Cmd$none);
+			case 'SearchStation':
+				var query = msg.a;
+				return A2(author$project$StationBoard$searchStations, model, query);
+			case 'SelectStation':
+				var station = msg.a;
+				return A2(author$project$StationBoard$updateSelectStation, model, station);
+			case 'FetchedDepartures':
+				var result = msg.a;
+				return A2(author$project$StationBoard$departuresFetched, model, result);
+			case 'FetchedStations':
+				var result = msg.a;
+				return A2(author$project$StationBoard$stationsFetched, model, result);
+			default:
+				var mode = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{mode: mode}),
+					elm$core$Platform$Cmd$none);
+		}
+	});
+var elm$browser$Browser$External = function (a) {
+	return {$: 'External', a: a};
+};
+var elm$browser$Browser$Internal = function (a) {
+	return {$: 'Internal', a: a};
+};
+var elm$browser$Browser$Dom$NotFound = function (a) {
+	return {$: 'NotFound', a: a};
+};
+var elm$core$Basics$never = function (_n0) {
+	never:
+	while (true) {
+		var nvr = _n0.a;
+		var $temp$_n0 = nvr;
+		_n0 = $temp$_n0;
+		continue never;
+	}
+};
+var elm$core$Task$perform = F2(
+	function (toMessage, task) {
+		return elm$core$Task$command(
+			elm$core$Task$Perform(
+				A2(elm$core$Task$map, toMessage, task)));
+	});
+var elm$core$String$slice = _String_slice;
+var elm$core$String$dropLeft = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(
+			elm$core$String$slice,
+			n,
+			elm$core$String$length(string),
+			string);
+	});
+var elm$core$String$startsWith = _String_startsWith;
+var elm$url$Url$Http = {$: 'Http'};
+var elm$url$Url$Https = {$: 'Https'};
+var elm$core$String$indexes = _String_indexes;
+var elm$core$String$left = F2(
+	function (n, string) {
+		return (n < 1) ? '' : A3(elm$core$String$slice, 0, n, string);
+	});
+var elm$core$String$contains = _String_contains;
+var elm$core$String$toInt = _String_toInt;
+var elm$url$Url$Url = F6(
+	function (protocol, host, port_, path, query, fragment) {
+		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
+	});
+var elm$url$Url$chompBeforePath = F5(
+	function (protocol, path, params, frag, str) {
+		if (elm$core$String$isEmpty(str) || A2(elm$core$String$contains, '@', str)) {
+			return elm$core$Maybe$Nothing;
+		} else {
+			var _n0 = A2(elm$core$String$indexes, ':', str);
+			if (!_n0.b) {
+				return elm$core$Maybe$Just(
+					A6(elm$url$Url$Url, protocol, str, elm$core$Maybe$Nothing, path, params, frag));
+			} else {
+				if (!_n0.b.b) {
+					var i = _n0.a;
+					var _n1 = elm$core$String$toInt(
+						A2(elm$core$String$dropLeft, i + 1, str));
+					if (_n1.$ === 'Nothing') {
+						return elm$core$Maybe$Nothing;
+					} else {
+						var port_ = _n1;
+						return elm$core$Maybe$Just(
+							A6(
+								elm$url$Url$Url,
+								protocol,
+								A2(elm$core$String$left, i, str),
+								port_,
+								path,
+								params,
+								frag));
+					}
+				} else {
+					return elm$core$Maybe$Nothing;
+				}
+			}
+		}
+	});
+var elm$url$Url$chompBeforeQuery = F4(
+	function (protocol, params, frag, str) {
+		if (elm$core$String$isEmpty(str)) {
+			return elm$core$Maybe$Nothing;
+		} else {
+			var _n0 = A2(elm$core$String$indexes, '/', str);
+			if (!_n0.b) {
+				return A5(elm$url$Url$chompBeforePath, protocol, '/', params, frag, str);
+			} else {
+				var i = _n0.a;
+				return A5(
+					elm$url$Url$chompBeforePath,
+					protocol,
+					A2(elm$core$String$dropLeft, i, str),
+					params,
+					frag,
+					A2(elm$core$String$left, i, str));
+			}
+		}
+	});
+var elm$url$Url$chompBeforeFragment = F3(
+	function (protocol, frag, str) {
+		if (elm$core$String$isEmpty(str)) {
+			return elm$core$Maybe$Nothing;
+		} else {
+			var _n0 = A2(elm$core$String$indexes, '?', str);
+			if (!_n0.b) {
+				return A4(elm$url$Url$chompBeforeQuery, protocol, elm$core$Maybe$Nothing, frag, str);
+			} else {
+				var i = _n0.a;
+				return A4(
+					elm$url$Url$chompBeforeQuery,
+					protocol,
+					elm$core$Maybe$Just(
+						A2(elm$core$String$dropLeft, i + 1, str)),
+					frag,
+					A2(elm$core$String$left, i, str));
+			}
+		}
+	});
+var elm$url$Url$chompAfterProtocol = F2(
+	function (protocol, str) {
+		if (elm$core$String$isEmpty(str)) {
+			return elm$core$Maybe$Nothing;
+		} else {
+			var _n0 = A2(elm$core$String$indexes, '#', str);
+			if (!_n0.b) {
+				return A3(elm$url$Url$chompBeforeFragment, protocol, elm$core$Maybe$Nothing, str);
+			} else {
+				var i = _n0.a;
+				return A3(
+					elm$url$Url$chompBeforeFragment,
+					protocol,
+					elm$core$Maybe$Just(
+						A2(elm$core$String$dropLeft, i + 1, str)),
+					A2(elm$core$String$left, i, str));
+			}
+		}
+	});
+var elm$url$Url$fromString = function (str) {
+	return A2(elm$core$String$startsWith, 'http://', str) ? A2(
+		elm$url$Url$chompAfterProtocol,
+		elm$url$Url$Http,
+		A2(elm$core$String$dropLeft, 7, str)) : (A2(elm$core$String$startsWith, 'https://', str) ? A2(
+		elm$url$Url$chompAfterProtocol,
+		elm$url$Url$Https,
+		A2(elm$core$String$dropLeft, 8, str)) : elm$core$Maybe$Nothing);
+};
 var elm$browser$Browser$document = _Browser_document;
 var author$project$Main$main = elm$browser$Browser$document(
 	{init: author$project$StationBoard$init, subscriptions: author$project$StationBoard$subscriptions, update: author$project$StationBoard$update, view: author$project$StationBoard$document});
