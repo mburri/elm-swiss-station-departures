@@ -1,6 +1,5 @@
 {
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveTimeout": 250,
-    "elm.compiler": "./node_modules/.bin/elm",
-    "elm.formatCommand": "./node_modules/.bin/elm-format",
+  "editor.formatOnSave": true,
+  "elm.formatCommand": "node_modules/.bin/elm-format",
+  "elm.compiler": "node_modules/.bin/elm"
 }
