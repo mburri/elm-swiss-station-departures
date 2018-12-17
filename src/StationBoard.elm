@@ -308,7 +308,7 @@ viewStation station =
     station
         |> Station.stationName
         |> Element.text
-        |> Element.el [ Element.padding 5 ]
+        |> Element.el [ Element.padding 5, Events.onClick (SelectStation station) ]
 
 
 viewButtons : a -> Element Msg
@@ -378,20 +378,20 @@ viewDepartures departures =
         Element.none
 
     else
-        Element.table []
+        Element.table [ Element.padding 15 ]
             { data = departures
             , columns =
                 [ { header = Element.text "Zeit"
                   , width = Element.fill
-                  , view = \departure -> Element.text (Departure.time departure)
+                  , view = \departure -> Element.el [ Element.padding 5, Element.width (Element.fillPortion 3) ] (Element.text (Departure.time departure))
                   }
                 , { header = Element.none
                   , width = Element.fill
-                  , view = \departure -> Element.text (Departure.departureName departure)
+                  , view = \departure -> Element.el [ Element.padding 5, Element.width (Element.fillPortion 1) ] (Element.text (Departure.departureName departure))
                   }
                 , { header = Element.text "Nach"
                   , width = Element.fill
-                  , view = \departure -> Element.text (Departure.destination departure)
+                  , view = \departure -> Element.el [ Element.padding 5, Element.width (Element.fillPortion 3) ] (Element.text (Departure.destination departure))
                   }
                 ]
             }
