@@ -10561,7 +10561,9 @@ var author$project$StationBoard$viewStation = function (station) {
 		mdgriffith$elm_ui$Element$el,
 		_List_fromArray(
 			[
-				mdgriffith$elm_ui$Element$padding(5)
+				mdgriffith$elm_ui$Element$padding(5),
+				mdgriffith$elm_ui$Element$Events$onClick(
+				author$project$StationBoard$SelectStation(station))
 			]),
 		mdgriffith$elm_ui$Element$text(
 			author$project$OpenTransport$Station$stationName(station)));
@@ -11518,6 +11520,7 @@ var author$project$OpenTransport$Departure$time = function (_n0) {
 	var departure = _n0.a.departure;
 	return departure;
 };
+var mdgriffith$elm_ui$Element$fillPortion = mdgriffith$elm_ui$Internal$Model$Fill;
 var mdgriffith$elm_ui$Element$InternalColumn = function (a) {
 	return {$: 'InternalColumn', a: a};
 };
@@ -11749,31 +11752,58 @@ var mdgriffith$elm_ui$Element$table = F2(
 var author$project$StationBoard$viewDepartures = function (departures) {
 	return elm$core$List$isEmpty(departures) ? mdgriffith$elm_ui$Element$none : A2(
 		mdgriffith$elm_ui$Element$table,
-		_List_Nil,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$padding(15)
+			]),
 		{
 			columns: _List_fromArray(
 				[
 					{
 					header: mdgriffith$elm_ui$Element$text('Zeit'),
 					view: function (departure) {
-						return mdgriffith$elm_ui$Element$text(
-							author$project$OpenTransport$Departure$time(departure));
+						return A2(
+							mdgriffith$elm_ui$Element$el,
+							_List_fromArray(
+								[
+									mdgriffith$elm_ui$Element$padding(5),
+									mdgriffith$elm_ui$Element$width(
+									mdgriffith$elm_ui$Element$fillPortion(3))
+								]),
+							mdgriffith$elm_ui$Element$text(
+								author$project$OpenTransport$Departure$time(departure)));
 					},
 					width: mdgriffith$elm_ui$Element$fill
 				},
 					{
 					header: mdgriffith$elm_ui$Element$none,
 					view: function (departure) {
-						return mdgriffith$elm_ui$Element$text(
-							author$project$OpenTransport$Departure$departureName(departure));
+						return A2(
+							mdgriffith$elm_ui$Element$el,
+							_List_fromArray(
+								[
+									mdgriffith$elm_ui$Element$padding(5),
+									mdgriffith$elm_ui$Element$width(
+									mdgriffith$elm_ui$Element$fillPortion(1))
+								]),
+							mdgriffith$elm_ui$Element$text(
+								author$project$OpenTransport$Departure$departureName(departure)));
 					},
 					width: mdgriffith$elm_ui$Element$fill
 				},
 					{
 					header: mdgriffith$elm_ui$Element$text('Nach'),
 					view: function (departure) {
-						return mdgriffith$elm_ui$Element$text(
-							author$project$OpenTransport$Departure$destination(departure));
+						return A2(
+							mdgriffith$elm_ui$Element$el,
+							_List_fromArray(
+								[
+									mdgriffith$elm_ui$Element$padding(5),
+									mdgriffith$elm_ui$Element$width(
+									mdgriffith$elm_ui$Element$fillPortion(3))
+								]),
+							mdgriffith$elm_ui$Element$text(
+								author$project$OpenTransport$Departure$destination(departure)));
 					},
 					width: mdgriffith$elm_ui$Element$fill
 				}
