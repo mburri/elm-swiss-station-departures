@@ -1,27 +1,40 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <meta charset="utf-8" />
-    <title>elm-swiss-station-departures</title>
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Search departures using the OpenData Transport API"
+    />
+    <link rel="manifest" href="/public/manifest.json" />
+    <!-- Theme color, also see manifest.json-->
+    <meta name="theme-color" content="#2F3BA2" />
 
-<body>
+    <!-- iOs meta tags and icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Departure Board PWA" />
+    <link rel="apple-touch-icon" href="/images/icons/icon-152x152.png" />
+
+    <title>Departure Board</title>
+  </head>
+
+  <body>
     <div id="elm"></div>
     <script src="app.js"></script>
     <script>
-        var storageKey = 'recent-searches';
-        var storedData = localStorage.getItem(storageKey)
-        var recentStations = storedData ? JSON.parse(storedData) : [];
-        var app = Elm.Main.init({
-            node: document.getElementById('elm'),
-            flags: recentStations
-        });
+      var storageKey = "recent-searches";
+      var storedData = localStorage.getItem(storageKey);
+      var recentStations = storedData ? JSON.parse(storedData) : [];
+      var app = Elm.Main.init({
+        node: document.getElementById("elm"),
+        flags: recentStations
+      });
 
-        app.ports.setStorage.subscribe(function (recentStations) {
-            localStorage.setItem(storageKey, JSON.stringify(recentStations));
-        });
+      app.ports.setStorage.subscribe(function(recentStations) {
+        localStorage.setItem(storageKey, JSON.stringify(recentStations));
+      });
     </script>
-</body>
-
+  </body>
 </html>
