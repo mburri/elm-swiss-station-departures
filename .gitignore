@@ -2,5 +2,6 @@ elm-stuff/
 node_modules/
 dist/
 build/
+bin/
 npm-debug.log
 
