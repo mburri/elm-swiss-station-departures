@@ -1,27 +1,37 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
 
-<head>
-    <meta charset="utf-8" />
-    <title>elm-swiss-station-departures</title>
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Search departures using the OpenData Transport API"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <!-- Theme color, also see manifest.json-->
+    <meta name="theme-color" content="#2F3BA2" />
 
-<body>
-    <div id="elm"></div>
-    <script src="app.js"></script>
-    <script>
-        var storageKey = 'recent-searches';
-        var storedData = localStorage.getItem(storageKey)
-        var recentStations = storedData ? JSON.parse(storedData) : [];
-        var app = Elm.Main.init({
-            node: document.getElementById('elm'),
-            flags: recentStations
-        });
+    <!-- iOs meta tags and icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Departure Board PWA" />
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
 
-        app.ports.setStorage.subscribe(function (recentStations) {
-            localStorage.setItem(storageKey, JSON.stringify(recentStations));
-        });
-    </script>
-</body>
+    <link rel="stylesheet" href="/main.css" />
 
+    <title>Departure Board</title>
+  </head>
+  <body>
+    <main id="app">
+      <h1>Loading...</h1>
+    </main>
+  </body>
+  <script type="text/javascript" src="/main.min.js"></script>
+  <script type="text/javascript" src="/boot.js"></script>
+  <script>
+    if (navigator.serviceWorker && !navigator.serviceWorker.controller) {
+      navigator.serviceWorker.register("/service-worker.js");
+    }
+  </script>
 </html>
