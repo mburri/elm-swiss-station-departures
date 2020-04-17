@@ -11,8 +11,7 @@ A simple app to look up the next departures from a given station
 Clone this repo.
 
 ```
-npm install
-npm run dev
+make watch
 ```
 
-Compiles and runs the app on http://localhost:8000
+Compiles and runs the app on http://localhost:8080
