@@ -2,19 +2,16 @@ port module StationBoard exposing (Model, Msg, document, init, subscriptions, up
 
 import Browser
 import Element exposing (Element)
-import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html
 import Http
-import Json.Decode as Json exposing (field)
 import List.Extra
 import OpenTransport.Departure as Departure exposing (Departure, time)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
-import Task
 
 
 
@@ -75,20 +72,11 @@ type Msg
     | FetchedDepartures (Result Http.Error (List Departure))
     | FetchedStations (Result Http.Error (List Station))
     | Switch Mode
-    | Clear
-
-
-howManyToShow : number
-howManyToShow =
-    5
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Clear ->
-            ( clear model, Cmd.none )
-
         SearchStation query ->
             searchStations model query
 
@@ -105,18 +93,13 @@ update msg model =
             ( { model | mode = mode }, Cmd.none )
 
 
-clear : Model -> Model
-clear { recent, mode } =
-    let
-        initial =
-            initialModel recent
-    in
-    { initial | mode = mode }
-
-
 searchStations : Model -> String -> ( Model, Cmd Msg )
 searchStations model query =
-    ( { model | query = query }, fetchStations query )
+    if String.length query == 0 then
+        ( initialModel model.recent, Cmd.none )
+
+    else
+        ( { model | query = query }, fetchStations query )
 
 
 updateSelectStation : Model -> Station -> ( Model, Cmd Msg )
@@ -233,20 +216,6 @@ view model =
 
 viewStyled : Model -> Element Msg
 viewStyled model =
-    let
-        options =
-            { preventDefault = True, stopPropagation = False }
-
-        -- dec =
-        --     -- TODO: naming?
-        --     Json.map
-        --         (\code ->
-        --             if code == 27 then
-        --                 Ok HandleEscape
-        --             else
-        --                 Err "not handling that key"
-        --         )
-    in
     Element.column
         [ Element.centerX
         , Element.padding 50
@@ -304,6 +273,7 @@ viewStations model =
                     ]
 
 
+viewStation : Station -> Element Msg
 viewStation station =
     station
         |> Station.stationName
