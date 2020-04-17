@@ -1,11 +1,14 @@
-# dist: xenial (the default) or newer required
-language: node_js # Node 10 LTS or later required
-addons:
-  chrome: stable # make Chrome available
-before_install:
-  - npm install -g @lhci/cli@0.3.x # install LHCI
+language: ruby
+
+install:
+  - rm -rf ~/.nvm
+  - git clone https://github.com/creationix/nvm.git ~/.nvm
+  - source ~/.nvm/nvm.sh
+  - nvm install lts/*
+
+os:
+  - linux
+  - osx
+
 script:
-  - npm run build # build your site
-  - npm test # run your normal tests
-after_success:
-  - lhci autorun --upload.target=temporary-public-storage # run lighthouse CI against your static site
+  - make prod
