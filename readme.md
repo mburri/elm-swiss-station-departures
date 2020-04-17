@@ -9,9 +9,10 @@ A simple app to look up the next departures from a given station
 ## Installation and running
 
 Clone this repo.
+You'll need node/ npm installed - but the actual build tool is make...
 
 ```
 make watch
 ```
 
-Compiles and runs the app on http://localhost:8080
+Compiles and runs the app on http://localhost:8000
