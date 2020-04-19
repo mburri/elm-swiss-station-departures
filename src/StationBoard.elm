@@ -2,6 +2,7 @@ port module StationBoard exposing (Model, Msg, document, init, subscriptions, up
 
 import Browser
 import Element exposing (Element)
+import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
@@ -147,7 +148,7 @@ getDepartures maybeStation =
 
 
 
--- HTTP Handling
+-- HTTP
 
 
 fetchStations : String -> Cmd Msg
@@ -196,7 +197,7 @@ stationsFetched model result =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -206,7 +207,9 @@ subscriptions model =
 
 document : Model -> Browser.Document Msg
 document model =
-    Browser.Document "Swiss Departures" [ view model ]
+    Browser.Document
+        "Departures"
+        [ view model ]
 
 
 view : Model -> Html.Html Msg
@@ -278,7 +281,12 @@ viewStation station =
     station
         |> Station.stationName
         |> Element.text
-        |> Element.el [ Element.padding 5, Events.onClick (SelectStation station) ]
+        |> Element.el
+            [ Element.padding 5
+            , Element.width Element.fill
+            , Element.mouseOver [ Background.color grey ]
+            , Events.onClick (SelectStation station)
+            ]
 
 
 viewButtons : a -> Element Msg
