@@ -352,10 +352,31 @@ viewErrors fetchStationTableFailedMessage =
 
 viewDepartures : List Departure -> Element msg
 viewDepartures departures =
-    if List.isEmpty departures then
-        Element.none
+    case departures of
+        [] ->
+            Element.none
 
-    else
+        xs ->
+            Element.column
+                [ Element.width Element.fill ]
+                (List.map viewDeparture xs)
+
+
+viewDeparture : Departure -> Element msg
+viewDeparture departure =
+    Element.row
+        [ Element.width Element.fill
+        , Element.padding 5
+        , Element.mouseOver [ Background.color grey ]
+        ]
+        [ Element.el [ Element.width (Element.fillPortion 3) ] (Element.text (Departure.time departure))
+        , Element.el [ Element.width (Element.fillPortion 1) ] (Element.text (Departure.departureName departure))
+        , Element.el [ Element.width (Element.fillPortion 3) ] (Element.text (Departure.destination departure))
+        ]
+
+
+
+{--
         Element.table [ Element.padding 15 ]
             { data = departures
             , columns =
@@ -373,6 +394,8 @@ viewDepartures departures =
                   }
                 ]
             }
+
+--}
 
 
 toErrorMessage : Http.Error -> String
