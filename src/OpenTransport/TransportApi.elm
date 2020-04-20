@@ -4,6 +4,7 @@ module OpenTransport.TransportApi exposing
     )
 
 import Http
+import Iso8601
 import Json.Decode as Json exposing (field)
 import OpenTransport.Departure as Departure exposing (Departure)
 import OpenTransport.Station as Station exposing (Station)
@@ -64,5 +65,5 @@ decodeDeparture : Json.Decoder Departure
 decodeDeparture =
     Json.map3 Departure.create
         (field "to" Json.string)
-        (Json.at [ "stop", "departure" ] Json.string)
+        (Json.at [ "stop", "departure" ] Iso8601.decoder)
         (field "name" Json.string)

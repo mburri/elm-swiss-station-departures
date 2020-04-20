@@ -14,6 +14,8 @@ import OpenTransport.Departure exposing (Departure, viewDepartures)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
 import Style.Color exposing (grey)
+import Task
+import Time
 
 
 
@@ -40,6 +42,7 @@ type alias Model =
     , departures : List Departure
     , fetchStationTableFailedMessage : String
     , mode : Mode
+    , timeZone : Time.Zone
     }
 
 
@@ -52,6 +55,7 @@ initialModel recentStations =
     , departures = []
     , fetchStationTableFailedMessage = ""
     , mode = Search
+    , timeZone = Time.utc
     }
 
 
@@ -61,7 +65,7 @@ init recentStations =
         recent =
             List.map Station.create recentStations
     in
-    ( initialModel recent, Cmd.none )
+    ( initialModel recent, Task.perform GotTimeZone Time.here )
 
 
 
@@ -74,6 +78,7 @@ type Msg
     | FetchedDepartures (Result Http.Error (List Departure))
     | FetchedStations (Result Http.Error (List Station))
     | Switch Mode
+    | GotTimeZone Time.Zone
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -90,6 +95,9 @@ update msg model =
 
         FetchedStations result ->
             stationsFetched model result
+
+        GotTimeZone zone ->
+            ( { model | timeZone = zone }, Cmd.none )
 
         Switch mode ->
             ( { model | mode = mode }, Cmd.none )
@@ -227,7 +235,7 @@ viewStyled model =
         ]
         (viewHeader model
             ++ viewBody model
-            ++ [ viewDepartures model.departures ]
+            ++ [ viewDepartures model.timeZone model.departures ]
         )
 
 
