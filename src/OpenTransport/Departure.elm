@@ -1,10 +1,12 @@
 module OpenTransport.Departure exposing
     ( Departure
     , create
-    , departureName
-    , destination
-    , time
+    , viewDepartures
     )
+
+import Element exposing (Element)
+import Element.Background as Background
+import Style.Color exposing (grey)
 
 
 type Departure
@@ -24,17 +26,35 @@ create to departure stationName =
         }
 
 
-destination : Departure -> String
-destination (Departure { to }) =
-    to
+
+-- VIEW
 
 
-departureName : Departure -> String
-departureName (Departure { name }) =
-    name
+viewDepartures : List Departure -> Element msg
+viewDepartures departures =
+    case departures of
+        [] ->
+            Element.none
+
+        xs ->
+            Element.column
+                [ Element.width Element.fill ]
+                (List.map viewDeparture xs)
 
 
-time : Departure -> String
-time (Departure { departure }) =
-    {--todo: format date --}
-    departure
+viewDeparture : Departure -> Element msg
+viewDeparture (Departure { departure, name, to }) =
+    Element.row
+        [ Element.width Element.fill
+        , Element.padding 5
+        , Element.mouseOver [ Background.color grey ]
+        ]
+        [ Element.el [ Element.width (Element.fillPortion 3) ] (viewTime departure)
+        , Element.el [ Element.width (Element.fillPortion 1) ] (Element.text name)
+        , Element.el [ Element.width (Element.fillPortion 3) ] (Element.text to)
+        ]
+
+
+viewTime : String -> Element msg
+viewTime departureTime =
+    Element.text departureTime

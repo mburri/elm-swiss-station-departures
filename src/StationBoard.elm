@@ -10,9 +10,10 @@ import Element.Input as Input
 import Html
 import Http
 import List.Extra
-import OpenTransport.Departure as Departure exposing (Departure, time)
+import OpenTransport.Departure exposing (Departure, viewDepartures)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
+import Style.Color exposing (grey)
 
 
 
@@ -337,7 +338,11 @@ viewRecentlySelected recents =
 
 viewRecent : List Station -> Station -> Element Msg
 viewRecent recents station =
-    Element.row [ Events.onClick (SelectStation station) ] [ station |> Station.stationName |> Element.text ]
+    Element.row [ Events.onClick (SelectStation station) ]
+        [ station
+            |> Station.stationName
+            |> Element.text
+        ]
 
 
 viewErrors : String -> Element Msg
@@ -348,54 +353,6 @@ viewErrors fetchStationTableFailedMessage =
     else
         Element.row []
             [ Element.text fetchStationTableFailedMessage ]
-
-
-viewDepartures : List Departure -> Element msg
-viewDepartures departures =
-    case departures of
-        [] ->
-            Element.none
-
-        xs ->
-            Element.column
-                [ Element.width Element.fill ]
-                (List.map viewDeparture xs)
-
-
-viewDeparture : Departure -> Element msg
-viewDeparture departure =
-    Element.row
-        [ Element.width Element.fill
-        , Element.padding 5
-        , Element.mouseOver [ Background.color grey ]
-        ]
-        [ Element.el [ Element.width (Element.fillPortion 3) ] (Element.text (Departure.time departure))
-        , Element.el [ Element.width (Element.fillPortion 1) ] (Element.text (Departure.departureName departure))
-        , Element.el [ Element.width (Element.fillPortion 3) ] (Element.text (Departure.destination departure))
-        ]
-
-
-
-{--
-        Element.table [ Element.padding 15 ]
-            { data = departures
-            , columns =
-                [ { header = Element.text "Zeit"
-                  , width = Element.fill
-                  , view = \departure -> Element.el [ Element.padding 5, Element.width (Element.fillPortion 3) ] (Element.text (Departure.time departure))
-                  }
-                , { header = Element.none
-                  , width = Element.fill
-                  , view = \departure -> Element.el [ Element.padding 5, Element.width (Element.fillPortion 1) ] (Element.text (Departure.departureName departure))
-                  }
-                , { header = Element.text "Nach"
-                  , width = Element.fill
-                  , view = \departure -> Element.el [ Element.padding 5, Element.width (Element.fillPortion 3) ] (Element.text (Departure.destination departure))
-                  }
-                ]
-            }
-
---}
 
 
 toErrorMessage : Http.Error -> String
@@ -418,11 +375,3 @@ toErrorMessage error =
 
         Http.BadPayload string stringResponseHttp ->
             "Bad Payload - unable to handle response from server"
-
-
-
--- Colors
-
-
-grey =
-    Element.rgb 0.9 0.9 0.9
