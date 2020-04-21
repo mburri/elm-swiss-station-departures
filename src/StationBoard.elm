@@ -29,11 +29,6 @@ port setStorage : List String -> Cmd msg
 -- MODEL
 
 
-type Mode
-    = Search
-    | Recent
-
-
 type alias Model =
     { query : String
     , stations : List Station
@@ -41,7 +36,6 @@ type alias Model =
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
-    , mode : Mode
     , timeZone : Time.Zone
     }
 
@@ -54,7 +48,6 @@ initialModel recentStations =
     , selectedStation = Nothing
     , departures = []
     , fetchStationTableFailedMessage = ""
-    , mode = Search
     , timeZone = Time.utc
     }
 
@@ -77,7 +70,6 @@ type Msg
     | SelectStation Station
     | FetchedDepartures (Result Http.Error (List Departure))
     | FetchedStations (Result Http.Error (List Station))
-    | Switch Mode
     | GotTimeZone Time.Zone
 
 
@@ -99,9 +91,6 @@ update msg model =
         GotTimeZone zone ->
             ( { model | timeZone = zone }, Cmd.none )
 
-        Switch mode ->
-            ( { model | mode = mode }, Cmd.none )
-
 
 searchStations : Model -> String -> ( Model, Cmd Msg )
 searchStations model query =
@@ -116,12 +105,7 @@ updateSelectStation : Model -> Station -> ( Model, Cmd Msg )
 updateSelectStation model selected =
     let
         newRecent =
-            case model.mode of
-                Search ->
-                    addStation model.recent selected
-
-                Recent ->
-                    model.recent
+            addStation model.recent selected
     in
     ( selectStation model newRecent selected
     , Cmd.batch
@@ -243,7 +227,6 @@ viewHeader : Model -> List (Element Msg)
 viewHeader model =
     [ viewTitle
     , viewErrors model.fetchStationTableFailedMessage
-    , viewButtons model.mode
     ]
 
 
@@ -259,22 +242,23 @@ viewTitle =
 
 viewBody : Model -> List (Element Msg)
 viewBody model =
-    case model.mode of
-        Search ->
-            [ viewSearchBar model ]
-
-        Recent ->
-            [ viewRecentlySelected model.recent ]
+    [ viewSearchBar model ]
 
 
 viewStations : Model -> Element Msg
 viewStations model =
-    case model.stations of
-        [] ->
-            Element.none
+    let
+        stations =
+            case model.stations of
+                [] ->
+                    model.recent
 
-        _ ->
-            model.stations
+                _ ->
+                    model.stations
+    in
+    case model.departures of
+        [] ->
+            stations
                 |> List.map viewStation
                 |> Element.column
                     [ Element.padding 5
@@ -283,6 +267,9 @@ viewStations model =
                     , Border.width 1
                     , Border.rounded 5
                     ]
+
+        _ ->
+            Element.none
 
 
 viewStation : Station -> Element Msg
@@ -298,30 +285,6 @@ viewStation station =
             ]
 
 
-viewButtons : a -> Element Msg
-viewButtons model =
-    Element.row
-        [ Element.centerX
-        , Element.width Element.fill
-        , Element.spaceEvenly
-        ]
-        [ Input.button
-            [ Element.centerX
-            , Element.padding 50
-            ]
-            { onPress = Just (Switch Search)
-            , label = Element.text "Search"
-            }
-        , Input.button
-            [ Element.centerX
-            , Element.padding 50
-            ]
-            { onPress = Just (Switch Recent)
-            , label = Element.text "Recent"
-            }
-        ]
-
-
 viewSearchBar : Model -> Element Msg
 viewSearchBar model =
     Element.column [ Element.width Element.fill ]
@@ -331,25 +294,6 @@ viewSearchBar model =
             , placeholder = Nothing
             , label = Input.labelHidden "Search"
             }
-        ]
-
-
-viewRecentlySelected : List Station -> Element Msg
-viewRecentlySelected recents =
-    let
-        recentSearches =
-            recents
-                |> List.map (viewRecent recents)
-    in
-    Element.column [] recentSearches
-
-
-viewRecent : List Station -> Station -> Element Msg
-viewRecent recents station =
-    Element.row [ Events.onClick (SelectStation station) ]
-        [ station
-            |> Station.stationName
-            |> Element.text
         ]
 
 
