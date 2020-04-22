@@ -40,9 +40,4 @@ getDepartures stationName =
         url =
             baseUrl ++ "/stationboard?station=" ++ stationName ++ "&limit=20"
     in
-    Http.get url decode
-
-
-decode : Json.Decoder (List Departure)
-decode =
-    Json.map identity (field "stationboard" (Json.list Departure.decode))
+    Http.get url Departure.decode

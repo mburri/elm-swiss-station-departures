@@ -12,13 +12,23 @@ import Style.Color exposing (grey)
 import Time
 
 
-type alias Departure =
-    { to : String
-    , departure : Time.Posix
-    , name : String
-    , category : String
-    , number : String
-    }
+type Departure
+    = Departure
+        { to : String
+        , departure : Time.Posix
+        , category : String
+        , number : String
+        }
+
+
+create : String -> Time.Posix -> String -> String -> Departure
+create to departure category number =
+    Departure
+        { to = to
+        , departure = departure
+        , category = category
+        , number = number
+        }
 
 
 
@@ -29,20 +39,20 @@ viewDepartures : Time.Zone -> List Departure -> Element msg
 viewDepartures timeZone departures =
     case departures of
         [] ->
-            Element.none
+            none
 
         xs ->
-            Element.column
-                [ Element.width Element.fill ]
+            column
+                [ width fill ]
                 (List.map (viewDeparture timeZone) xs)
 
 
 viewDeparture : Time.Zone -> Departure -> Element msg
-viewDeparture timeZone { category, number, departure, to } =
-    Element.row
-        [ Element.width Element.fill
-        , Element.padding 10
-        , Element.mouseOver [ Background.color grey ]
+viewDeparture timeZone (Departure { category, number, departure, to }) =
+    row
+        [ width fill
+        , padding 10
+        , mouseOver [ Background.color grey ]
         ]
         [ viewCategory category
         , viewNumber number
@@ -56,10 +66,12 @@ viewCategory category =
     el [ alignLeft ] (text category)
 
 
+viewNumber : String -> Element msg
 viewNumber number =
     el [ alignLeft ] (text number)
 
 
+viewDestination : String -> Element msg
 viewDestination destination =
     el [ centerX ] (text destination)
 
@@ -81,11 +93,19 @@ toString zone posix =
 -- Decoders
 
 
-decode : Json.Decoder Departure
+decode : Json.Decoder (List Departure)
 decode =
-    Json.map5 Departure
+    Json.map identity (Json.field "stationboard" (Json.list decodeDeparture))
+
+
+decodeDeparture : Json.Decoder Departure
+decodeDeparture =
+    Json.map4
+        create
         (Json.field "to" Json.string)
         (Json.at [ "stop", "departure" ] Iso8601.decoder)
-        (Json.field "name" Json.string)
         (Json.field "category" Json.string)
         (Json.field "number" Json.string)
+
+
+
