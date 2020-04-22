@@ -1,30 +1,24 @@
 module OpenTransport.Departure exposing
     ( Departure
-    , create
+    , decode
     , viewDepartures
     )
 
-import Element exposing (Element)
+import Element exposing (..)
 import Element.Background as Background
+import Iso8601
+import Json.Decode as Json
 import Style.Color exposing (grey)
 import Time
 
 
-type Departure
-    = Departure
-        { to : String
-        , departure : Time.Posix
-        , name : String
-        }
-
-
-create : String -> Time.Posix -> String -> Departure
-create to departure stationName =
-    Departure
-        { to = to
-        , departure = departure
-        , name = stationName
-        }
+type alias Departure =
+    { to : String
+    , departure : Time.Posix
+    , name : String
+    , category : String
+    , number : String
+    }
 
 
 
@@ -44,98 +38,54 @@ viewDepartures timeZone departures =
 
 
 viewDeparture : Time.Zone -> Departure -> Element msg
-viewDeparture timeZone (Departure { departure, name, to }) =
+viewDeparture timeZone { category, number, departure, to } =
     Element.row
         [ Element.width Element.fill
-        , Element.padding 5
+        , Element.padding 10
         , Element.mouseOver [ Background.color grey ]
         ]
-        [ Element.el [ Element.width (Element.fillPortion 3) ] (viewTime timeZone departure)
-        , Element.el [ Element.width (Element.fillPortion 1) ] (Element.text name)
-        , Element.el [ Element.width (Element.fillPortion 3) ] (Element.text to)
+        [ viewCategory category
+        , viewNumber number
+        , viewDestination to
+        , viewTime timeZone departure
         ]
+
+
+viewCategory : String -> Element msg
+viewCategory category =
+    el [ alignLeft ] (text category)
+
+
+viewNumber number =
+    el [ alignLeft ] (text number)
+
+
+viewDestination destination =
+    el [ centerX ] (text destination)
 
 
 viewTime : Time.Zone -> Time.Posix -> Element msg
 viewTime timeZone departureTime =
-    Element.text (toString timeZone departureTime)
+    el [ alignRight ] (text (toString timeZone departureTime))
 
 
 toString : Time.Zone -> Time.Posix -> String
 toString zone posix =
-    String.join " "
-        [ (Time.toWeekday zone posix |> weekdayToName) ++ ","
-        , (Time.toDay zone posix |> String.fromInt) ++ "."
-        , Time.toMonth zone posix |> monthToName
-        , Time.toYear zone posix |> String.fromInt
-        , String.join ":"
-            [ Time.toHour zone posix |> String.fromInt |> String.padLeft 2 '0'
-            , Time.toMinute zone posix |> String.fromInt |> String.padLeft 2 '0'
-            , Time.toSecond zone posix |> String.fromInt |> String.padLeft 2 '0'
-            ]
+    String.join ":"
+        [ Time.toHour zone posix |> String.fromInt |> String.padLeft 2 '0'
+        , Time.toMinute zone posix |> String.fromInt |> String.padLeft 2 '0'
         ]
 
 
-monthToName : Time.Month -> String
-monthToName m =
-    case m of
-        Time.Jan ->
-            "January"
 
-        Time.Feb ->
-            "February"
-
-        Time.Mar ->
-            "March"
-
-        Time.Apr ->
-            "April"
-
-        Time.May ->
-            "May"
-
-        Time.Jun ->
-            "June"
-
-        Time.Jul ->
-            "July"
-
-        Time.Aug ->
-            "August"
-
-        Time.Sep ->
-            "September"
-
-        Time.Oct ->
-            "October"
-
-        Time.Nov ->
-            "November"
-
-        Time.Dec ->
-            "December"
+-- Decoders
 
 
-weekdayToName : Time.Weekday -> String
-weekdayToName wd =
-    case wd of
-        Time.Mon ->
-            "Monday"
-
-        Time.Tue ->
-            "Tuesday"
-
-        Time.Wed ->
-            "Wednesday"
-
-        Time.Thu ->
-            "Thursday"
-
-        Time.Fri ->
-            "Friday"
-
-        Time.Sat ->
-            "Saturday"
-
-        Time.Sun ->
-            "Sunday"
+decode : Json.Decoder Departure
+decode =
+    Json.map5 Departure
+        (Json.field "to" Json.string)
+        (Json.at [ "stop", "departure" ] Iso8601.decoder)
+        (Json.field "name" Json.string)
+        (Json.field "category" Json.string)
+        (Json.field "number" Json.string)
