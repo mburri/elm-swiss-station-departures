@@ -106,11 +106,55 @@ update msg model =
             ( { model | timeZone = zone }, Cmd.none )
 
         KeyUp code ->
-            let
-                _ =
-                    Debug.log "KeyCode" code
-            in
-            ( model, Cmd.none )
+            case code of
+                38 ->
+                    ( moveUp model, Cmd.none )
+
+                40 ->
+                    ( moveDown model, Cmd.none )
+
+                13 ->
+                    chooseStation model
+
+                _ ->
+                    ( model, Cmd.none )
+
+
+chooseStation : Model -> ( Model, Cmd Msg )
+chooseStation model =
+    let
+        selected =
+            case model.query of
+                "" ->
+                    ZipList.current model.recent
+
+                _ ->
+                    ZipList.current model.stations
+
+        query =
+            selected
+                |> Maybe.map Station.stationName
+                |> Maybe.withDefault ""
+    in
+    ( { model | selectedStation = selected, query = query }, getDepartures selected )
+
+
+moveUp model =
+    case model.query of
+        "" ->
+            { model | recent = ZipList.back model.recent }
+
+        _ ->
+            { model | stations = ZipList.back model.stations }
+
+
+moveDown model =
+    case model.query of
+        "" ->
+            { model | recent = ZipList.forward model.recent }
+
+        _ ->
+            { model | stations = ZipList.forward model.stations }
 
 
 searchStations : Model -> String -> ( Model, Cmd Msg )
@@ -280,7 +324,7 @@ viewStations : Model -> Element Msg
 viewStations model =
     let
         stations =
-            if ZipList.isEmpty model.stations then
+            if String.length model.query == 0 then
                 model.recent
 
             else
@@ -290,14 +334,13 @@ viewStations model =
         [] ->
             stations
                 |> ZipList.toList
-                |> List.map viewStation
+                |> List.map (viewStation (ZipList.current stations))
                 |> Element.column
                     [ Element.padding 5
                     , Element.width Element.fill
                     , Border.color (Element.rgb 0.9 0.9 0.9)
                     , Border.width 1
                     , Border.rounded 5
-                    , onKeyUp KeyUp
                     ]
 
         _ ->
@@ -309,25 +352,45 @@ onKeyUp tagger =
     Html.Events.on "keyup" (Json.map tagger Html.Events.keyCode) |> Element.htmlAttribute
 
 
-viewStation : Station -> Element Msg
-viewStation station =
-    station
-        |> Station.stationName
-        |> Element.text
-        |> Element.el
+viewStation : Maybe Station -> Station -> Element Msg
+viewStation current station =
+    let
+        highlighted =
+            case current of
+                Nothing ->
+                    []
+
+                Just element ->
+                    if element == station then
+                        [ Background.color grey ]
+
+                    else
+                        []
+
+        attrs =
             [ Element.padding 5
             , Element.width Element.fill
             , Element.mouseOver [ Background.color grey ]
             , Events.onClick (SelectStation station)
             ]
+                ++ highlighted
+    in
+    station
+        |> Station.stationName
+        |> Element.text
+        |> Element.el attrs
 
 
 viewSearchBar : Model -> Element Msg
 viewSearchBar model =
     Element.column
         [ Element.width Element.fill
+        , onKeyUp KeyUp
         ]
-        [ Input.search [ Element.below (viewStations model) ]
+        [ Input.search
+            [ Element.below (viewStations model)
+            , Input.focusedOnLoad
+            ]
             { onChange = SearchStation
             , text = model.query
             , placeholder = Nothing
