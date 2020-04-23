@@ -8,7 +8,10 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html
+import Html.Attributes
+import Html.Events
 import Http
+import Json.Decode as Json
 import List.Extra
 import OpenTransport.Departure exposing (Departure, viewDepartures)
 import OpenTransport.Station as Station exposing (Station)
@@ -16,6 +19,7 @@ import OpenTransport.TransportApi as TransportApi exposing (..)
 import Style.Color exposing (grey)
 import Task
 import Time
+import ZipList exposing (ZipList)
 
 
 
@@ -31,8 +35,8 @@ port setStorage : List String -> Cmd msg
 
 type alias Model =
     { query : String
-    , stations : List Station
-    , recent : List Station
+    , stations : ZipList Station
+    , recent : ZipList Station
     , selectedStation : Maybe Station
     , departures : List Departure
     , fetchStationTableFailedMessage : String
@@ -42,9 +46,18 @@ type alias Model =
 
 initialModel : List Station -> Model
 initialModel recentStations =
+    let
+        recents =
+            case recentStations of
+                [] ->
+                    ZipList.empty
+
+                x :: xs ->
+                    ZipList.new x xs
+    in
     { query = ""
-    , stations = []
-    , recent = recentStations
+    , stations = ZipList.empty
+    , recent = recents
     , selectedStation = Nothing
     , departures = []
     , fetchStationTableFailedMessage = ""
@@ -71,6 +84,7 @@ type Msg
     | FetchedDepartures (Result Http.Error (List Departure))
     | FetchedStations (Result Http.Error (List Station))
     | GotTimeZone Time.Zone
+    | KeyUp Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -91,11 +105,18 @@ update msg model =
         GotTimeZone zone ->
             ( { model | timeZone = zone }, Cmd.none )
 
+        KeyUp code ->
+            let
+                _ =
+                    Debug.log "KeyCode" code
+            in
+            ( model, Cmd.none )
+
 
 searchStations : Model -> String -> ( Model, Cmd Msg )
 searchStations model query =
     if String.length query == 0 then
-        ( initialModel model.recent, Cmd.none )
+        ( initialModel (ZipList.toList model.recent), Cmd.none )
 
     else
         ( { model | query = query }, fetchStations query )
@@ -104,28 +125,29 @@ searchStations model query =
 updateSelectStation : Model -> Station -> ( Model, Cmd Msg )
 updateSelectStation model selected =
     let
-        newRecent =
-            addStation model.recent selected
+        recents =
+            ZipList.toList model.recent
+                |> addStation selected
+                |> List.take 5
+
+        newRecents =
+            case recents of
+                x :: xs ->
+                    ZipList.new x xs
+
+                _ ->
+                    ZipList.empty
     in
-    ( selectStation model newRecent selected
+    ( { model | recent = newRecents, query = Station.stationName selected }
     , Cmd.batch
-        [ getDepartures (Just selected)
-        , newRecent |> List.map Station.stationName |> setStorage
+        [ getDepartures (ZipList.current model.stations)
+        , newRecents |> ZipList.toList |> List.map Station.stationName |> setStorage
         ]
     )
 
 
-selectStation : Model -> List Station -> Station -> Model
-selectStation model newRecent selected =
-    { model
-        | query = Station.stationName selected
-        , selectedStation = Just selected
-        , recent = newRecent |> List.take 5
-    }
-
-
-addStation : List Station -> Station -> List Station
-addStation stations station =
+addStation : Station -> List Station -> List Station
+addStation station stations =
     (station :: stations)
         |> List.Extra.uniqueBy (\s -> Station.stationName s)
 
@@ -159,7 +181,7 @@ departuresFetched model result =
         Result.Ok departures ->
             ( { model
                 | departures = departures
-                , stations = []
+                , stations = ZipList.empty
                 , fetchStationTableFailedMessage = ""
               }
             , Cmd.none
@@ -173,8 +195,17 @@ stationsFetched : Model -> Result Http.Error (List Station) -> ( Model, Cmd msg 
 stationsFetched model result =
     case result of
         Result.Ok stations ->
+            let
+                stationsZipList =
+                    case stations of
+                        [] ->
+                            ZipList.empty
+
+                        x :: xs ->
+                            ZipList.new x xs
+            in
             ( { model
-                | stations = stations
+                | stations = stationsZipList
                 , departures = []
                 , fetchStationTableFailedMessage = ""
               }
@@ -249,16 +280,16 @@ viewStations : Model -> Element Msg
 viewStations model =
     let
         stations =
-            case model.stations of
-                [] ->
-                    model.recent
+            if ZipList.isEmpty model.stations then
+                model.recent
 
-                _ ->
-                    model.stations
+            else
+                model.stations
     in
     case model.departures of
         [] ->
             stations
+                |> ZipList.toList
                 |> List.map viewStation
                 |> Element.column
                     [ Element.padding 5
@@ -266,10 +297,16 @@ viewStations model =
                     , Border.color (Element.rgb 0.9 0.9 0.9)
                     , Border.width 1
                     , Border.rounded 5
+                    , onKeyUp KeyUp
                     ]
 
         _ ->
             Element.none
+
+
+onKeyUp : (Int -> msg) -> Element.Attribute msg
+onKeyUp tagger =
+    Html.Events.on "keyup" (Json.map tagger Html.Events.keyCode) |> Element.htmlAttribute
 
 
 viewStation : Station -> Element Msg
@@ -287,7 +324,9 @@ viewStation station =
 
 viewSearchBar : Model -> Element Msg
 viewSearchBar model =
-    Element.column [ Element.width Element.fill ]
+    Element.column
+        [ Element.width Element.fill
+        ]
         [ Input.search [ Element.below (viewStations model) ]
             { onChange = SearchStation
             , text = model.query
