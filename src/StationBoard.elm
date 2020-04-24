@@ -8,7 +8,6 @@ import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html
-import Html.Attributes
 import Html.Events
 import Http
 import Json.Decode as Json
@@ -56,7 +55,7 @@ initialModel recentStations =
                     ZipList.new x xs
     in
     { query = ""
-    , stations = ZipList.empty
+    , stations = recents
     , recent = recents
     , selectedStation = Nothing
     , departures = []
@@ -94,7 +93,7 @@ update msg model =
             searchStations model query
 
         SelectStation station ->
-            updateSelectStation model station
+            updateSelectStation model (Just station)
 
         FetchedDepartures result ->
             departuresFetched model result
@@ -114,65 +113,49 @@ update msg model =
                     ( moveDown model, Cmd.none )
 
                 13 ->
-                    chooseStation model
+                    model.stations |> ZipList.current |> updateSelectStation model
 
                 _ ->
                     ( model, Cmd.none )
 
 
-chooseStation : Model -> ( Model, Cmd Msg )
-chooseStation model =
-    let
-        selected =
-            case model.query of
-                "" ->
-                    ZipList.current model.recent
-
-                _ ->
-                    ZipList.current model.stations
-
-        query =
-            selected
-                |> Maybe.map Station.stationName
-                |> Maybe.withDefault ""
-    in
-    ( { model | selectedStation = selected, query = query }, getDepartures selected )
-
-
 moveUp model =
-    case model.query of
-        "" ->
-            { model | recent = ZipList.back model.recent }
-
-        _ ->
-            { model | stations = ZipList.back model.stations }
+    { model | stations = ZipList.back model.stations }
 
 
 moveDown model =
-    case model.query of
-        "" ->
-            { model | recent = ZipList.forward model.recent }
-
-        _ ->
-            { model | stations = ZipList.forward model.stations }
+    { model | stations = ZipList.forward model.stations }
 
 
 searchStations : Model -> String -> ( Model, Cmd Msg )
 searchStations model query =
     if String.length query == 0 then
-        ( initialModel (ZipList.toList model.recent), Cmd.none )
+        ( { model
+            | departures = []
+            , stations = model.recent
+            , query = query
+          }
+        , Cmd.none
+        )
 
     else
-        ( { model | query = query }, fetchStations query )
+        ( { model | query = query }
+        , fetchStations query
+        )
 
 
-updateSelectStation : Model -> Station -> ( Model, Cmd Msg )
-updateSelectStation model selected =
+updateSelectStation : Model -> Maybe Station -> ( Model, Cmd Msg )
+updateSelectStation model maybeSelected =
     let
         recents =
-            ZipList.toList model.recent
-                |> addStation selected
-                |> List.take 5
+            case maybeSelected of
+                Just selected ->
+                    ZipList.toList model.recent
+                        |> addStation selected
+                        |> List.take 5
+
+                Nothing ->
+                    ZipList.toList model.recent
 
         newRecents =
             case recents of
@@ -181,8 +164,11 @@ updateSelectStation model selected =
 
                 _ ->
                     ZipList.empty
+
+        newQuery =
+            maybeSelected |> Maybe.map Station.stationName |> Maybe.withDefault ""
     in
-    ( { model | recent = newRecents, query = Station.stationName selected }
+    ( { model | recent = newRecents, query = newQuery }
     , Cmd.batch
         [ getDepartures (ZipList.current model.stations)
         , newRecents |> ZipList.toList |> List.map Station.stationName |> setStorage
@@ -322,19 +308,11 @@ viewBody model =
 
 viewStations : Model -> Element Msg
 viewStations model =
-    let
-        stations =
-            if String.length model.query == 0 then
-                model.recent
-
-            else
-                model.stations
-    in
     case model.departures of
         [] ->
-            stations
+            model.stations
                 |> ZipList.toList
-                |> List.map (viewStation (ZipList.current stations))
+                |> List.map (viewStation (ZipList.current model.stations))
                 |> Element.column
                     [ Element.padding 5
                     , Element.width Element.fill
