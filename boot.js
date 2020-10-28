@@ -1,5 +1,4 @@
 window.onload = function () {
-  var container = document.getElementById("app");
   var storageKey = "recent-searches";
   var storedData = localStorage.getItem(storageKey);
   var recentStations = storedData ? JSON.parse(storedData) : [];
