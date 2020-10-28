@@ -1,13 +1,12 @@
-port module StationBoard exposing (Model, Msg, document, init, subscriptions, update)
+port module StationBoard exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser
-import Element exposing (Element)
+import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
-import Html
 import Html.Events
 import Http
 import Json.Decode as Json
@@ -37,6 +36,8 @@ type alias Model =
     , stations : ZipList Station
     , recent : ZipList Station
     , selectedStation : Maybe Station
+
+    -- model it as Loading | Loaded (List Departure) | Error String
     , departures : List Departure
     , fetchStationTableFailedMessage : String
     , timeZone : Time.Zone
@@ -93,7 +94,7 @@ update msg model =
             searchStations model query
 
         SelectStation station ->
-            updateSelectStation model (Just station)
+            selectStation model (Just station)
 
         FetchedDepartures result ->
             departuresFetched model result
@@ -107,24 +108,16 @@ update msg model =
         KeyUp code ->
             case code of
                 38 ->
-                    ( moveUp model, Cmd.none )
+                    ( { model | stations = ZipList.back model.stations }, Cmd.none )
 
                 40 ->
-                    ( moveDown model, Cmd.none )
+                    ( { model | stations = ZipList.forward model.stations }, Cmd.none )
 
                 13 ->
-                    model.stations |> ZipList.current |> updateSelectStation model
+                    model.stations |> ZipList.current |> selectStation model
 
                 _ ->
                     ( model, Cmd.none )
-
-
-moveUp model =
-    { model | stations = ZipList.back model.stations }
-
-
-moveDown model =
-    { model | stations = ZipList.forward model.stations }
 
 
 searchStations : Model -> String -> ( Model, Cmd Msg )
@@ -144,8 +137,8 @@ searchStations model query =
         )
 
 
-updateSelectStation : Model -> Maybe Station -> ( Model, Cmd Msg )
-updateSelectStation model maybeSelected =
+selectStation : Model -> Maybe Station -> ( Model, Cmd Msg )
+selectStation model maybeSelected =
     let
         recents =
             case maybeSelected of
@@ -259,16 +252,11 @@ subscriptions _ =
 -- VIEW
 
 
-document : Model -> Browser.Document Msg
-document model =
+view : Model -> Browser.Document Msg
+view model =
     Browser.Document
         "Departures"
-        [ view model ]
-
-
-view : Model -> Html.Html Msg
-view model =
-    Element.layout [] (viewStyled model)
+        [ Element.layout [] (viewStyled model) ]
 
 
 viewStyled : Model -> Element Msg
