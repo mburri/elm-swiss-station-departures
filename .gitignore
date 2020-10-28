@@ -3,5 +3,9 @@ node_modules/
 dist/
 build/
 bin/
+
 npm-debug.log
 
+# intellij project files and settings
+.idea
+*.iml
