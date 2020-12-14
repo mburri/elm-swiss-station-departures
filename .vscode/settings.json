@@ -1,5 +1,5 @@
 {
   "editor.formatOnSave": true,
-  "elm.formatCommand": "bin/elm-format",
-  "elm.compiler": "bin/elm"
+  "elmLS.elmFormatPath": "./bin/elm-format",
+  "elmLS.elmPath": "./bin/elm"
 }
