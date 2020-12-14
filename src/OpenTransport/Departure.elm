@@ -54,26 +54,20 @@ viewDeparture timeZone (Departure { category, number, departure, to }) =
         , padding 10
         , mouseOver [ Background.color grey ]
         ]
-        [ viewCategory category
-        , viewNumber number
-        , viewDestination to
-        , viewTime timeZone departure
+        [ el [ width <| fillPortion 1 ] <| viewCategory category number
+        , el [ width <| fillPortion 5 ] <| viewDestination to
+        , el [ width <| fillPortion 1 ] <| viewTime timeZone departure
         ]
 
 
-viewCategory : String -> Element msg
-viewCategory category =
-    el [ alignLeft ] (text category)
-
-
-viewNumber : String -> Element msg
-viewNumber number =
-    el [ alignLeft ] (text number)
+viewCategory : String -> String -> Element msg
+viewCategory category number =
+    el [ alignLeft ] (text (category ++ " " ++ number))
 
 
 viewDestination : String -> Element msg
 viewDestination destination =
-    el [ centerX ] (text destination)
+    el [ alignLeft, padding 10 ] (text destination)
 
 
 viewTime : Time.Zone -> Time.Posix -> Element msg
@@ -106,6 +100,3 @@ decodeDeparture =
         (Json.at [ "stop", "departure" ] Iso8601.decoder)
         (Json.field "category" Json.string)
         (Json.field "number" Json.string)
-
-
-
