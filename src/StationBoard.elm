@@ -210,7 +210,7 @@ departuresFetched model result =
             , Cmd.none
             )
 
-        Result.Err err ->
+        Result.Err _ ->
             ( { model | fetchStationTableFailedMessage = "Error retrieving departures" }, Cmd.none )
 
 
@@ -382,7 +382,7 @@ viewErrors fetchStationTableFailedMessage =
 toErrorMessage : Http.Error -> String
 toErrorMessage error =
     case error of
-        Http.BadUrl string ->
+        Http.BadUrl _ ->
             "Bad Url requested"
 
         Http.Timeout ->
@@ -397,5 +397,5 @@ toErrorMessage error =
                 ++ ", the message was: "
                 ++ stringResponseHttp.status.message
 
-        Http.BadPayload string stringResponseHttp ->
+        Http.BadPayload _ stringResponseHttp ->
             "Bad Payload - unable to handle response from server"

@@ -4,8 +4,6 @@ module ZipList exposing
     , current
     , empty
     , forward
-    , insert
-    , isEmpty
     , new
     , toList
     )
@@ -66,16 +64,6 @@ current zipList =
             Just element
 
 
-isEmpty : ZipList a -> Bool
-isEmpty zipList =
-    case zipList of
-        Empty ->
-            True
-
-        _ ->
-            False
-
-
 toList : ZipList a -> List a
 toList zipList =
     case zipList of
@@ -88,13 +76,3 @@ toList zipList =
                 , [ element ]
                 , after
                 ]
-
-
-insert : a -> ZipList a -> ZipList a
-insert element zipList =
-    case zipList of
-        Empty ->
-            new element []
-
-        ZipList before elem after ->
-            ZipList (List.concat [ before, [ element ] ]) elem after
