@@ -24,7 +24,7 @@ jobs:
       run: ./deploy.sh
     
     - name: Push to gh-pages
-      uses: actions-js/push@gh-pages
+      uses: actions-js/push@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: gh-pages
