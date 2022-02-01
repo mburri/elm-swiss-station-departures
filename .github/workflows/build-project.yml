@@ -19,3 +19,6 @@ jobs:
       
     - name: Build prod
       run: make prod
+    
+    - name: deploy
+      run: ./deploy.sh
