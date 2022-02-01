@@ -300,7 +300,8 @@ viewStations model =
                 |> ZipList.toList
                 |> List.map (viewStation (ZipList.current model.stations))
                 |> Element.column
-                    [ Element.padding 5
+                    [ Element.paddingXY 5 10
+                    , Element.spacing 10
                     , Element.width Element.fill
                     , Border.color (Element.rgb 0.9 0.9 0.9)
                     , Border.width 1
@@ -319,20 +320,29 @@ onKeyUp tagger =
 viewStation : Maybe Station -> Station -> Element Msg
 viewStation current station =
     let
+        -- highlighted =
+        --     case current of
+        --         Nothing ->
+        --             []
+        --         Just element ->
+        --             if element == station then
+        --                 [ Background.color grey ]
+        --             else
+        --                 []
         highlighted =
-            case current of
-                Nothing ->
-                    []
+            current
+                |> Maybe.map
+                    (\element ->
+                        if element == station then
+                            [ Background.color grey ]
 
-                Just element ->
-                    if element == station then
-                        [ Background.color grey ]
-
-                    else
-                        []
+                        else
+                            []
+                    )
+                |> Maybe.withDefault []
 
         attrs =
-            [ Element.padding 5
+            [ Element.padding 10
             , Element.width Element.fill
             , Element.mouseOver [ Background.color grey ]
             , Events.onClick (SelectStation station)
