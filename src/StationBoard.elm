@@ -268,17 +268,18 @@ viewStyled model =
         , Element.centerX
         , Element.paddingXY 10 0
         ]
-        (viewHeader model
-            ++ viewBody model
-            ++ [ viewDepartures model.timeZone model.departures ]
-        )
+        [ viewHeader model
+        , viewSearchBar model
+        , viewDepartures model.timeZone model.departures
+        ]
 
 
-viewHeader : Model -> List (Element Msg)
+viewHeader : Model -> Element Msg
 viewHeader model =
-    [ viewTitle
-    , viewErrors model.fetchStationTableFailedMessage
-    ]
+    column []
+        [ viewTitle
+        , viewErrors model.fetchStationTableFailedMessage
+        ]
 
 
 viewTitle : Element msg
@@ -289,11 +290,6 @@ viewTitle =
         , Font.size 48
         ]
         [ Element.text "Station Board" ]
-
-
-viewBody : Model -> List (Element Msg)
-viewBody model =
-    [ viewSearchBar model ]
 
 
 viewStations : Model -> Element Msg
