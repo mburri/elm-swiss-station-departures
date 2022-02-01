@@ -1,10 +1,15 @@
-module Style.Color exposing (grey, white)
+module Style.Color exposing (darkGrey, grey, white)
 
 import Element
 
 
 
 -- Colors
+
+
+darkGrey : Element.Color
+darkGrey =
+    Element.rgb 0.4 0.4 0.4
 
 
 grey : Element.Color

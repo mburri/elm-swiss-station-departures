@@ -81,6 +81,7 @@ init recentStations =
 type Msg
     = SearchStation String
     | SelectStation Station
+    | ClearSearchClicked
     | FetchedDepartures (Result Http.Error (List Departure))
     | FetchedStations (Result Http.Error (List Station))
     | GotTimeZone Time.Zone
@@ -95,6 +96,9 @@ update msg model =
 
         SelectStation station ->
             selectStation model (Just station)
+
+        ClearSearchClicked ->
+            ( initialModel (ZipList.toList model.recent), Cmd.none )
 
         FetchedDepartures result ->
             departuresFetched model result
@@ -320,15 +324,6 @@ onKeyUp tagger =
 viewStation : Maybe Station -> Station -> Element Msg
 viewStation current station =
     let
-        -- highlighted =
-        --     case current of
-        --         Nothing ->
-        --             []
-        --         Just element ->
-        --             if element == station then
-        --                 [ Background.color grey ]
-        --             else
-        --                 []
         highlighted =
             current
                 |> Maybe.map
@@ -357,19 +352,42 @@ viewStation current station =
 
 viewSearchBar : Model -> Element Msg
 viewSearchBar model =
+    let
+        inFront =
+            Element.inFront
+                (if String.length model.query > 0 then
+                    Input.button [ alignRight, centerY, paddingXY 10 0 ]
+                        { onPress = Just ClearSearchClicked
+                        , label =
+                            Element.el
+                                [ Font.color
+                                    Style.Color.darkGrey
+                                ]
+                            <|
+                                Element.text "x"
+                        }
+
+                 else
+                    Element.none
+                )
+    in
     Element.column
         [ Element.width Element.fill
         , onKeyUp KeyUp
         ]
-        [ Input.search
-            [ Element.below (viewStations model)
-            , Input.focusedOnLoad
+        [ Element.row [ Element.width Element.fill ]
+            [ Input.search
+                [ Element.below (viewStations model)
+                , paddingEach { top = 10, right = 20, bottom = 10, left = 10 }
+                , Input.focusedOnLoad
+                , inFront
+                ]
+                { onChange = SearchStation
+                , text = model.query
+                , placeholder = Nothing
+                , label = Input.labelHidden "Search"
+                }
             ]
-            { onChange = SearchStation
-            , text = model.query
-            , placeholder = Nothing
-            , label = Input.labelHidden "Search"
-            }
         ]
 
 
