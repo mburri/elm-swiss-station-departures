@@ -256,19 +256,17 @@ view : Model -> Browser.Document Msg
 view model =
     Browser.Document
         "Departures"
-        [ Element.layout [ Element.padding 50 ] (viewStyled model)
+        [ Element.layout [] (viewStyled model)
         ]
 
 
 viewStyled : Model -> Element Msg
 viewStyled model =
     Element.column
-        [ Element.centerX
-        , Element.padding 50
-        , Element.width (px 860)
+        [ Element.width fill
         , Element.height fill
-        , Border.width 1
-        , Border.color (Element.rgb 0.2 0.2 0.2)
+        , Element.centerX
+        , Element.paddingXY 10 0
         ]
         (viewHeader model
             ++ viewBody model

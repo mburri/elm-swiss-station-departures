@@ -6,6 +6,7 @@ module OpenTransport.Departure exposing
 
 import Element exposing (..)
 import Element.Background as Background
+import Element.Font exposing (light)
 import Iso8601
 import Json.Decode as Json
 import Style.Color exposing (grey)
@@ -44,15 +45,19 @@ viewDepartures timeZone departures =
         xs ->
             column
                 [ width fill ]
-                (List.map (viewDeparture timeZone) xs)
+                (List.indexedMap (viewDeparture timeZone) xs)
 
 
-viewDeparture : Time.Zone -> Departure -> Element msg
-viewDeparture timeZone (Departure { category, number, departure, to }) =
+viewDeparture : Time.Zone -> Int -> Departure -> Element msg
+viewDeparture timeZone index (Departure { category, number, departure, to }) =
     row
         [ width fill
         , padding 10
-        , mouseOver [ Background.color grey ]
+        , if remainderBy 2 index == 0 then
+            Background.color Style.Color.white
+
+          else
+            Background.color Style.Color.grey
         ]
         [ el [ width <| fillPortion 1 ] <| viewCategory category number
         , el [ width <| fillPortion 5 ] <| viewDestination to
