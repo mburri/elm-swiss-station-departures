@@ -14,7 +14,7 @@ import List.Extra
 import OpenTransport.Departure exposing (Departure, viewDepartures)
 import OpenTransport.Station as Station exposing (Station)
 import OpenTransport.TransportApi as TransportApi exposing (..)
-import Style.Color exposing (grey)
+import Style.Color exposing (darkGrey, grey)
 import Task
 import Time
 import ZipList exposing (ZipList)
@@ -337,17 +337,25 @@ viewStation current station =
                 |> Maybe.withDefault []
 
         attrs =
-            [ Element.padding 10
+            [ Element.spacing 10
+            , Element.padding 10
             , Element.width Element.fill
             , Element.mouseOver [ Background.color grey ]
             , Events.onClick (SelectStation station)
             ]
                 ++ highlighted
+
+        stationName =
+            Station.stationName station
+
+        enterHint =
+            if current == Just station then
+                Element.el [ Font.color darkGrey ] <| Element.text "[enter]"
+
+            else
+                Element.none
     in
-    station
-        |> Station.stationName
-        |> Element.text
-        |> Element.el attrs
+    Element.row attrs [ Element.text stationName, enterHint ]
 
 
 viewSearchBar : Model -> Element Msg
