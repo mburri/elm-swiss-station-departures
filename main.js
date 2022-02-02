@@ -14850,6 +14850,7 @@ var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
 };
 var $author$project$StationBoard$viewStation = F2(
 	function (current, station) {
+		var stationName = $author$project$OpenTransport$Station$stationName(station);
 		var highlighted = A2(
 			$elm$core$Maybe$withDefault,
 			_List_Nil,
@@ -14862,9 +14863,19 @@ var $author$project$StationBoard$viewStation = F2(
 						]) : _List_Nil;
 				},
 				current));
+		var enterHint = _Utils_eq(
+			current,
+			$elm$core$Maybe$Just(station)) ? A2(
+			$mdgriffith$elm_ui$Element$el,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Font$color($author$project$Style$Color$darkGrey)
+				]),
+			$mdgriffith$elm_ui$Element$text('[enter]')) : $mdgriffith$elm_ui$Element$none;
 		var attrs = _Utils_ap(
 			_List_fromArray(
 				[
+					$mdgriffith$elm_ui$Element$spacing(10),
 					$mdgriffith$elm_ui$Element$padding(10),
 					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 					$mdgriffith$elm_ui$Element$mouseOver(
@@ -14877,10 +14888,13 @@ var $author$project$StationBoard$viewStation = F2(
 				]),
 			highlighted);
 		return A2(
-			$mdgriffith$elm_ui$Element$el,
+			$mdgriffith$elm_ui$Element$row,
 			attrs,
-			$mdgriffith$elm_ui$Element$text(
-				$author$project$OpenTransport$Station$stationName(station)));
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$text(stationName),
+					enterHint
+				]));
 	});
 var $author$project$StationBoard$viewStations = function (model) {
 	var _v0 = model.M;
